@@ -33,7 +33,12 @@ export default function RootLayout({
     >
       <body className="h-full antialiased">
         {/* agent name must match /api/copilotkit and the LangGraphAGUIAgent name */}
-        <CopilotKit runtimeUrl="/api/copilotkit" agent="finance_department">
+        <CopilotKit
+          runtimeUrl="/api/copilotkit"
+          agent="finance_department"
+          showDevConsole={false}
+          enableInspector={false}
+        >
           <AppShell>{children}</AppShell>
         </CopilotKit>
       </body>

@@ -1,17 +1,50 @@
 "use client";
 
-import { useState } from "react";
-import { useCoAgent, useCopilotChatHeadless_c } from "@copilotkit/react-core";
-import { ArrowUp, Loader2 } from "lucide-react";
-import type { DebateState, TranscriptTurn } from "@/lib/types";
-import { decisionStyle, resolveMember, ROSTER_BY_ID, STANCE_STYLE } from "@/lib/agents";
-import { Card, Monogram, Pill, SectionTitle } from "@/components/ui";
+import { useCallback, useEffect, useMemo, useState, type ReactNode } from "react";
+import { useCoAgent, useCopilotChat } from "@copilotkit/react-core";
+import { MessageRole, TextMessage } from "@copilotkit/runtime-client-gql";
+import {
+  Activity,
+  AlertTriangle,
+  ArrowUp,
+  BarChart3,
+  Bell,
+  CheckCircle2,
+  Clock,
+  Database,
+  ExternalLink,
+  Landmark,
+  Loader2,
+  Radio,
+  Scale,
+  ServerCog,
+  ShieldAlert,
+  ShieldCheck,
+  ShoppingCart,
+  Sparkles,
+  Terminal,
+  Vault,
+  XCircle,
+} from "lucide-react";
+import type {
+  AgentStatus,
+  DebateState,
+  ObservabilityEvent,
+  RedisActivity,
+  RosterMember,
+  TraceSummary,
+  TranscriptTurn,
+} from "@/lib/types";
+import { decisionStyle, resolveMember, ROSTER, ROSTER_BY_ID, STANCE_STYLE } from "@/lib/agents";
+import { Monogram, Pill, SectionTitle } from "@/components/ui";
 import { fmtMonths, fmtSignedMonths } from "@/lib/format";
+
+const AGENT_BASE = process.env.NEXT_PUBLIC_AGENT_URL || "http://localhost:8123";
 
 const EXAMPLES = [
   "Should we renew the $180k/yr Datadog contract as-is, or renegotiate it down?",
   "Should we hire 5 engineers next quarter (~$95k/mo) or extend runway?",
-  "A vendor wants $250k upfront for a year of an analytics platform — approve it?",
+  "A vendor wants $250k upfront for a year of an analytics platform - approve it?",
 ];
 
 const NODE_LABEL: Record<string, string> = {
@@ -25,234 +58,1579 @@ const NODE_LABEL: Record<string, string> = {
   persist: "Recording the decision",
 };
 
+const NODE_TO_AGENT: Record<string, string> = {
+  intake: "cfo",
+  treasury: "treasury",
+  fpna: "fpna",
+  risk: "risk",
+  procurement: "procurement",
+  synthesis: "cfo",
+  persist: "cfo",
+};
+
+const PHASE_LABEL: Record<string, string> = {
+  analysis: "Functional analysis",
+  debate: "Cross-examination",
+  synthesis: "CFO synthesis",
+  done: "Decision recorded",
+};
+
+const SPONSOR_DEFAULTS = [
+  { id: "weave", label: "W&B Weave", detail: "Trace readiness pending", icon: Sparkles },
+  { id: "openai", label: "OpenAI", detail: "Model readiness pending", icon: Activity },
+  { id: "redis", label: "Redis", detail: "Stack readiness pending", icon: Database },
+  { id: "copilotkit", label: "CopilotKit", detail: "AG-UI bridge pending", icon: Radio },
+  { id: "cursor", label: "Cursor", detail: "Workflow rules pending", icon: Terminal },
+];
+
+const AGENT_ICONS = {
+  cfo: Landmark,
+  treasury: Vault,
+  fpna: BarChart3,
+  risk: ShieldCheck,
+  procurement: ShoppingCart,
+} as const;
+
+type HealthStatus = "loading" | "ready" | "blocked" | "unavailable";
+type SponsorStatus = "ready" | "blocked" | "checking";
+
+type HealthCheck = {
+  id?: string;
+  label: string;
+  ready: boolean;
+  detail?: string;
+  error?: string | null;
+  url?: string | null;
+  checks?: HealthCheck[];
+};
+
+type HealthPayload = {
+  ready: boolean;
+  mode?: string;
+  blockers?: string[];
+  env?: HealthCheck[];
+  sponsors?: HealthCheck[];
+  weave?: {
+    configured?: boolean;
+    initialized?: boolean;
+    project?: string;
+    entity?: string;
+    error?: string | null;
+    url?: string | null;
+  };
+};
+
+type HealthView = {
+  status: HealthStatus;
+  data?: HealthPayload;
+  error?: string;
+  refreshing?: boolean;
+};
+
+type SponsorView = {
+  id: string;
+  label: string;
+  detail: string;
+  error?: string | null;
+  url?: string | null;
+  status: SponsorStatus;
+  checks?: HealthCheck[];
+  sandbox?: {
+    configured?: boolean;
+    id?: string | null;
+    url?: string | null;
+    detail?: string;
+  };
+  icon: (typeof SPONSOR_DEFAULTS)[number]["icon"];
+};
+
+type TimelineStatus = "complete" | "active" | "pending" | "blocked";
+
 export default function DecisionsPage() {
   const [input, setInput] = useState("");
+  const [health, setHealth] = useState<HealthView>({ status: "loading", refreshing: true });
+  const [selectedAgentId, setSelectedAgentId] = useState("cfo");
+  const [nowLabel, setNowLabel] = useState("");
   const { state, running, nodeName } = useCoAgent<DebateState>({ name: "finance_department" });
-  const { sendMessage } = useCopilotChatHeadless_c();
+  const { appendMessage } = useCopilotChat();
 
   const transcript: TranscriptTurn[] = state?.transcript ?? [];
+  const agentStatuses = state?.agent_statuses ?? [];
+  const observabilityEvents = state?.observability_events ?? [];
+  const traceSummary = state?.trace_summary;
+  const redisActivity = state?.redis_activity ?? [];
   const recommendation = state?.recommendation;
   const started = transcript.length > 0 || running;
+  const healthReady = health.status === "ready" && health.data?.ready === true;
+  const currentPhase = getCurrentPhaseLabel({
+    health,
+    healthReady,
+    nodeName,
+    phase: state?.phase,
+    recommendation,
+    running,
+  });
+
+  const loadHealth = useCallback(async () => {
+    setHealth((prev) => ({
+      ...prev,
+      status: prev.data || prev.error ? prev.status : "loading",
+      refreshing: true,
+    }));
+
+    try {
+      const res = await fetch(`${AGENT_BASE}/api/health`, { cache: "no-store" });
+      const data = (await res.json().catch(() => null)) as HealthPayload | null;
+      if (!data) {
+        throw new Error(`/api/health -> ${res.status}`);
+      }
+      setHealth({
+        status: data.ready ? "ready" : "blocked",
+        data,
+        refreshing: false,
+      });
+    } catch (err) {
+      const message = err instanceof Error ? err.message : String(err);
+      setHealth({
+        status: "unavailable",
+        error: message,
+        refreshing: false,
+        data: {
+          ready: false,
+          mode: "strict-live",
+          blockers: [`Health endpoint unavailable at ${AGENT_BASE}/api/health`, message],
+        },
+      });
+    }
+  }, []);
+
+  useEffect(() => {
+    const timeout = window.setTimeout(loadHealth, 0);
+    const interval = window.setInterval(loadHealth, 15000);
+    return () => {
+      window.clearTimeout(timeout);
+      window.clearInterval(interval);
+    };
+  }, [loadHealth]);
+
+  useEffect(() => {
+    const update = () => {
+      setNowLabel(
+        new Intl.DateTimeFormat("en-US", {
+          hour: "numeric",
+          minute: "2-digit",
+          second: "2-digit",
+          timeZoneName: "short",
+        }).format(new Date()),
+      );
+    };
+    update();
+    const interval = window.setInterval(update, 1000);
+    return () => window.clearInterval(interval);
+  }, []);
 
   async function submit(text: string) {
     const content = text.trim();
-    if (!content || running) return;
+    if (!content || running || !healthReady) return;
     setInput("");
-    await sendMessage({ id: crypto.randomUUID(), role: "user", content });
+    await appendMessage(new TextMessage({ role: MessageRole.User, content }));
   }
 
-  return (
-    <div className="mx-auto max-w-[940px] px-8 py-8">
-      <SectionTitle>Decision Room</SectionTitle>
-      <h1 className="mt-1.5 text-[22px] font-semibold tracking-tight">
-        Bring a decision to the committee
-      </h1>
-      <p className="mt-1 text-[13px] text-muted-foreground">
-        Pose any financial decision. Treasury, FP&amp;A, Risk &amp; Audit, and Procurement weigh in,
-        debate it, and the CFO issues a board-ready recommendation.
-      </p>
+  const sponsorRows = useMemo(() => getSponsorRows(health), [health]);
 
+  return (
+    <main className="flex min-h-full flex-col bg-background">
+      <CouncilTopBar healthReady={healthReady} nowLabel={nowLabel} />
+
+      <CouncilBriefStrip
+        currentPhase={currentPhase}
+        decision={state?.decision}
+        health={health}
+        healthReady={healthReady}
+        nodeName={nodeName}
+        recommendation={recommendation}
+        running={running}
+        transcript={transcript}
+      />
+
+      {!healthReady && (
+        <div className="px-2 pt-2">
+          <PreflightPanel health={health} onRefresh={loadHealth} />
+        </div>
+      )}
+
+      <div className="grid flex-1 items-start gap-2 p-2 xl:grid-cols-[286px_minmax(0,1fr)_390px]">
+        <LiveEventPanel
+          events={observabilityEvents}
+          nodeName={nodeName}
+          running={running}
+          transcript={transcript}
+        />
+
+        <div className="min-w-0 space-y-2">
+          <CommandComposer
+            input={input}
+            onInput={setInput}
+            onSubmit={submit}
+            running={running}
+            healthReady={healthReady}
+            started={started}
+          />
+
+          <CouncilStage
+            agentStatuses={agentStatuses}
+            currentPhase={currentPhase}
+            decision={state?.decision}
+            events={observabilityEvents}
+            healthReady={healthReady}
+            nodeName={nodeName}
+            onSelectAgent={setSelectedAgentId}
+            recommendation={recommendation}
+            redisActivity={redisActivity}
+            running={running}
+            selectedAgentId={selectedAgentId}
+            started={started}
+            traceSummary={traceSummary}
+            transcript={transcript}
+          />
+
+          <SponsorProofStrip sponsorRows={sponsorRows} />
+        </div>
+
+        <ObservabilityRail
+          events={observabilityEvents}
+          health={health}
+          nodeName={nodeName}
+          redisActivity={redisActivity}
+          running={running}
+          sponsorRows={sponsorRows}
+          traceSummary={traceSummary}
+        />
+      </div>
+    </main>
+  );
+}
+
+function CouncilTopBar({ healthReady, nowLabel }: { healthReady: boolean; nowLabel: string }) {
+  return (
+    <header className="flex min-h-14 items-center justify-between gap-3 border-b border-border bg-surface px-4 lg:px-5">
+      <div className="min-w-0">
+        <h1 className="truncate text-[18px] font-semibold">AI Council</h1>
+      </div>
+      <div className="flex min-w-0 items-center gap-3 text-[12px] text-muted-foreground">
+        <div className="hidden items-center gap-2 sm:flex">
+          <span className={`h-2 w-2 rounded-full ${healthReady ? "bg-positive" : "bg-warning"}`} />
+          <span>{healthReady ? "System Healthy" : "Preflight Checking"}</span>
+        </div>
+        <div className="hidden tabular-nums md:block">{nowLabel}</div>
+        <span className="inline-flex items-center gap-1.5 rounded-md border border-positive/20 bg-positive-bg px-2.5 py-1 text-[12px] font-semibold text-positive">
+          <Radio className="h-3.5 w-3.5" strokeWidth={2.25} />
+          Live
+        </span>
+        <div className="hidden h-6 w-px bg-border md:block" />
+        <Bell className="hidden h-4 w-4 md:block" strokeWidth={1.9} />
+        <div className="grid h-7 w-7 place-items-center rounded-full bg-info-bg text-[12px] font-semibold text-info">
+          AT
+        </div>
+      </div>
+    </header>
+  );
+}
+
+function CouncilBriefStrip({
+  currentPhase,
+  health,
+  healthReady,
+  nodeName,
+  decision,
+  recommendation,
+  running,
+  transcript,
+}: {
+  currentPhase: string;
+  health: HealthView;
+  healthReady: boolean;
+  nodeName?: string;
+  decision?: string;
+  recommendation?: DebateState["recommendation"];
+  running: boolean;
+  transcript: TranscriptTurn[];
+}) {
+  const progress = buildTimeline({
+    health,
+    healthReady,
+    nodeName,
+    phase: recommendation?.decision ? "done" : undefined,
+    recommendation,
+    running,
+    transcript,
+  });
+  const activeStep = progress.find((step) => step.status === "active")?.label ?? "Ready";
+
+  return (
+    <section className="border-b border-border bg-surface px-4 py-4 lg:px-5">
+      <div className="grid gap-4 xl:grid-cols-[minmax(260px,1fr)_300px_220px_460px] xl:items-center">
+        <div>
+          <h2 className="text-[22px] font-semibold tracking-tight">AI Council Room</h2>
+          <p className="mt-1 text-[13px] leading-relaxed text-muted-foreground">
+            Autonomous finance council debating a company decision with live agent telemetry.
+          </p>
+        </div>
+
+        <div className="border-l border-border pl-4">
+          <div className="text-[11px] font-medium text-muted-foreground">Decision Under Debate</div>
+          <div className="mt-1 text-[14px] font-semibold leading-snug">
+            {decision || "No decision submitted"}
+          </div>
+        </div>
+
+        <div className="border-l border-border pl-4">
+          <div className="text-[11px] font-medium text-muted-foreground">Current Phase</div>
+          <div className="mt-1 text-[14px] font-semibold text-info">{currentPhase}</div>
+          <div className="mt-0.5 text-[11px] text-muted-foreground">
+            {running ? NODE_LABEL[nodeName ?? ""] ?? "Streaming" : getHealthLabel(health)}
+          </div>
+        </div>
+
+        <div className="border-l border-border pl-4">
+          <div className="mb-3 flex items-center justify-between text-[11px] font-medium text-muted-foreground">
+            <span>Decision Progress</span>
+            <span>{activeStep}</span>
+          </div>
+          <div className="grid grid-cols-5 gap-2">
+            {progress.slice(0, 5).map((step) => (
+              <div key={step.id} className="min-w-0">
+                <div
+                  className={`mx-auto h-4 w-4 rounded-full border ${
+                    step.status === "complete"
+                      ? "border-positive bg-positive"
+                      : step.status === "active"
+                        ? "border-info bg-info"
+                        : "border-border-strong bg-surface"
+                  }`}
+                />
+                <div className="mt-1 truncate text-center text-[10px] text-muted-foreground">
+                  {step.label}
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+    </section>
+  );
+}
+
+function PreflightPanel({ health, onRefresh }: { health: HealthView; onRefresh: () => void }) {
+  const blockers = health.data?.blockers?.length
+    ? health.data.blockers
+    : health.error
+      ? [health.error]
+      : ["Awaiting /api/health from the live agent service."];
+
+  return (
+    <section className="rounded-2xl border border-risk/25 bg-risk-bg px-5 py-4 text-risk shadow-sm">
+      <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
+        <div className="min-w-0">
+          <div className="flex items-center gap-2">
+            {health.status === "loading" ? (
+              <Loader2 className="h-5 w-5 animate-spin" strokeWidth={2.25} />
+            ) : (
+              <AlertTriangle className="h-5 w-5" strokeWidth={2.25} />
+            )}
+            <h2 className="text-[17px] font-semibold">
+              {health.status === "loading" ? "Strict live preflight is checking" : "Strict live preflight failed"}
+            </h2>
+          </div>
+          <p className="mt-2 max-w-[860px] text-[13px] leading-relaxed text-risk/85">
+            Council submissions are locked until W&B Weave, OpenAI, Redis, CopilotKit, and Cursor
+            readiness all report green from the live health endpoint.
+          </p>
+          <ul className="mt-3 grid gap-1.5 text-[12px] leading-relaxed text-risk/90 md:grid-cols-2">
+            {blockers.map((blocker) => (
+              <li key={blocker} className="flex min-w-0 gap-2">
+                <XCircle className="mt-0.5 h-3.5 w-3.5 shrink-0" strokeWidth={2.25} />
+                <span className="break-words">{blocker}</span>
+              </li>
+            ))}
+          </ul>
+        </div>
+        <button
+          type="button"
+          onClick={onRefresh}
+          className="inline-flex h-10 shrink-0 items-center justify-center gap-2 rounded-lg border border-risk/25 bg-surface px-4 text-[13px] font-semibold text-risk transition-colors hover:bg-risk-bg"
+        >
+          {health.refreshing ? <Loader2 className="h-4 w-4 animate-spin" /> : <ShieldAlert className="h-4 w-4" />}
+          Recheck preflight
+        </button>
+      </div>
+    </section>
+  );
+}
+
+function CommandComposer({
+  input,
+  onInput,
+  onSubmit,
+  running,
+  healthReady,
+  started,
+}: {
+  input: string;
+  onInput: (value: string) => void;
+  onSubmit: (value: string) => void;
+  running: boolean;
+  healthReady: boolean;
+  started: boolean;
+}) {
+  const disabled = running || !healthReady;
+
+  return (
+    <section id="decisions" className="rounded-lg border border-border bg-surface p-3 shadow-sm">
       <form
         onSubmit={(e) => {
           e.preventDefault();
-          submit(input);
+          onSubmit(input);
         }}
-        className="mt-5"
       >
-        <div className="flex items-end gap-2 rounded-xl border border-border bg-surface p-2 shadow-sm focus-within:border-border-strong">
-          <textarea
-            value={input}
-            onChange={(e) => setInput(e.target.value)}
-            onKeyDown={(e) => {
-              if (e.key === "Enter" && !e.shiftKey) {
-                e.preventDefault();
-                submit(input);
-              }
-            }}
-            rows={2}
-            disabled={running}
-            placeholder="e.g. Should we sign the $250k enterprise security audit, or defer to next quarter?"
-            className="max-h-40 min-h-[44px] flex-1 resize-none bg-transparent px-2 py-1.5 text-[14px] leading-relaxed outline-none placeholder:text-subtle-foreground disabled:opacity-60"
-          />
+        <div className="flex flex-col gap-3 lg:flex-row lg:items-end">
+          <div className="min-w-0 flex-1">
+            <label className="text-[11px] font-semibold uppercase tracking-[0.08em] text-subtle-foreground">
+              Decision command
+            </label>
+            <textarea
+              value={input}
+              onChange={(e) => onInput(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === "Enter" && !e.shiftKey) {
+                  e.preventDefault();
+                  onSubmit(input);
+                }
+              }}
+              rows={1}
+              disabled={running}
+              placeholder="e.g. Should we sign the $250k enterprise security audit, or defer to next quarter?"
+              className="mt-2 max-h-28 min-h-[48px] w-full resize-none rounded-lg border border-border bg-background px-4 py-3 text-[14px] leading-relaxed outline-none transition-colors placeholder:text-subtle-foreground focus:border-border-strong disabled:opacity-60"
+            />
+          </div>
           <button
             type="submit"
-            disabled={running || !input.trim()}
-            className="grid h-9 w-9 shrink-0 place-items-center rounded-lg bg-accent text-accent-foreground transition-opacity hover:opacity-90 disabled:opacity-40"
-            aria-label="Submit decision"
+            disabled={disabled || !input.trim()}
+            className="inline-flex h-12 items-center justify-center gap-2 rounded-lg bg-accent px-5 text-[14px] font-semibold text-accent-foreground transition-opacity hover:opacity-90 disabled:opacity-40"
           >
             {running ? <Loader2 className="h-4 w-4 animate-spin" /> : <ArrowUp className="h-4 w-4" strokeWidth={2.25} />}
+            Send to council
           </button>
         </div>
       </form>
 
       {!started && (
-        <div className="mt-4 flex flex-wrap gap-2">
+        <div className="mt-3 flex flex-wrap gap-2">
           {EXAMPLES.map((ex) => (
             <button
               key={ex}
-              onClick={() => submit(ex)}
-              className="rounded-full border border-border bg-surface px-3 py-1.5 text-left text-[12px] text-muted-foreground transition-colors hover:border-border-strong hover:text-foreground"
+              type="button"
+              onClick={() => onSubmit(ex)}
+              disabled={disabled}
+              className="rounded-md border border-border bg-background px-3 py-2 text-left text-[12px] font-medium text-muted-foreground transition-colors hover:border-border-strong hover:text-foreground disabled:opacity-45"
             >
               {ex}
             </button>
           ))}
         </div>
       )}
+    </section>
+  );
+}
 
-      {started && (
-        <Boardroom
-          decision={state?.decision}
-          transcript={transcript}
-          running={running}
-          nodeName={nodeName}
-          recommendation={recommendation}
-        />
-      )}
+function CouncilStage({
+  agentStatuses,
+  currentPhase,
+  decision,
+  events,
+  healthReady,
+  nodeName,
+  onSelectAgent,
+  recommendation,
+  redisActivity,
+  running,
+  selectedAgentId,
+  started,
+  traceSummary,
+  transcript,
+}: {
+  agentStatuses: AgentStatus[];
+  currentPhase: string;
+  decision?: string;
+  events: ObservabilityEvent[];
+  healthReady: boolean;
+  nodeName?: string;
+  onSelectAgent: (agentId: string) => void;
+  recommendation?: DebateState["recommendation"];
+  redisActivity: RedisActivity[];
+  running: boolean;
+  selectedAgentId: string;
+  started: boolean;
+  traceSummary?: TraceSummary;
+  transcript: TranscriptTurn[];
+}) {
+  const members = [ROSTER_BY_ID.cfo, ...ROSTER.filter((member) => member.id !== "cfo")];
+  const selectedMember = ROSTER_BY_ID[selectedAgentId] ?? ROSTER_BY_ID.cfo;
+  const latestSpeaker = latestSpeakerId(transcript);
+  const statusById = Object.fromEntries(agentStatuses.map((status) => [status.id, status]));
+
+  return (
+    <section className="overflow-hidden rounded-lg border border-border bg-surface shadow-sm">
+      <div className="relative min-h-[620px] border-b border-border p-4 md:p-6">
+        <div className="pointer-events-none absolute inset-0 hidden md:block">
+          <span className="absolute left-[27%] top-[34%] h-px w-[23%] rotate-[28deg] border-t border-dashed border-border-strong" />
+          <span className="absolute right-[25%] top-[34%] h-px w-[23%] rotate-[-28deg] border-t border-dashed border-border-strong" />
+          <span className="absolute left-[28%] bottom-[28%] h-px w-[22%] rotate-[-6deg] border-t border-dashed border-border-strong" />
+          <span className="absolute right-[25%] bottom-[28%] h-px w-[22%] rotate-[4deg] border-t border-dashed border-border-strong" />
+          <span className="absolute left-1/2 top-[25%] h-[150px] border-l border-dashed border-border-strong" />
+        </div>
+
+        <div className="grid gap-4 md:hidden">
+          {members.map((member) => (
+            <AgentNode
+              key={member.id}
+              agentStatus={statusById[member.id]}
+              healthReady={healthReady}
+              latestSpeaker={latestSpeaker}
+              member={member}
+              nodeName={nodeName}
+              onSelect={() => onSelectAgent(member.id)}
+              recommendation={recommendation}
+              running={running}
+              selected={selectedAgentId === member.id}
+              started={started}
+              transcript={transcript}
+            />
+          ))}
+        </div>
+
+        <div className="hidden md:block">
+          {members.map((member) => (
+            <AgentNode
+              key={member.id}
+              absolute
+              agentStatus={statusById[member.id]}
+              healthReady={healthReady}
+              latestSpeaker={latestSpeaker}
+              member={member}
+              nodeName={nodeName}
+              onSelect={() => onSelectAgent(member.id)}
+              recommendation={recommendation}
+              running={running}
+              selected={selectedAgentId === member.id}
+              started={started}
+              transcript={transcript}
+            />
+          ))}
+
+          <DecisionThreadPanel
+            currentPhase={currentPhase}
+            decision={decision}
+            recommendation={recommendation}
+            running={running}
+            selectedMember={selectedMember}
+            started={started}
+            transcript={transcript}
+          />
+        </div>
+      </div>
+
+      <AgentDetailPanel
+        agentStatus={statusById[selectedMember.id]}
+        events={events}
+        healthReady={healthReady}
+        member={selectedMember}
+        nodeName={nodeName}
+        recommendation={recommendation}
+        redisActivity={redisActivity}
+        running={running}
+        started={started}
+        traceSummary={traceSummary}
+        transcript={transcript}
+      />
+
+      <div className="grid gap-0 border-t border-border bg-surface-quiet md:grid-cols-4">
+        <CouncilStat label="Council Mode" value="Balanced debate" icon={<Scale className="h-4 w-4" />} />
+        <CouncilStat label="Active Node" value={nodeName ? NODE_LABEL[nodeName] ?? nodeName : "Idle"} />
+        <CouncilStat label="Weave Node" value={traceSummary?.node ?? "Awaiting trace"} />
+        <CouncilStat label="Redis Stream" value={redisActivity.some((item) => item.kind === "stream") ? "Decision event" : "Listening"} />
+      </div>
+    </section>
+  );
+}
+
+function AgentNode({
+  absolute = false,
+  agentStatus,
+  healthReady,
+  latestSpeaker,
+  member,
+  nodeName,
+  onSelect,
+  recommendation,
+  running,
+  selected,
+  started,
+  transcript,
+}: {
+  absolute?: boolean;
+  agentStatus?: AgentStatus;
+  healthReady: boolean;
+  latestSpeaker?: string;
+  member: RosterMember;
+  nodeName?: string;
+  onSelect: () => void;
+  recommendation?: DebateState["recommendation"];
+  running: boolean;
+  selected: boolean;
+  started: boolean;
+  transcript: TranscriptTurn[];
+}) {
+  const latestTurn = findLatestTurnForMember(member.id, transcript);
+  const statusValue = String(agentStatus?.status ?? "").toLowerCase();
+  const active =
+    healthReady &&
+    ((running && NODE_TO_AGENT[nodeName ?? ""] === member.id) ||
+      ["thinking", "speaking", "running"].includes(statusValue));
+  const status = getAgentStatus({
+    active,
+    agentStatus,
+    healthReady,
+    latestSpeaker,
+    latestTurn,
+    member,
+    nodeName,
+    started,
+  });
+  const snippet = getAgentSnippet({ agentStatus, member, turn: latestTurn, recommendation, healthReady, started });
+  const stanceLabel = getAgentStanceLabel(member, latestTurn, recommendation);
+  const placement = agentPlacement(member.id);
+  const Icon = AGENT_ICONS[member.id as keyof typeof AGENT_ICONS] ?? ServerCog;
+
+  return (
+    <button
+      type="button"
+      onClick={onSelect}
+      className={`group text-left ${
+        absolute ? `absolute ${placement} w-[260px]` : ""
+      } ${selected ? "z-20" : "z-10"}`}
+    >
+      <article
+        className={`rounded-lg border bg-surface/95 p-3 transition-all ${
+          selected
+            ? "border-info shadow-[0_0_0_3px_rgba(47,91,183,0.12)]"
+            : active
+              ? "border-positive/50 shadow-sm"
+              : "border-transparent hover:border-border"
+        }`}
+      >
+        <div className="flex items-center gap-3">
+          <div className={`grid h-[76px] w-[76px] shrink-0 place-items-center rounded-full border-[3px] ${agentRingClass(member.id, latestTurn, recommendation, active)}`}>
+            <div className="grid h-[54px] w-[54px] place-items-center rounded-full border border-border bg-surface">
+              <Icon className="h-8 w-8" strokeWidth={1.9} />
+            </div>
+          </div>
+          <div className="min-w-0">
+            <div className="text-[17px] font-semibold leading-tight">{member.label}</div>
+            <div className={`mt-1 inline-flex rounded px-1.5 py-0.5 text-[10px] font-semibold uppercase ${active ? "bg-positive-bg text-positive" : "bg-info-bg text-info"}`}>
+              {status}
+            </div>
+            <Waveform active={active} />
+          </div>
+        </div>
+        <div className={`mt-3 text-[12px] font-semibold ${stanceColor(member.id, latestTurn, recommendation)}`}>
+          Stance: {stanceLabel}
+        </div>
+        <p className="mt-2 line-clamp-4 text-[12px] italic leading-relaxed text-foreground">
+          “{snippet}”
+        </p>
+      </article>
+    </button>
+  );
+}
+
+function DecisionThreadPanel({
+  currentPhase,
+  decision,
+  recommendation,
+  running,
+  selectedMember,
+  started,
+  transcript,
+}: {
+  currentPhase: string;
+  decision?: string;
+  recommendation?: DebateState["recommendation"];
+  running: boolean;
+  selectedMember: RosterMember;
+  started: boolean;
+  transcript: TranscriptTurn[];
+}) {
+  const turns = transcript.slice(-4);
+  return (
+    <div className="absolute left-1/2 top-[46%] w-[260px] -translate-x-1/2 -translate-y-1/2 rounded-lg border border-border bg-surface px-4 py-4 shadow-sm">
+      <div className="text-center text-[12px] font-medium text-muted-foreground">Decision Thread (Live)</div>
+      <div className="mt-3 space-y-2">
+        {turns.length === 0 ? (
+          <p className="text-[12px] leading-relaxed text-muted-foreground">
+            {started ? "Waiting for the first live council turn." : "Submit a decision to open the live thread."}
+          </p>
+        ) : (
+          turns.map((turn, index) => (
+            <div key={`${turn.agent}-${turn.type}-${index}`} className="text-[12px] leading-relaxed">
+              <span className="font-semibold">{resolveThreadLabel(turn)}</span>
+              <span className="ml-2 text-[10px] text-subtle-foreground">{turn.type}</span>
+              <div className="line-clamp-2 text-muted-foreground">{turn.headline || turn.point || turn.argument}</div>
+            </div>
+          ))
+        )}
+      </div>
+      <div className="mt-3 border-t border-border pt-3 text-[12px]">
+        <div className="font-semibold text-info">{currentPhase}</div>
+        <div className="line-clamp-2 text-muted-foreground">{decision || "No decision loaded"}</div>
+        {recommendation?.decision && (
+          <div className="mt-2 font-semibold text-positive">
+            {recommendation.decision} · {recommendation.confidence ?? "--"}%
+          </div>
+        )}
+        {running && <div className="mt-2 text-warning">Live stream active</div>}
+      </div>
+      <button type="button" className="mt-3 text-[12px] font-semibold text-info">
+        Viewing {selectedMember.label} details →
+      </button>
     </div>
   );
 }
 
-function Boardroom({
-  decision,
-  transcript,
-  running,
+function AgentDetailPanel({
+  agentStatus,
+  events,
+  healthReady,
+  member,
   nodeName,
   recommendation,
+  redisActivity,
+  running,
+  started,
+  traceSummary,
+  transcript,
 }: {
-  decision?: string;
-  transcript: TranscriptTurn[];
-  running: boolean;
+  agentStatus?: AgentStatus;
+  events: ObservabilityEvent[];
+  healthReady: boolean;
+  member: RosterMember;
   nodeName?: string;
   recommendation?: DebateState["recommendation"];
+  redisActivity: RedisActivity[];
+  running: boolean;
+  started: boolean;
+  traceSummary?: TraceSummary;
+  transcript: TranscriptTurn[];
 }) {
-  const turns = transcript.filter((t) => t.type !== "decision");
-  return (
-    <div className="mt-8">
-      {decision && (
-        <div className="mb-5 border-l-2 border-accent pl-4">
-          <div className="text-[11px] font-medium uppercase tracking-wider text-subtle-foreground">
-            Decision under review
-          </div>
-          <div className="mt-1 text-[15px] font-medium leading-snug">{decision}</div>
-        </div>
-      )}
+  const turn = findLatestTurnForMember(member.id, transcript);
+  const isActive = running && NODE_TO_AGENT[nodeName ?? ""] === member.id;
+  const snippet = getAgentSnippet({ agentStatus, member, turn, recommendation, healthReady, started });
+  const agentEvents = events
+    .filter((event) => `${event.label ?? ""} ${event.detail ?? ""}`.toLowerCase().includes(member.label.toLowerCase().split(" ")[0].toLowerCase()))
+    .slice(-3)
+    .reverse();
 
-      <div className="space-y-3">
-        {turns.map((t, i) => (
-          <TurnView key={i} turn={t} />
-        ))}
+  return (
+    <div className="grid gap-0 border-t border-border bg-background lg:grid-cols-[minmax(0,1.1fr)_minmax(260px,0.9fr)]">
+      <div className="min-w-0 p-4">
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <div>
+            <SectionTitle>Agent UDS</SectionTitle>
+            <h3 className="mt-1 text-[18px] font-semibold">{member.label} detail inspector</h3>
+          </div>
+          <span className={`rounded-full border px-2.5 py-1 text-[11px] font-semibold ${isActive ? "border-warning/20 bg-warning-bg text-warning" : "border-border bg-surface text-muted-foreground"}`}>
+            {isActive ? "Active in graph" : agentStatus?.status ?? "Waiting"}
+          </span>
+        </div>
+        <p className="mt-3 text-[14px] leading-relaxed text-foreground">{snippet}</p>
+        {turn?.key_points && turn.key_points.length > 0 && (
+          <div className="mt-3 grid gap-2 md:grid-cols-2">
+            {turn.key_points.slice(0, 4).map((point) => (
+              <div key={point} className="rounded-md border border-border bg-surface px-3 py-2 text-[12px] leading-relaxed text-muted-foreground">
+                {point}
+              </div>
+            ))}
+          </div>
+        )}
       </div>
 
-      {running && (
-        <div className="mt-4 flex items-center gap-2.5 text-[13px] text-muted-foreground">
-          <Loader2 className="h-4 w-4 animate-spin" />
-          <span>{NODE_LABEL[nodeName ?? ""] ?? "Deliberating"}…</span>
+      <div className="min-w-0 border-t border-border bg-surface p-4 lg:border-l lg:border-t-0">
+        <div className="grid grid-cols-2 gap-2">
+          <RailMetric label="Node" value={isActive ? NODE_LABEL[nodeName ?? ""] ?? nodeName ?? "Active" : traceSummary?.node ?? "Idle"} />
+          <RailMetric label="Trace" value={traceSummary?.status ?? "Waiting"} />
+          <RailMetric label="Redis" value={redisActivity.at(-1)?.label ?? "No event"} />
+          <RailMetric label="Weave" value={traceSummary?.weave_project ?? "Project ready"} />
         </div>
-      )}
-
-      {recommendation?.decision && <Resolution rec={recommendation} />}
+        <div className="mt-3 space-y-2">
+          {(agentEvents.length ? agentEvents : events.slice(-2).reverse()).map((event, index) => (
+            <RailEvent
+              key={event.id ?? `${event.label}-${index}`}
+              label={`${event.sponsor ?? "Atlas"} · ${event.label ?? "Event"}`}
+              detail={event.detail ?? event.summary ?? event.status ?? "Live event recorded"}
+              tone={event.tone ?? "info"}
+            />
+          ))}
+        </div>
+      </div>
     </div>
   );
 }
 
-function TurnView({ turn }: { turn: TranscriptTurn }) {
-  if (turn.type === "rebuttal") {
-    const from = resolveMember(turn.from_role);
-    const to = resolveMember(turn.to_role);
-    return (
-      <div className="flex gap-3 pl-1">
-        <div className="mt-1 flex items-center gap-1 text-[11px] font-medium text-subtle-foreground">
-          <span className="rounded bg-surface-muted px-1.5 py-0.5">{from?.label ?? turn.from_role}</span>
-          <span>→</span>
-          <span className="rounded bg-surface-muted px-1.5 py-0.5">{to?.label ?? turn.to_role}</span>
-        </div>
-        <p className="flex-1 text-[13px] leading-relaxed text-muted-foreground">{turn.point}</p>
+function CouncilStat({ label, value, icon }: { label: string; value: string; icon?: ReactNode }) {
+  return (
+    <div className="flex min-w-0 items-center gap-3 border-b border-border px-4 py-3 last:border-b-0 md:border-b-0 md:border-r md:last:border-r-0">
+      <div className="grid h-8 w-8 shrink-0 place-items-center rounded-full bg-surface text-muted-foreground">
+        {icon ?? <Activity className="h-4 w-4" />}
       </div>
+      <div className="min-w-0">
+        <div className="text-[11px] text-muted-foreground">{label}</div>
+        <div className="truncate text-[12px] font-semibold">{value}</div>
+      </div>
+    </div>
+  );
+}
+
+function agentPlacement(id: string) {
+  switch (id) {
+    case "cfo":
+      return "left-[4%] top-[9%]";
+    case "treasury":
+      return "left-1/2 top-[8%] -translate-x-1/2";
+    case "fpna":
+      return "right-[4%] top-[9%]";
+    case "risk":
+      return "left-[4%] bottom-[12%]";
+    case "procurement":
+      return "right-[4%] bottom-[12%]";
+    default:
+      return "left-4 top-4";
+  }
+}
+
+function agentRingClass(
+  id: string,
+  turn?: TranscriptTurn,
+  recommendation?: DebateState["recommendation"],
+  active?: boolean,
+) {
+  const stance = getAgentStanceLabel(ROSTER_BY_ID[id] ?? ROSTER_BY_ID.cfo, turn, recommendation).toLowerCase();
+  if (active) return "border-positive text-positive shadow-[0_0_0_6px_rgba(24,121,78,0.12)]";
+  if (stance.includes("oppose") || stance.includes("reject")) {
+    return "border-risk text-risk shadow-[0_0_0_6px_rgba(180,35,24,0.10)]";
+  }
+  if (stance.includes("caution") || stance.includes("conditional") || stance.includes("defer")) {
+    return "border-warning text-warning shadow-[0_0_0_6px_rgba(181,71,8,0.10)]";
+  }
+  if (stance.includes("support") || stance.includes("approve")) {
+    return "border-positive text-positive shadow-[0_0_0_6px_rgba(24,121,78,0.10)]";
+  }
+  return "border-info text-info shadow-[0_0_0_6px_rgba(47,91,183,0.10)]";
+}
+
+function stanceColor(
+  id: string,
+  turn?: TranscriptTurn,
+  recommendation?: DebateState["recommendation"],
+) {
+  const stance = getAgentStanceLabel(ROSTER_BY_ID[id] ?? ROSTER_BY_ID.cfo, turn, recommendation).toLowerCase();
+  if (stance.includes("oppose") || stance.includes("reject")) return "text-risk";
+  if (stance.includes("caution") || stance.includes("conditional") || stance.includes("defer")) return "text-warning";
+  if (stance.includes("support") || stance.includes("approve")) return "text-positive";
+  return "text-info";
+}
+
+function getAgentStanceLabel(
+  member: RosterMember,
+  turn?: TranscriptTurn,
+  recommendation?: DebateState["recommendation"],
+) {
+  if (member.id === "cfo" && recommendation?.decision) return recommendation.decision;
+  if (turn?.stance) {
+    if (turn.stance === "conditional") return "Caution";
+    return String(turn.stance).toUpperCase();
+  }
+  return member.id === "cfo" ? "Chair" : "Neutral";
+}
+
+function Waveform({ active }: { active: boolean }) {
+  return (
+    <div className={`mt-2 flex h-4 items-end gap-[3px] ${active ? "text-positive" : "text-info"}`} aria-hidden="true">
+      {[4, 9, 13, 7, 15, 6, 11, 5, 10].map((height, index) => (
+        <span
+          key={`${height}-${index}`}
+          className={`w-[2px] rounded-full bg-current ${active ? "animate-pulse" : "opacity-75"}`}
+          style={{ height }}
+        />
+      ))}
+    </div>
+  );
+}
+
+function resolveThreadLabel(turn: TranscriptTurn) {
+  if (turn.label) return turn.label;
+  if (turn.agent && ROSTER_BY_ID[turn.agent]) return ROSTER_BY_ID[turn.agent].label;
+  if (turn.from_role) return resolveMember(turn.from_role)?.label ?? turn.from_role;
+  return "Council";
+}
+
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
+function AgentConsole({
+  agentStatus,
+  featured = false,
+  healthReady,
+  latestSpeaker,
+  member,
+  nodeName,
+  recommendation,
+  running,
+  started,
+  transcript,
+}: {
+  agentStatus?: AgentStatus;
+  featured?: boolean;
+  healthReady: boolean;
+  latestSpeaker?: string;
+  member: RosterMember;
+  nodeName?: string;
+  recommendation?: DebateState["recommendation"];
+  running: boolean;
+  started: boolean;
+  transcript: TranscriptTurn[];
+}) {
+  const latestTurn = findLatestTurnForMember(member.id, transcript);
+  const statusValue = String(agentStatus?.status ?? "").toLowerCase();
+  const active =
+    healthReady &&
+    (running && NODE_TO_AGENT[nodeName ?? ""] === member.id ||
+      ["thinking", "speaking", "running"].includes(statusValue));
+  const status = getAgentStatus({
+    active,
+    agentStatus,
+    healthReady,
+    latestSpeaker,
+    latestTurn,
+    member,
+    nodeName,
+    started,
+  });
+  const snippet = getAgentSnippet({ agentStatus, member, turn: latestTurn, recommendation, healthReady, started });
+  const statusTone = getAgentStatusTone(status);
+
+  return (
+    <article
+      className={`min-w-0 rounded-xl border px-4 py-4 transition-colors ${
+        active
+          ? "border-accent bg-foreground/[0.025]"
+          : featured
+            ? "border-border-strong bg-surface"
+            : "border-border bg-surface"
+      }`}
+    >
+      <div className="flex min-w-0 items-start justify-between gap-4">
+        <div className="flex min-w-0 items-start gap-3">
+          <Monogram
+            text={member.monogram}
+            className={`h-12 w-12 text-[14px] ${
+              featured ? "bg-accent text-accent-foreground" : "bg-foreground/[0.07] text-foreground"
+            }`}
+          />
+          <div className="min-w-0">
+            <div className="text-[18px] font-semibold leading-tight">{member.label}</div>
+            <div className="mt-1 text-[12px] font-medium text-subtle-foreground">{member.role}</div>
+          </div>
+        </div>
+        <div className={`inline-flex shrink-0 items-center gap-1.5 rounded-full border px-2.5 py-1 text-[11px] font-semibold ${statusTone}`}>
+          <span className={`h-1.5 w-1.5 rounded-full ${status.includes("Thinking") ? "animate-pulse bg-current" : "bg-current"}`} />
+          {status}
+        </div>
+      </div>
+
+      <div className="mt-4 flex flex-wrap items-center gap-2">
+        <StanceBadge member={member} recommendation={recommendation} turn={latestTurn} />
+        {agentStatus?.last_update && (
+          <span className="inline-flex items-center rounded-full border border-border bg-background px-2 py-0.5 text-[11px] font-medium text-subtle-foreground">
+            {agentStatus.last_update}
+          </span>
+        )}
+        {active && (
+          <span className="inline-flex items-center gap-1 rounded-full border border-warning/20 bg-warning-bg px-2 py-0.5 text-[11px] font-semibold text-warning">
+            <Clock className="h-3 w-3" strokeWidth={2.25} />
+            {NODE_LABEL[nodeName ?? ""] ?? "Working"}
+          </span>
+        )}
+      </div>
+
+      <p className={`mt-4 break-words font-semibold leading-snug ${featured ? "text-[20px]" : "text-[17px]"}`}>
+        {getAgentHeadline(member, latestTurn, recommendation, agentStatus)}
+      </p>
+      <p className="mt-2 line-clamp-4 min-h-[72px] break-words text-[14px] leading-relaxed text-muted-foreground">
+        {snippet}
+      </p>
+
+      {latestTurn?.key_points && latestTurn.key_points.length > 0 && (
+        <ul className="mt-3 grid gap-1.5">
+          {latestTurn.key_points.slice(0, featured ? 3 : 2).map((point) => (
+            <li key={point} className="flex gap-2 text-[12px] leading-relaxed text-muted-foreground">
+              <span className="mt-2 h-1.5 w-1.5 shrink-0 rounded-full bg-subtle-foreground" />
+              <span className="break-words">{point}</span>
+            </li>
+          ))}
+        </ul>
+      )}
+    </article>
+  );
+}
+
+function StanceBadge({
+  member,
+  recommendation,
+  turn,
+}: {
+  member: RosterMember;
+  recommendation?: DebateState["recommendation"];
+  turn?: TranscriptTurn;
+}) {
+  if (member.id === "cfo" && recommendation?.decision) {
+    return <Pill className={decisionStyle(recommendation.decision)}>{recommendation.decision}</Pill>;
+  }
+
+  if (turn?.stance) {
+    const stanceStyle = STANCE_STYLE[turn.stance as keyof typeof STANCE_STYLE];
+    return (
+      <Pill className={stanceStyle?.cls ?? "border-border text-muted-foreground"}>
+        {stanceStyle?.label ?? turn.stance}
+      </Pill>
     );
   }
 
-  const member = turn.agent ? ROSTER_BY_ID[turn.agent] : undefined;
-  const isFraming = turn.type === "framing";
   return (
-    <Card className={`p-4 ${isFraming ? "bg-surface-muted/40" : ""}`}>
-      <div className="flex items-start gap-3">
-        <Monogram
-          text={turn.monogram ?? member?.monogram ?? "··"}
-          className="mt-0.5 h-8 w-8 bg-foreground/[0.06] text-[11px] text-foreground"
-        />
-        <div className="min-w-0 flex-1">
-          <div className="flex items-center justify-between gap-2">
-            <div className="text-[13px] font-semibold">{turn.label ?? member?.label}</div>
-            {turn.stance && (
-              <Pill className={STANCE_STYLE[turn.stance]?.cls ?? "border-border text-muted-foreground"}>
-                {STANCE_STYLE[turn.stance]?.label ?? turn.stance}
-              </Pill>
-            )}
-          </div>
-          {turn.headline && <div className="mt-0.5 text-[13px] font-medium">{turn.headline}</div>}
-          {turn.argument && (
-            <p className="mt-1.5 text-[13px] leading-relaxed text-muted-foreground">{turn.argument}</p>
-          )}
-          {turn.key_points && turn.key_points.length > 0 && (
-            <ul className="mt-2 space-y-1">
-              {turn.key_points.map((p, i) => (
-                <li key={i} className="flex gap-2 text-[12px] text-muted-foreground">
-                  <span className="mt-1.5 h-1 w-1 shrink-0 rounded-full bg-subtle-foreground" />
-                  {p}
-                </li>
-              ))}
-            </ul>
-          )}
-        </div>
-      </div>
-    </Card>
+    <span className="inline-flex items-center rounded-full border border-border bg-background px-2 py-0.5 text-[11px] font-medium text-subtle-foreground">
+      {member.id === "cfo" ? "Chair" : "No stance yet"}
+    </span>
   );
 }
 
-function Resolution({ rec }: { rec: NonNullable<DebateState["recommendation"]> }) {
-  const impact = rec.impact;
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
+function DebateFloor({ transcript, running }: { transcript: TranscriptTurn[]; running: boolean }) {
+  const rebuttals = transcript.filter((turn) => turn.type === "rebuttal");
+
   return (
-    <Card className="mt-5 overflow-hidden">
-      <div className="border-b border-border bg-surface-muted/50 px-5 py-3">
-        <SectionTitle>Committee Resolution</SectionTitle>
+    <section className="rounded-2xl border border-border bg-surface p-5 shadow-sm">
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+        <div>
+          <SectionTitle>Cross-examination floor</SectionTitle>
+          <h2 className="mt-1 text-[22px] font-semibold tracking-tight">Live challenge stream</h2>
+        </div>
+        {running && (
+          <div className="inline-flex items-center gap-2 rounded-full border border-warning/20 bg-warning-bg px-3 py-1.5 text-[12px] font-semibold text-warning">
+            <Loader2 className="h-3.5 w-3.5 animate-spin" />
+            Listening for committee turns
+          </div>
+        )}
       </div>
-      <div className="p-5">
-        <div className="flex items-center gap-3">
+
+      {rebuttals.length === 0 ? (
+        <p className="mt-5 rounded-xl border border-dashed border-border bg-background px-4 py-6 text-[14px] leading-relaxed text-muted-foreground">
+          No cross-examination has streamed yet. The floor opens after each finance function files
+          a live position.
+        </p>
+      ) : (
+        <div className="mt-4 divide-y divide-border rounded-xl border border-border bg-background">
+          {rebuttals.map((turn, index) => {
+            const from = resolveMember(turn.from_role);
+            const to = resolveMember(turn.to_role);
+            return (
+              <div key={`${turn.from_role}-${turn.to_role}-${index}`} className="grid gap-3 px-4 py-3 md:grid-cols-[240px_1fr]">
+                <div className="flex min-w-0 flex-wrap items-center gap-1.5 text-[12px] font-semibold text-muted-foreground">
+                  <span className="rounded-md bg-surface px-2 py-1">{from?.label ?? turn.from_role}</span>
+                  <span className="text-subtle-foreground">to</span>
+                  <span className="rounded-md bg-surface px-2 py-1">{to?.label ?? turn.to_role}</span>
+                </div>
+                <p className="break-words text-[14px] leading-relaxed text-foreground">{turn.point}</p>
+              </div>
+            );
+          })}
+        </div>
+      )}
+    </section>
+  );
+}
+
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
+function ResolutionCommand({ rec }: { rec: NonNullable<DebateState["recommendation"]> }) {
+  const impact = rec.impact;
+
+  return (
+    <section className="rounded-2xl border border-border bg-surface p-5 shadow-sm">
+      <div className="flex flex-col gap-3 border-b border-border pb-4 sm:flex-row sm:items-start sm:justify-between">
+        <div>
+          <SectionTitle>Committee resolution</SectionTitle>
+          <h2 className="mt-1 text-[24px] font-semibold tracking-tight">CFO ruling</h2>
+        </div>
+        <div className="flex flex-wrap items-center gap-2">
           <Pill className={`${decisionStyle(rec.decision)} text-[12px]`}>{rec.decision}</Pill>
           {typeof rec.confidence === "number" && (
-            <span className="text-[13px] text-muted-foreground tabular-nums">
+            <span className="rounded-full border border-border bg-background px-3 py-1 text-[12px] font-semibold text-muted-foreground tabular-nums">
               {rec.confidence}% confidence
             </span>
           )}
         </div>
+      </div>
 
-        {rec.rationale && (
-          <p className="mt-3 text-[14px] leading-relaxed">{rec.rationale}</p>
+      {rec.rationale && (
+        <p className="mt-4 max-w-[1000px] text-[16px] leading-relaxed text-foreground">{rec.rationale}</p>
+      )}
+
+      {impact && typeof impact.scenario_runway_months === "number" && (
+        <div className="mt-5 grid gap-3 rounded-xl border border-border bg-background p-4 sm:grid-cols-3">
+          <Metric label="Runway today" value={fmtMonths(impact.current_runway_months)} />
+          <Metric label="After this decision" value={fmtMonths(impact.scenario_runway_months)} />
+          <Metric
+            label="Runway impact"
+            value={fmtSignedMonths(impact.delta_months)}
+            tone={(impact.delta_months ?? 0) < 0 ? "risk" : "positive"}
+          />
+        </div>
+      )}
+
+      <div className="mt-5 grid gap-4 md:grid-cols-2">
+        {rec.key_risks && rec.key_risks.length > 0 && (
+          <ResolutionList title="Key risks" items={rec.key_risks} dot="bg-risk" />
         )}
+        {rec.conditions && rec.conditions.length > 0 && (
+          <ResolutionList title="Conditions" items={rec.conditions} dot="bg-info" />
+        )}
+      </div>
+    </section>
+  );
+}
 
-        {impact && typeof impact.scenario_runway_months === "number" && (
-          <div className="mt-4 flex items-center gap-6 rounded-lg border border-border bg-background px-4 py-3">
-            <Metric label="Runway today" value={fmtMonths(impact.current_runway_months)} />
-            <span className="text-subtle-foreground">→</span>
-            <Metric label="After this decision" value={fmtMonths(impact.scenario_runway_months)} />
-            <Metric
-              label="Impact"
-              value={fmtSignedMonths(impact.delta_months)}
-              tone={(impact.delta_months ?? 0) < 0 ? "risk" : "positive"}
-            />
+function LiveEventPanel({
+  events,
+  nodeName,
+  running,
+  transcript,
+}: {
+  events: ObservabilityEvent[];
+  nodeName?: string;
+  running: boolean;
+  transcript: TranscriptTurn[];
+}) {
+  const latestTurns = transcript.slice(-4).map((turn, index) => ({
+    id: `${turn.agent ?? turn.from_role ?? "turn"}-${index}`,
+    at: turn.agent ? "agent" : "debate",
+    label: turn.headline || turn.point || `${resolveThreadLabel(turn)} updated the thread`,
+    tone: turn.type === "rebuttal" ? "risk" : "positive",
+  }));
+  const latestEvents = events.slice(-5).map((event, index) => ({
+    id: event.id ?? `${event.label}-${index}`,
+    at: event.at ?? "--",
+    label: `${event.sponsor ?? "Atlas"}: ${event.label ?? event.event ?? "event"}`,
+    tone: event.tone ?? "info",
+  }));
+  const rows = [...latestTurns, ...latestEvents].slice(-8).reverse();
+
+  return (
+    <aside className="rounded-lg border border-border bg-surface p-3 shadow-sm xl:sticky xl:top-2">
+      <div className="flex items-center justify-between gap-3">
+        <div>
+          <h2 className="text-[14px] font-semibold">Event Timeline</h2>
+          <div className="text-[11px] text-muted-foreground">(Live)</div>
+        </div>
+        <span className="inline-flex items-center gap-1 rounded-md border border-border bg-background px-2 py-1 text-[11px] text-muted-foreground">
+          Auto-scroll
+          <span className={`h-2 w-2 rounded-full ${running ? "animate-pulse bg-info" : "bg-subtle-foreground"}`} />
+        </span>
+      </div>
+
+      <div className="mt-4 space-y-3">
+        <RailEvent
+          label={running ? NODE_LABEL[nodeName ?? ""] ?? "Council running" : "Council room ready"}
+          detail={running ? "Graph state is streaming through AG-UI." : "Submit a decision to begin a live run."}
+          tone={running ? "info" : "positive"}
+        />
+        {rows.length === 0 ? (
+          <p className="rounded-md border border-dashed border-border bg-background px-3 py-6 text-[12px] leading-relaxed text-muted-foreground">
+            Live council and sponsor events will appear here as the graph runs.
+          </p>
+        ) : (
+          rows.map((row) => (
+            <RailEvent key={row.id} label={row.label} detail={row.at} tone={row.tone} />
+          ))
+        )}
+      </div>
+      <button type="button" className="mt-4 text-[12px] font-semibold text-info">
+        View full timeline →
+      </button>
+    </aside>
+  );
+}
+
+function ObservabilityRail({
+  events,
+  health,
+  nodeName,
+  redisActivity,
+  running,
+  sponsorRows,
+  traceSummary,
+}: {
+  events: ObservabilityEvent[];
+  health: HealthView;
+  nodeName?: string;
+  redisActivity: RedisActivity[];
+  running: boolean;
+  sponsorRows: SponsorView[];
+  traceSummary?: TraceSummary;
+}) {
+  const visibleEvents = events.slice(-5).reverse();
+  const visibleRedis = redisActivity.slice(-4).reverse();
+  const weave = sponsorRows.find((row) => row.id === "weave");
+  const openai = sponsorRows.find((row) => row.id === "openai");
+  const redis = sponsorRows.find((row) => row.id === "redis");
+  const copilot = sponsorRows.find((row) => row.id === "copilotkit");
+  const sandbox = (weave as SponsorView & { sandbox?: { configured?: boolean; id?: string; url?: string; detail?: string } })?.sandbox;
+
+  return (
+    <aside id="observability" className="rounded-lg border border-border bg-surface p-3 shadow-sm xl:sticky xl:top-2">
+      <div className="flex items-start justify-between gap-3">
+        <div>
+          <h2 className="text-[15px] font-semibold tracking-tight">Observability Rail</h2>
+          <div className="mt-0.5 text-[11px] text-positive">
+            {healthReadyFromRows(sponsorRows) ? "All systems streaming" : "Preflight signals visible"}
           </div>
-        )}
+        </div>
+        {health.refreshing && <Loader2 className="h-4 w-4 animate-spin text-subtle-foreground" />}
+      </div>
 
-        <div className="mt-4 grid grid-cols-2 gap-6">
-          {rec.key_risks && rec.key_risks.length > 0 && (
-            <ResolutionList title="Key risks" items={rec.key_risks} dot="bg-risk" />
-          )}
-          {rec.conditions && rec.conditions.length > 0 && (
-            <ResolutionList title="Conditions" items={rec.conditions} dot="bg-info" />
-          )}
+      <RailBox title="W&B Weave Traces" status={weave?.status ?? "checking"}>
+        <TraceTree traceSummary={traceSummary} />
+        <div className="mt-3 rounded-md border border-border bg-surface px-3 py-2">
+          <div className="flex items-center justify-between gap-2">
+            <span className="text-[12px] font-semibold">Serverless Sandbox</span>
+            <SponsorStatusPill status={sandbox?.configured ? "ready" : "checking"} />
+          </div>
+          <p className="mt-1 text-[11px] leading-relaxed text-muted-foreground">
+            {sandbox?.detail ?? "No W&B Serverless Sandbox env linked; Weave traces remain live."}
+          </p>
+        </div>
+      </RailBox>
+
+      <RailBox title="Latency / Tokens / Cost (USD)" status={traceSummary ? "ready" : "checking"}>
+        <div className="grid grid-cols-3 gap-2">
+          <RailMetric label="Latency" value={formatTelemetry(traceSummary?.latency_ms, "ms")} />
+          <RailMetric label="Tokens" value={formatTelemetry(traceSummary?.total_tokens)} />
+          <RailMetric label="Cost" value={formatCost(traceSummary?.cost_usd)} />
+        </div>
+      </RailBox>
+
+      <RailBox title="Redis Stack" status={redis?.status ?? "checking"}>
+        <div className="grid grid-cols-3 gap-2">
+          <RailMetric label="Memory" value="Live" />
+          <RailMetric label="Search" value={visibleRedis.some((item) => item.kind === "search") ? "Seen" : "Waiting"} />
+          <RailMetric label="Streams" value={visibleRedis.some((item) => item.kind === "stream") ? "Seen" : "Ready"} />
+        </div>
+        <div className="mt-2 space-y-2">
+          {visibleRedis.slice(0, 3).map((item, index) => (
+            <RailEvent
+              key={`${item.kind}-${item.label}-${index}`}
+              label={item.label ?? item.kind ?? "Redis"}
+              detail={item.detail ?? item.name ?? item.key ?? "Activity recorded"}
+              tone="positive"
+            />
+          ))}
+        </div>
+      </RailBox>
+
+      <RailBox title="CopilotKit AG-UI Event Stream" status={copilot?.status ?? "checking"}>
+        <div className="mb-2 text-[12px] font-semibold">
+          {running ? NODE_LABEL[nodeName ?? ""] ?? "Streaming" : "Idle"}
+        </div>
+        <div className="grid grid-cols-2 gap-x-3 gap-y-1 text-[11px] text-muted-foreground">
+          {visibleEvents.slice(0, 6).map((event, index) => (
+            <div key={event.id ?? `${event.label}-${index}`} className="truncate">
+              {event.at ?? "--"} · {event.label ?? event.event ?? "state"}
+            </div>
+          ))}
+        </div>
+      </RailBox>
+
+      <RailBox title={`OpenAI (${traceSummary?.model ?? openai?.detail ?? "model"}) Health`} status={openai?.status ?? "checking"}>
+        <div className="grid grid-cols-3 gap-2">
+          <RailMetric label="Model" value={openai?.detail?.replace("openai:", "") ?? "Live"} />
+          <RailMetric label="Structured" value="Valid" />
+          <RailMetric label="Rate" value="OK" />
+        </div>
+      </RailBox>
+    </aside>
+  );
+}
+
+function RailMetric({ label, value }: { label: string; value: string }) {
+  return (
+    <div className="min-w-0 rounded-lg border border-border bg-surface px-2.5 py-2">
+      <div className="text-[10px] font-semibold uppercase tracking-[0.08em] text-subtle-foreground">{label}</div>
+      <div className="mt-1 break-words text-[12px] font-semibold">{value}</div>
+    </div>
+  );
+}
+
+function RailBox({
+  children,
+  status,
+  title,
+}: {
+  children: ReactNode;
+  status: SponsorStatus;
+  title: string;
+}) {
+  return (
+    <section className="mt-2 rounded-lg border border-border bg-background p-3">
+      <div className="mb-2 flex items-center justify-between gap-3">
+        <h3 className="text-[13px] font-semibold">{title}</h3>
+        <SponsorStatusPill status={status} />
+      </div>
+      {children}
+    </section>
+  );
+}
+
+function TraceTree({ traceSummary }: { traceSummary?: TraceSummary }) {
+  const nodes = [
+    "planner_agent",
+    traceSummary?.node ?? "cfo_agent",
+    "treasury_agent",
+    "fpna_agent",
+    "risk_audit_agent",
+    "procurement_agent",
+    "synthesis_agent",
+    "persist_agent",
+  ];
+  return (
+    <div className="rounded-md border border-border bg-surface px-3 py-2">
+      <div className="flex items-center justify-between gap-2 text-[11px] text-muted-foreground">
+        <span className="truncate">council_run</span>
+        <span>{traceSummary?.status ?? "waiting"}</span>
+      </div>
+      <div className="mt-2 space-y-1 border-l border-border pl-3">
+        {nodes.map((node) => (
+          <div key={node} className="flex items-center justify-between gap-2 text-[11px]">
+            <span className="truncate">{node}</span>
+            <span className={node === traceSummary?.node ? "font-semibold text-positive" : "text-muted-foreground"}>
+              {node === traceSummary?.node ? "LIVE" : "—"}
+            </span>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+function RailEvent({ label, detail, tone }: { label: string; detail: string; tone?: string }) {
+  const dot =
+    tone === "positive"
+      ? "bg-positive"
+      : tone === "warning"
+        ? "bg-warning"
+        : tone === "risk"
+          ? "bg-risk"
+          : "bg-info";
+  return (
+    <div className="flex min-w-0 gap-2">
+      <span className={`mt-1.5 h-1.5 w-1.5 shrink-0 rounded-full ${dot}`} />
+      <div className="min-w-0">
+        <div className="truncate text-[12px] font-semibold">{label}</div>
+        <div className="break-words text-[11px] leading-relaxed text-muted-foreground">{detail}</div>
+      </div>
+    </div>
+  );
+}
+
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
+function SponsorRailRow({ row }: { row: SponsorView }) {
+  const Icon = row.icon;
+
+  return (
+    <div className="rounded-xl border border-border bg-background p-3">
+      <div className="flex items-start justify-between gap-3">
+        <div className="flex min-w-0 items-start gap-3">
+          <div className="grid h-9 w-9 shrink-0 place-items-center rounded-lg bg-surface text-foreground">
+            <Icon className="h-4 w-4" strokeWidth={2.25} />
+          </div>
+          <div className="min-w-0">
+            <div className="flex min-w-0 items-center gap-2">
+              <div className="truncate text-[14px] font-semibold">{row.label}</div>
+              {row.url && (
+                <a
+                  href={row.url}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="shrink-0 text-muted-foreground transition-colors hover:text-foreground"
+                  aria-label={`${row.label} trace link`}
+                >
+                  <ExternalLink className="h-3.5 w-3.5" strokeWidth={2.25} />
+                </a>
+              )}
+            </div>
+            <div className="mt-1 break-words text-[12px] leading-relaxed text-muted-foreground">
+              {row.error || row.detail}
+            </div>
+          </div>
+        </div>
+        <SponsorStatusPill status={row.status} />
+      </div>
+
+      {row.checks && row.checks.length > 0 && (
+        <div className="mt-3 grid gap-1.5 border-t border-border pt-3">
+          {row.checks.map((check) => (
+            <div key={check.label} className="flex items-center justify-between gap-2 text-[11px]">
+              <span className="truncate text-muted-foreground">{check.label}</span>
+              <span className={check.ready ? "font-semibold text-positive" : "font-semibold text-risk"}>
+                {check.ready ? "Ready" : "Blocked"}
+              </span>
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
+function SponsorStatusPill({ status }: { status: SponsorStatus }) {
+  const cls =
+    status === "ready"
+      ? "border-positive/20 bg-positive-bg text-positive"
+      : status === "blocked"
+        ? "border-risk/20 bg-risk-bg text-risk"
+        : "border-warning/20 bg-warning-bg text-warning";
+  const label = status === "ready" ? "Ready" : status === "blocked" ? "Blocked" : "Checking";
+
+  return (
+    <span className={`inline-flex shrink-0 items-center gap-1.5 rounded-full border px-2 py-0.5 text-[11px] font-semibold ${cls}`}>
+      {status === "ready" ? (
+        <CheckCircle2 className="h-3 w-3" strokeWidth={2.25} />
+      ) : status === "blocked" ? (
+        <XCircle className="h-3 w-3" strokeWidth={2.25} />
+      ) : (
+        <Loader2 className="h-3 w-3 animate-spin" strokeWidth={2.25} />
+      )}
+      {label}
+    </span>
+  );
+}
+
+function healthReadyFromRows(rows: SponsorView[]) {
+  return rows.length > 0 && rows.every((row) => row.status === "ready");
+}
+
+function formatTelemetry(value?: number, unit?: string) {
+  if (typeof value !== "number") return "Live";
+  const formatted = value >= 1000 ? value.toLocaleString() : String(value);
+  return unit ? `${formatted}${unit}` : formatted;
+}
+
+function formatCost(value?: number) {
+  if (typeof value !== "number") return "Pending";
+  return `$${value.toFixed(4)}`;
+}
+
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
+function EventTimeline({
+  health,
+  healthReady,
+  nodeName,
+  phase,
+  recommendation,
+  running,
+  transcript,
+}: {
+  health: HealthView;
+  healthReady: boolean;
+  nodeName?: string;
+  phase?: string;
+  recommendation?: DebateState["recommendation"];
+  running: boolean;
+  transcript: TranscriptTurn[];
+}) {
+  const steps = buildTimeline({ health, healthReady, nodeName, phase, recommendation, running, transcript });
+
+  return (
+    <section className="rounded-2xl border border-border bg-surface p-4 shadow-sm">
+      <div className="flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between">
+        <div>
+          <SectionTitle>Event timeline</SectionTitle>
+          <h2 className="mt-1 text-[20px] font-semibold tracking-tight">Graph progress</h2>
+        </div>
+        <div className="text-[12px] font-medium text-muted-foreground">
+          intake - analysts - debate - synthesis - persist
         </div>
       </div>
-    </Card>
+
+      <div className="mt-4 overflow-x-auto">
+        <div className="grid min-w-[980px] grid-cols-8 gap-2">
+          {steps.map((step) => (
+            <div key={step.id} className="relative rounded-xl border border-border bg-background px-3 py-3">
+              <div className="flex items-center justify-between gap-2">
+                <TimelineDot status={step.status} />
+                <span className="text-[11px] font-semibold uppercase tracking-[0.08em] text-subtle-foreground">
+                  {step.kind}
+                </span>
+              </div>
+              <div className="mt-3 text-[13px] font-semibold leading-snug">{step.label}</div>
+              <div className="mt-1 text-[11px] font-medium text-muted-foreground">{timelineLabel(step.status)}</div>
+            </div>
+          ))}
+        </div>
+      </div>
+    </section>
+  );
+}
+
+function TimelineDot({ status }: { status: TimelineStatus }) {
+  const cls =
+    status === "complete"
+      ? "bg-positive text-positive"
+      : status === "active"
+        ? "animate-pulse bg-warning text-warning"
+        : status === "blocked"
+          ? "bg-risk text-risk"
+          : "bg-border-strong text-subtle-foreground";
+
+  return <span className={`h-2.5 w-2.5 rounded-full ${cls}`} />;
+}
+
+function SponsorProofStrip({ sponsorRows }: { sponsorRows: SponsorView[] }) {
+  return (
+    <section className="rounded-2xl border border-border bg-surface px-4 py-3 shadow-sm">
+      <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
+        <div>
+          <SectionTitle>Sponsor proof strip</SectionTitle>
+          <div className="mt-1 text-[14px] font-semibold">Live readiness artifacts surfaced in one row</div>
+        </div>
+        <div className="grid flex-1 gap-2 sm:grid-cols-2 lg:grid-cols-5">
+          {sponsorRows.map((row) => (
+            <div key={row.id} className="flex min-w-0 items-center justify-between gap-2 rounded-lg border border-border bg-background px-3 py-2">
+              <span className="truncate text-[12px] font-semibold">{row.label}</span>
+              <span
+                className={`h-2 w-2 shrink-0 rounded-full ${
+                  row.status === "ready" ? "bg-positive" : row.status === "blocked" ? "bg-risk" : "animate-pulse bg-warning"
+                }`}
+              />
+            </div>
+          ))}
+        </div>
+      </div>
+    </section>
   );
 }
 
@@ -260,24 +1638,296 @@ function Metric({ label, value, tone }: { label: string; value: string; tone?: "
   const cls = tone === "risk" ? "text-risk" : tone === "positive" ? "text-positive" : "text-foreground";
   return (
     <div>
-      <div className="text-[11px] text-subtle-foreground">{label}</div>
-      <div className={`mt-0.5 text-[15px] font-semibold tabular-nums ${cls}`}>{value}</div>
+      <div className="text-[11px] font-semibold uppercase tracking-[0.08em] text-subtle-foreground">{label}</div>
+      <div className={`mt-1 text-[24px] font-semibold leading-none tabular-nums ${cls}`}>{value}</div>
     </div>
   );
 }
 
 function ResolutionList({ title, items, dot }: { title: string; items: string[]; dot: string }) {
   return (
-    <div>
-      <div className="text-[11px] font-medium uppercase tracking-wider text-subtle-foreground">{title}</div>
-      <ul className="mt-2 space-y-1.5">
-        {items.map((it, i) => (
-          <li key={i} className="flex gap-2 text-[12px] leading-relaxed text-muted-foreground">
-            <span className={`mt-1.5 h-1 w-1 shrink-0 rounded-full ${dot}`} />
-            {it}
+    <div className="rounded-xl border border-border bg-background p-4">
+      <div className="text-[11px] font-semibold uppercase tracking-[0.08em] text-subtle-foreground">{title}</div>
+      <ul className="mt-3 space-y-2">
+        {items.map((item) => (
+          <li key={item} className="flex gap-2 text-[13px] leading-relaxed text-muted-foreground">
+            <span className={`mt-2 h-1.5 w-1.5 shrink-0 rounded-full ${dot}`} />
+            <span className="break-words">{item}</span>
           </li>
         ))}
       </ul>
     </div>
   );
+}
+
+function getCurrentPhaseLabel({
+  health,
+  healthReady,
+  nodeName,
+  phase,
+  recommendation,
+  running,
+}: {
+  health: HealthView;
+  healthReady: boolean;
+  nodeName?: string;
+  phase?: string;
+  recommendation?: DebateState["recommendation"];
+  running: boolean;
+}) {
+  if (!healthReady) {
+    return health.status === "loading" ? "Strict preflight checking" : "Strict preflight blocked";
+  }
+  if (running) return NODE_LABEL[nodeName ?? ""] ?? "Council deliberating";
+  if (recommendation?.decision) return "Recommendation issued";
+  if (phase) return PHASE_LABEL[phase] ?? phase;
+  return "Awaiting decision";
+}
+
+function getHealthLabel(health: HealthView) {
+  if (health.status === "ready") return "Ready";
+  if (health.status === "loading") return "Checking";
+  if (health.status === "blocked") return "Blocked";
+  return "Unavailable";
+}
+
+function getSponsorRows(health: HealthView): SponsorView[] {
+  return SPONSOR_DEFAULTS.map((fallback) => {
+    const live = health.data?.sponsors?.find((item) => item.id === fallback.id);
+    const envOpenAI = fallback.id === "openai" ? health.data?.env?.find((item) => item.id === "openai_api_key") : undefined;
+    const source = live ?? envOpenAI;
+    const status: SponsorStatus =
+      health.status === "loading"
+        ? "checking"
+        : source
+          ? source.ready
+            ? "ready"
+            : "blocked"
+          : health.status === "ready"
+            ? "blocked"
+            : "blocked";
+
+    return {
+      id: fallback.id,
+      label: source?.label ?? fallback.label,
+      detail: source?.detail ?? fallback.detail,
+      error: source?.error,
+      url: source?.url,
+      status,
+      checks: source?.checks,
+      sandbox: (source as HealthCheck & SponsorView | undefined)?.sandbox,
+      icon: fallback.icon,
+    };
+  });
+}
+
+function latestSpeakerId(transcript: TranscriptTurn[]) {
+  for (let index = transcript.length - 1; index >= 0; index -= 1) {
+    const turn = transcript[index];
+    if (turn.agent && ROSTER_BY_ID[turn.agent]) return turn.agent;
+    if (turn.type === "framing" || turn.type === "decision") return "cfo";
+  }
+  return undefined;
+}
+
+function findLatestTurnForMember(memberId: string, transcript: TranscriptTurn[]) {
+  for (let index = transcript.length - 1; index >= 0; index -= 1) {
+    const turn = transcript[index];
+    if (memberId === "cfo" && (turn.agent === "cfo" || turn.type === "framing" || turn.type === "decision")) {
+      return turn;
+    }
+    if (turn.agent === memberId) return turn;
+  }
+  return undefined;
+}
+
+function getAgentStatus({
+  active,
+  agentStatus,
+  healthReady,
+  latestSpeaker,
+  latestTurn,
+  member,
+  nodeName,
+  started,
+}: {
+  active: boolean;
+  agentStatus?: AgentStatus;
+  healthReady: boolean;
+  latestSpeaker?: string;
+  latestTurn?: TranscriptTurn;
+  member: RosterMember;
+  nodeName?: string;
+  started: boolean;
+}) {
+  if (!healthReady) return "Preflight blocked";
+  const backendStatus = String(agentStatus?.status ?? "").toLowerCase();
+  if (backendStatus === "thinking" || backendStatus === "running") return "Thinking";
+  if (backendStatus === "speaking") return "Speaking";
+  if (backendStatus === "done" || backendStatus === "complete") return "On record";
+  if (backendStatus === "error") return "Error";
+  if (backendStatus === "warning" || backendStatus === "blocked") return "Blocked";
+  if (active) {
+    const currentOutput =
+      latestTurn &&
+      (latestTurn.agent === nodeName ||
+        (nodeName === "intake" && latestTurn.type === "framing") ||
+        (nodeName === "synthesis" && latestTurn.type === "decision"));
+    return currentOutput ? "Speaking" : "Thinking";
+  }
+  if (latestSpeaker === member.id) return "Last spoke";
+  if (latestTurn) return "On record";
+  if (started) return "Queued";
+  return "Standing by";
+}
+
+function getAgentStatusTone(status: string) {
+  if (status === "Speaking" || status === "Last spoke") return "border-positive/20 bg-positive-bg text-positive";
+  if (status === "Thinking") return "border-warning/20 bg-warning-bg text-warning";
+  if (status === "Preflight blocked" || status === "Error") return "border-risk/20 bg-risk-bg text-risk";
+  if (status === "Blocked") return "border-warning/20 bg-warning-bg text-warning";
+  if (status === "On record") return "border-info/20 bg-info-bg text-info";
+  return "border-border bg-background text-muted-foreground";
+}
+
+function getAgentHeadline(
+  member: RosterMember,
+  turn?: TranscriptTurn,
+  recommendation?: DebateState["recommendation"],
+  agentStatus?: AgentStatus,
+) {
+  if (member.id === "cfo" && recommendation?.decision) {
+    return `${recommendation.decision} at ${recommendation.confidence ?? "--"}% confidence`;
+  }
+  return agentStatus?.headline || turn?.headline || member.mandate || "Awaiting live council output";
+}
+
+function getAgentSnippet({
+  agentStatus,
+  member,
+  turn,
+  recommendation,
+  healthReady,
+  started,
+}: {
+  agentStatus?: AgentStatus;
+  member: RosterMember;
+  turn?: TranscriptTurn;
+  recommendation?: DebateState["recommendation"];
+  healthReady: boolean;
+  started: boolean;
+}) {
+  if (member.id === "cfo" && recommendation?.rationale) return recommendation.rationale;
+  if (agentStatus?.detail && agentStatus.detail !== "Awaiting council turn") return agentStatus.detail;
+  if (turn?.argument) return turn.argument;
+  if (turn?.point) return turn.point;
+  if (!healthReady) return "Strict live preflight must pass before this seat can produce a live utterance.";
+  if (started) return "Queued in the graph. No live utterance has streamed for this seat yet.";
+  return "Ready to join once a decision command is submitted.";
+}
+
+function buildTimeline({
+  health,
+  healthReady,
+  nodeName,
+  phase,
+  recommendation,
+  running,
+  transcript,
+}: {
+  health: HealthView;
+  healthReady: boolean;
+  nodeName?: string;
+  phase?: string;
+  recommendation?: DebateState["recommendation"];
+  running: boolean;
+  transcript: TranscriptTurn[];
+}) {
+  const preflightStatus: TimelineStatus = healthReady ? "complete" : health.status === "loading" ? "active" : "blocked";
+  const hasFraming = transcript.some((turn) => turn.type === "framing");
+  const hasDebate = transcript.some((turn) => turn.type === "rebuttal");
+  const hasAgent = (agent: string) => transcript.some((turn) => turn.agent === agent && turn.type === "position");
+
+  return [
+    {
+      id: "preflight",
+      kind: "gate",
+      label: "Strict preflight",
+      status: preflightStatus,
+    },
+    {
+      id: "intake",
+      kind: "node",
+      label: "Intake",
+      status: timelineStatus({ complete: hasFraming, healthReady, id: "intake", nodeName, running }),
+    },
+    {
+      id: "treasury",
+      kind: "agent",
+      label: "Treasury",
+      status: timelineStatus({ complete: hasAgent("treasury"), healthReady, id: "treasury", nodeName, running }),
+    },
+    {
+      id: "fpna",
+      kind: "agent",
+      label: "FP&A",
+      status: timelineStatus({ complete: hasAgent("fpna"), healthReady, id: "fpna", nodeName, running }),
+    },
+    {
+      id: "risk",
+      kind: "agent",
+      label: "Risk & Audit",
+      status: timelineStatus({ complete: hasAgent("risk"), healthReady, id: "risk", nodeName, running }),
+    },
+    {
+      id: "procurement",
+      kind: "agent",
+      label: "Procurement",
+      status: timelineStatus({ complete: hasAgent("procurement"), healthReady, id: "procurement", nodeName, running }),
+    },
+    {
+      id: "debate",
+      kind: "node",
+      label: "Cross-exam",
+      status: timelineStatus({ complete: hasDebate, healthReady, id: "debate", nodeName, running }),
+    },
+    {
+      id: "synthesis",
+      kind: "node",
+      label: phase === "done" ? "Persisted" : "CFO ruling",
+      status: timelineStatus({
+        complete: Boolean(recommendation?.decision) || phase === "done",
+        healthReady,
+        id: nodeName === "persist" ? "persist" : "synthesis",
+        nodeName,
+        running,
+      }),
+    },
+  ] satisfies Array<{ id: string; kind: string; label: string; status: TimelineStatus }>;
+}
+
+function timelineStatus({
+  complete,
+  healthReady,
+  id,
+  nodeName,
+  running,
+}: {
+  complete: boolean;
+  healthReady: boolean;
+  id: string;
+  nodeName?: string;
+  running: boolean;
+}) {
+  if (complete) return "complete";
+  if (!healthReady) return "pending";
+  if (running && nodeName === id) return "active";
+  return "pending";
+}
+
+function timelineLabel(status: TimelineStatus) {
+  if (status === "complete") return "Complete";
+  if (status === "active") return "Active";
+  if (status === "blocked") return "Blocked";
+  return "Pending";
 }

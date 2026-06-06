@@ -1,0 +1,13 @@
+---
+description: Sponsor workflow for OpenAI, W&B Weave, Redis, CopilotKit, and Cursor
+alwaysApply: true
+---
+
+# Sponsor workflow
+
+- OpenAI: agent reasoning and embeddings must use live OpenAI credentials from environment variables. Model/provider selection belongs in env such as `LLM_PROVIDER`, `LLM_MODEL`, and `EMBED_MODEL`.
+- W&B Weave: keep Weave tracing enabled for every agent run when `WANDB_API_KEY` is present. Verify traces by project/entity metadata, not by logging secrets.
+- Redis: use Redis Stack, specifically `redis/redis-stack-server:latest` for local Docker setup. The demo depends on RedisJSON, RediSearch/vector search, Streams, and Pub/Sub.
+- CopilotKit: the browser talks through Next.js `/api/copilotkit`, which proxies to the FastAPI LangGraph AG-UI agent. Keep `AGENT_URL` and `NEXT_PUBLIC_AGENT_URL` aligned with the backend port.
+- Cursor: use these rules and the README live setup path as the local workflow source of truth. Add workflow guidance in `.cursor/rules/` instead of scattering secret-bearing notes.
+- Before presenting a live demo, run `scripts/start-redis-stack.sh`, `npm ci --prefix frontend`, `uv sync --directory agent`, `scripts/live-preflight.sh`, `scripts/seed-live.sh`, and `scripts/live-preflight.sh` again.

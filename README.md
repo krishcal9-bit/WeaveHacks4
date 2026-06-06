@@ -24,10 +24,26 @@ Built for **WeaveHacks 4 — Multi-Agent Orchestration**.
 
 | Tool | Role in Atlas |
 | --- | --- |
-| **Redis** (load-bearing) | RedisJSON system-of-record (financials, vendors); RediSearch structured queries; **vector RAG** over finance policies & past decisions; **Streams** as the decision log; **Pub/Sub** for live updates. |
-| **W&B Weave** | Every agent turn and model call is traced — `weave.init()` + a `@weave.op` span per committee member (`intake`, `analyst_*`, `debate_round`, `cfo_synthesis`, `persist`). |
-| **OpenAI (GPT-5.5)** | Powers the agents via LangChain `init_chat_model` (provider-configurable). |
-| **CopilotKit** | AG-UI shared-state streaming drives the live boardroom (`useCoAgent`); the Next.js runtime proxies to the LangGraph agent. |
+| **OpenAI** | Powers the agents and policy embeddings from live environment credentials. `LLM_PROVIDER`, `LLM_MODEL`, and `EMBED_MODEL` are configurable, but the demo must not fall back to canned model output. |
+| **W&B Weave** | Every agent turn and model call is traced with `weave.init()` plus `@weave.op` spans per committee member (`intake`, `analyst_*`, `debate_round`, `cfo_synthesis`, `persist`). |
+| **Redis** (load-bearing) | RedisJSON system-of-record (financials, vendors); RediSearch structured queries; vector RAG over finance policies & past decisions; Streams as the decision log; Pub/Sub for live updates. |
+| **CopilotKit** | AG-UI shared-state streaming drives the live boardroom (`useCoAgent`); the Next.js runtime proxies to the FastAPI LangGraph agent. |
+| **Cursor** | Project workflow rules in `.cursor/rules/` preserve the strict live-only setup, sponsor checklist, root `.env` contract, and no-secret handling. |
+
+## Live-only contract
+
+Atlas is a strict live sponsor demo. Do not run or present it with mocked LLM output, fake
+Weave traces, a non-Stack Redis server, browser-only data, or hard-coded sponsor responses.
+The required live environment keys are loaded from the workspace root `.env`:
+
+- `OPENAI_API_KEY`
+- `WANDB_API_KEY`
+- `REDIS_URL`
+
+Optional live configuration includes `WANDB_PROJECT`, `WANDB_ENTITY`, `LLM_PROVIDER`,
+`LLM_MODEL`, `EMBED_MODEL`, `PORT`, `AGENT_URL`, and `NEXT_PUBLIC_AGENT_URL`. Never commit or
+print secret values. `agent/.env.example` lists the expected names; the repeatable scripts use
+the root `.env` so the backend and frontend share one local configuration source.
 
 ## Architecture
 
@@ -47,23 +63,52 @@ FastAPI + LangGraph agent  (:8123, AG-UI)        ← Weave traces every node
 
 ## Run it
 
-**Prereqs:** Node 18+, [`uv`](https://docs.astral.sh/uv/), Redis Stack
-(`brew install redis-stack-server` — bundles RediSearch/RedisJSON/vector).
+**Prereqs:** Node 18+, [`uv`](https://docs.astral.sh/uv/), Docker Desktop, and a root `.env`
+with live sponsor credentials. Redis must be Redis Stack; the repeatable setup uses Docker image
+`redis/redis-stack-server:latest`.
 
 ```bash
-# 1. Start Redis (with modules)
-redis-stack-server
+# 1. Configure live keys once. Do not commit the resulting .env.
+cp agent/.env.example .env
+# Fill OPENAI_API_KEY, WANDB_API_KEY, REDIS_URL, and optional model/project settings.
 
-# 2. Configure keys
-cp agent/.env.example agent/.env      # set OPENAI_API_KEY and WANDB_API_KEY
+# 2. Run repeatable live setup.
+scripts/live-setup.sh
 
-# 3. Seed the demo company into Redis
-uv run --directory agent python -m src.data.seed
+# 3. Start the FastAPI agent and Next.js app.
+scripts/dev-live.sh
+#   UI      http://localhost:3000
+#   agent   http://localhost:8123
+```
 
-# 4. Run the agent + UI together
-cd frontend && npm install && npm run dev
-#   → UI  http://localhost:3000
-#   → agent http://localhost:8123
+`scripts/live-setup.sh` runs the required setup steps in order:
+
+```bash
+scripts/start-redis-stack.sh              # Docker: redis/redis-stack-server:latest
+npm ci --prefix frontend                  # exact Next/CopilotKit dependency install
+uv sync --directory agent                 # exact FastAPI/LangGraph/Weave dependency sync
+scripts/live-preflight.sh                 # env/tool/sponsor DNS/Redis Stack checks
+scripts/seed-live.sh                      # live OpenAI embeddings + Redis Stack seed
+scripts/live-preflight.sh                 # final readiness check after seed
+```
+
+If Docker Desktop is closed or the daemon is unavailable, the Redis script stops with:
+
+```text
+Docker daemon is not running. Start Docker Desktop, then rerun scripts/start-redis-stack.sh.
+```
+
+Manual live commands are also supported as long as root `.env` is exported first:
+
+```bash
+set -a; source .env; set +a
+scripts/start-redis-stack.sh
+npm ci --prefix frontend
+uv sync --directory agent
+scripts/live-preflight.sh
+scripts/seed-live.sh
+uv run --directory agent python main.py
+npm --prefix frontend run dev:ui
 ```
 
 ## Demo prompts

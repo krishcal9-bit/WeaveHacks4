@@ -1,0 +1,13 @@
+---
+description: Atlas strict live setup contract
+alwaysApply: true
+---
+
+# Atlas strict live-only contract
+
+- Treat Atlas as a live sponsor integration demo. Do not add mock model calls, fake Weave traces, fake Redis data, browser-only fallbacks, or hard-coded sponsor responses.
+- Keep the workspace root `.env` as the canonical local secret source. Scripts may load it into process environment variables, but never print key values or paste secrets into tracked files.
+- Required live keys are `OPENAI_API_KEY`, `WANDB_API_KEY`, and `REDIS_URL`. `WANDB_PROJECT`, `WANDB_ENTITY`, `LLM_PROVIDER`, `LLM_MODEL`, `PORT`, `AGENT_URL`, and `NEXT_PUBLIC_AGENT_URL` may be configured without committing values.
+- Use `scripts/live-setup.sh` for repeatable judge prep: Redis Stack Docker container, `npm ci`, `uv sync`, live seed, and sponsor/Redis preflight.
+- If Docker is unavailable, say that the Docker daemon is not running and stop the Redis setup path until Docker Desktop is started.
+- Keep generated setup artifacts non-secret and reversible. Do not alter unrelated worker files.

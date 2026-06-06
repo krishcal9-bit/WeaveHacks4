@@ -1,4 +1,11 @@
-import type { CompanyFinancials, DecisionEvent, Vendor } from "./types";
+import type {
+  CompanyFinancials,
+  DecisionEvent,
+  ObservabilitySnapshot,
+  RosterMember,
+  SponsorHealth,
+  Vendor,
+} from "./types";
 
 const BASE = process.env.NEXT_PUBLIC_AGENT_URL || "http://localhost:8123";
 
@@ -12,4 +19,7 @@ export const api = {
   company: () => getJSON<CompanyFinancials>("/api/company"),
   vendors: () => getJSON<Vendor[]>("/api/vendors"),
   decisions: () => getJSON<DecisionEvent[]>("/api/decisions"),
+  roster: () => getJSON<RosterMember[]>("/api/roster"),
+  health: () => getJSON<SponsorHealth>("/api/health"),
+  observability: () => getJSON<ObservabilitySnapshot>("/api/observability"),
 };
