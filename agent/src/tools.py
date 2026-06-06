@@ -94,6 +94,396 @@ def search_finance_policies(query: str) -> str:
     ])
 
 
+# --------------------------------------------------------------------------- #
+# Governance — read-only previews so agents can reason about controls, approvals,
+# evidence, and obligations *before* the CFO rules. These never create or approve
+# anything; they run the same deterministic engine the governance node uses.
+# --------------------------------------------------------------------------- #
+def _govern_preview(
+    decision: str,
+    estimated_monthly_cost: float,
+    estimated_one_time_cost: float,
+    added_monthly_revenue: float,
+    department: str,
+    data_sensitivity: str,
+):
+    """Run the governance pipeline in preview mode (no persistence) for a decision."""
+    from src import governance as G
+    from src.governance_models import DataSensitivity
+
+    impact = json.loads(compute_runway.invoke({
+        "extra_monthly_spend": float(estimated_monthly_cost or 0),
+        "one_time_cost": float(estimated_one_time_cost or 0),
+        "added_monthly_revenue": float(added_monthly_revenue or 0),
+    }))
+    rec = {
+        "decision": "APPROVE", "confidence": 70,
+        "rationale": "Pre-decision governance preview.",
+        "key_risks": [], "conditions": [], "impact": impact,
+    }
+    sensitivity = None
+    if data_sensitivity:
+        try:
+            sensitivity = DataSensitivity(data_sensitivity).value
+        except ValueError:
+            sensitivity = None
+    return G.preview_governance(
+        decision, rec,
+        monthly_cost=float(estimated_monthly_cost or 0),
+        one_time_cost=float(estimated_one_time_cost or 0),
+        added_monthly_revenue=float(added_monthly_revenue or 0),
+        department=department or None,
+        data_sensitivity=sensitivity,
+    )
+
+
+@tool
+def required_approvals(
+    decision: str,
+    estimated_monthly_cost: float = 0.0,
+    estimated_one_time_cost: float = 0.0,
+    added_monthly_revenue: float = 0.0,
+    department: str = "",
+    data_sensitivity: str = "",
+) -> str:
+    """What approvals are required for a decision under Acme Corp's approval matrix.
+
+    Returns the full approval route (which roles must sign off and why), the
+    committed amount, inferred risk tier and data sensitivity, the runway impact,
+    and the status the decision would land in (pending_approval vs. system-cleared).
+    data_sensitivity: optional one of internal|confidential|customer_data|regulated.
+    Preview only — creates and approves nothing."""
+    req = _govern_preview(decision, estimated_monthly_cost, estimated_one_time_cost, added_monthly_revenue, department, data_sensitivity)
+    return json.dumps({
+        "decision": decision,
+        "amount_annualized": req.amount_annualized,
+        "department": req.department,
+        "risk_tier": req.risk_tier.value,
+        "data_sensitivity": req.data_sensitivity.value,
+        "runway_after_months": req.runway_after_months,
+        "resulting_status": req.status.value,
+        "human_approval_required": req.human_approvals_pending(),
+        "approval_route": [
+            {"sequence": s.sequence, "approver": s.approver_role, "reason": s.reason}
+            for s in req.route
+        ],
+        "note": "Preview only — no approval request is created and nothing is approved.",
+    }, default=str)
+
+
+@tool
+def check_controls(
+    decision: str,
+    estimated_monthly_cost: float = 0.0,
+    estimated_one_time_cost: float = 0.0,
+    added_monthly_revenue: float = 0.0,
+    department: str = "",
+    data_sensitivity: str = "",
+) -> str:
+    """Which governance controls a decision engages or violates (runway floor,
+    vendor/CFO spend thresholds, board notification, headcount burn discipline,
+    gross-margin floor, security-blocked revenue priority, data-sensitivity review).
+
+    Each finding is quantified (observed vs. policy limit) and flags whether it is
+    blocking (requires a board-approved exception). Preview only."""
+    req = _govern_preview(decision, estimated_monthly_cost, estimated_one_time_cost, added_monthly_revenue, department, data_sensitivity)
+    controls = [
+        {
+            "control_id": v.control_id,
+            "policy_id": v.policy_id,
+            "title": v.title,
+            "severity": v.severity.value,
+            "message": v.message,
+            "blocking": v.blocking,
+            "requires_exception": v.requires_exception,
+            "remediation": v.remediation,
+        }
+        for v in req.violations
+    ]
+    return json.dumps({
+        "controls_engaged": controls,
+        "blocking_count": sum(1 for v in req.violations if v.blocking),
+        "note": "No governance controls are engaged by this decision as specified." if not controls else "Controls engaged; see route for required approvals.",
+    }, default=str)
+
+
+@tool
+def missing_evidence(
+    decision: str,
+    estimated_monthly_cost: float = 0.0,
+    estimated_one_time_cost: float = 0.0,
+    added_monthly_revenue: float = 0.0,
+    department: str = "",
+    data_sensitivity: str = "",
+) -> str:
+    """What evidence is required, already present, and still missing for a decision
+    to pass governance (e.g. CFO/board memos, security review sign-off, signed DPA,
+    financing term sheet, headcount-to-revenue mapping). Preview only."""
+    req = _govern_preview(decision, estimated_monthly_cost, estimated_one_time_cost, added_monthly_revenue, department, data_sensitivity)
+    return json.dumps({
+        "evidence_required": req.evidence_required,
+        "evidence_present": req.evidence_present,
+        "evidence_missing": req.evidence_missing,
+        "note": "Missing items must be supplied by an owner before the decision can be approved.",
+    }, default=str)
+
+
+@tool
+def obligations_if_approved(
+    decision: str,
+    estimated_monthly_cost: float = 0.0,
+    estimated_one_time_cost: float = 0.0,
+    added_monthly_revenue: float = 0.0,
+    department: str = "",
+    data_sensitivity: str = "",
+) -> str:
+    """What obligations and monitoring follow if a decision is approved: board
+    notification windows, vendor renewal/termination notice deadlines, SOC 2
+    evidence deadlines, revenue milestones, forecast-calibration checkpoints, and
+    follow-up reviews — each with an owner and a due date. Preview only."""
+    req = _govern_preview(decision, estimated_monthly_cost, estimated_one_time_cost, added_monthly_revenue, department, data_sensitivity)
+    return json.dumps({
+        "obligations": [
+            {"kind": o.kind, "title": o.title, "owner_role": o.owner_role, "due_date": o.due_date, "evidence_required": o.evidence_required}
+            for o in req.obligations
+        ],
+        "monitoring_triggers": [
+            {"kind": m.kind, "label": m.label, "trigger_date": m.trigger_date, "condition": m.condition, "target": m.target}
+            for m in req.monitoring
+        ],
+        "note": "These obligations are scheduled only if the decision is approved.",
+    }, default=str)
+
+
+# --------------------------------------------------------------------------- #
+# Finance-operations connectors — reconciled facts from imported live data.
+# These return honest "not imported / not configured" payloads when no operations
+# feed has been ingested, so agents never invent connector data.
+# --------------------------------------------------------------------------- #
+@tool
+def list_operations_sources() -> str:
+    """Inventory of imported finance-operations feeds (ledgers, invoices, vendor
+    exports, CRM pipeline, headcount, security evidence, board policy) with their
+    provenance: origin, record counts, source freshness, and import status. Use
+    this to know which real operating data is available and how trustworthy it is."""
+    from src.integrations import service as OPS
+
+    statuses = OPS.connector_statuses()
+    imported = [s for s in statuses if s.get("status") in ("imported", "partial", "skipped_unchanged") and (s.get("record_count") or 0) > 0]
+    return json.dumps({
+        "configured_connectors": [s["source_type"] for s in statuses if s.get("configured")],
+        "imported_sources": [
+            {
+                "source_type": s["source_type"],
+                "origin": s.get("origin"),
+                "records": s.get("record_count"),
+                "status": s.get("status"),
+                "source_timestamp": s.get("source_timestamp"),
+                "reconciliation_status": s.get("reconciliation_status"),
+            }
+            for s in imported
+        ],
+        "confidence": OPS.import_confidence().model_dump(mode="json"),
+        "note": "Empty imported_sources means no live operations data has been ingested; do not assume figures.",
+    }, default=str)
+
+
+@tool
+def get_reconciliation_summary() -> str:
+    """Summary of the latest reconciliation of imported operations data against
+    the company system of record: per-workflow status (invoices vs vendors, contract
+    terms vs spend, CRM vs forecast, headcount vs plan, policy/board constraints,
+    security revenue blockers), discrepancy counts by severity, blockers, and confidence."""
+    from src.integrations import service as OPS
+
+    report = OPS.reconciliation_summary()
+    if not report:
+        return json.dumps({"status": "not_run", "note": "No reconciliation has been run; no reconciled facts available."})
+    return json.dumps({
+        "status": report.get("status"),
+        "generated_at": report.get("generated_at"),
+        "counts_by_severity": report.get("counts_by_severity"),
+        "workflows": [
+            {"workflow": w.get("workflow"), "status": w.get("status"), "checked": w.get("checked"), "discrepancy_count": w.get("discrepancy_count")}
+            for w in (report.get("workflows") or [])
+        ],
+        "blockers": report.get("blockers", []),
+        "confidence": report.get("confidence"),
+    }, default=str)
+
+
+@tool
+def list_open_discrepancies(severity: str = "") -> str:
+    """Outstanding reconciliation mismatches (e.g. contract overspend, unmatched
+    invoices, headcount drift, board-constraint violations, revenue-blocking
+    security gaps). Optionally filter by severity: info|low|medium|high|critical.
+    Each item is explainable with expected vs observed values and a recommended action."""
+    from src.integrations import service as OPS
+
+    items = OPS.list_discrepancies(severity=severity or None)
+    return json.dumps([
+        {
+            "id": d.get("id"),
+            "kind": d.get("kind"),
+            "severity": d.get("severity"),
+            "title": d.get("title"),
+            "detail": d.get("detail"),
+            "expected": d.get("expected"),
+            "observed": d.get("observed"),
+            "recommended_action": d.get("recommended_action"),
+            "confidence": d.get("confidence"),
+        }
+        for d in items
+    ], default=str)
+
+
+@tool
+def get_operations_data_confidence() -> str:
+    """Confidence in the imported operations picture: connector coverage, row
+    validation pass-rate, source freshness, and an overall 0-100 score. Use this
+    to weight how much to rely on reconciled operations facts."""
+    from src.integrations import service as OPS
+
+    return json.dumps(OPS.import_confidence().model_dump(mode="json"), default=str)
+
+
+# --------------------------------------------------------------------------- #
+# Strategic planning tools — deterministic finance "digital twin".
+# These wrap the calculation engine in src/planning.py, src/playbooks.py and
+# src/stress_tests.py. Every number returned is computed from the Redis system of
+# record; no LLM is involved in producing the figures (the council/CFO narrates
+# them afterwards). Each tool persists its artifacts to Redis with provenance.
+# --------------------------------------------------------------------------- #
+@tool
+def list_finance_playbooks() -> str:
+    """List the available finance playbooks (extend runway, unblock enterprise
+    revenue via security spend, renegotiate vendors, hire against signed revenue,
+    prepare a financing bridge, shift from growth to efficiency, recover from
+    pipeline slippage). Returns each playbook's id, label, and what it does."""
+    from src import playbooks as PB
+
+    return json.dumps(PB.catalog())
+
+
+@tool
+def build_strategic_plan(horizon_months: int = 12, playbook: str = "") -> str:
+    """Build and persist a multi-month strategic operating plan for Acme Corp,
+    projecting cash, burn, runway, ARR, churn, hiring ramps, vendor savings, and
+    financing month by month from the real company record.
+
+    horizon_months: how many months to project (1-36).
+    playbook: optional playbook id (see list_finance_playbooks); empty = base
+        operating plan that executes the current hiring plan as-is.
+
+    Returns the plan id, computed summary (ending cash, min cash, lowest runway,
+    ending ARR, cash-flow-positive month), milestones, capital plan, and any
+    policy/compliance blockers. Deterministic."""
+    from src import planning as PL
+    from src import playbooks as PB
+
+    company = PL.load_company()
+    horizon = max(1, min(36, int(horizon_months)))
+    if playbook and playbook in PB.PLAYBOOKS:
+        plan = PB.build_playbook_plan(company, playbook, horizon_months=horizon)
+    else:
+        plan = PL.build_plan(company, title=f"{horizon}-month base operating plan", horizon_months=horizon)
+    PL.save_plan(plan)
+    return json.dumps(
+        {
+            "plan_id": plan.id,
+            "title": plan.title,
+            "playbook": plan.playbook_label or plan.playbook_id,
+            "horizon_months": plan.horizon_months,
+            "summary": plan.summary,
+            "assumptions": [a.model_dump() for a in plan.assumptions],
+            "capital_plan": plan.capital_plan.model_dump(),
+            "milestones": [m.model_dump() for m in plan.milestones],
+            "policy_blockers": plan.policy_blockers,
+            "risks": plan.risks,
+            "monitoring_triggers": plan.monitoring_triggers,
+            "provenance": plan.provenance,
+        },
+        default=str,
+    )
+
+
+@tool
+def compare_finance_playbooks(decision: str, playbooks: str = "", horizon_months: int = 12) -> str:
+    """Compare multiple finance playbooks for one decision and recommend a
+    portfolio (a sequenced set of strategies), not just approve/reject.
+
+    decision: the financial decision or situation under review.
+    playbooks: optional comma-separated playbook ids to compare; empty = all.
+    horizon_months: projection horizon (1-36).
+
+    Returns a deterministic scorecard for each playbook (runway safety, liquidity,
+    growth, compliance, efficiency, dilution), an overall ranking, the recommended
+    portfolio with weights/roles, and the key trade-offs."""
+    from src import playbooks as PB
+
+    ids = [p.strip() for p in (playbooks or "").split(",") if p.strip()]
+    horizon = max(1, min(36, int(horizon_months)))
+    portfolio, _plans = PB.compare_playbooks(PB.PL.load_company(), ids, decision, horizon_months=horizon)
+    return json.dumps(portfolio.model_dump(), default=str)
+
+
+@tool
+def run_plan_stress_test(playbook: str = "", horizon_months: int = 12, trials: int = 400) -> str:
+    """Run a Monte Carlo-style stress test over the uncertain operating dials
+    (churn, pipeline conversion, growth, gross margin) and report the probability
+    of breaching the runway and cash guardrails.
+
+    playbook: optional playbook id whose plan should be stress-tested; empty =
+        the base operating plan (the current hiring plan as-is).
+    horizon_months: projection horizon (1-36).
+    trials: number of Monte Carlo trials (deterministic for a fixed internal seed).
+
+    Returns percentile bands (p5/p50/p95) for ending cash, min cash, and runway,
+    plus probability of runway breach / insolvency and the expected breach month."""
+    from src import planning as PL
+    from src import playbooks as PB
+    from src import stress_tests as ST
+
+    company = PL.load_company()
+    horizon = max(1, min(36, int(horizon_months)))
+    trials = max(50, min(2000, int(trials)))
+    steps = None
+    overrides = None
+    name = "Base operating plan stress test"
+    if playbook and playbook in PB.PLAYBOOKS:
+        plan = PB.build_playbook_plan(company, playbook, horizon_months=horizon)
+        steps = plan.steps
+        overrides = {a.key: a.value for a in plan.assumptions if a.source in ("playbook", "override")}
+        name = f"{plan.playbook_label} stress test"
+    st = ST.run_stress_test(
+        company, name=name, horizon_months=horizon, trials=trials, steps=steps, base_overrides=overrides
+    )
+    return json.dumps(st.model_dump(), default=str)
+
+
+@tool
+def run_plan_sensitivity(variable: str = "", horizon_months: int = 12) -> str:
+    """Run sensitivity analysis on a strategic plan: vary one lever and measure the
+    impact on minimum cash and runway.
+
+    variable: one of churn, conversion, gross_margin, hiring_start, vendor_savings,
+        financing_close_month. Empty = run the full suite and rank the most
+        sensitive lever.
+    horizon_months: projection horizon (1-36).
+
+    Returns, per swept value, the resulting min cash / lowest runway / ending ARR,
+    plus a near-base elasticity and the output swing. Deterministic."""
+    from src import planning as PL
+    from src import stress_tests as ST
+
+    company = PL.load_company()
+    horizon = max(1, min(36, int(horizon_months)))
+    if variable:
+        result = ST.run_sensitivity(company, variable, horizon_months=horizon)
+        return json.dumps(result.model_dump(), default=str)
+    return json.dumps(ST.sensitivity_suite(company, horizon_months=horizon), default=str)
+
+
 # Exposed to the finance agents (the CFO synthesizer gets the full set).
 FINANCE_TOOLS = [
     get_company_financials,
@@ -101,3 +491,36 @@ FINANCE_TOOLS = [
     list_vendors,
     search_finance_policies,
 ]
+
+# Strategic-planning digital-twin tools (deterministic; persisted with provenance).
+PLANNING_TOOLS = [
+    list_finance_playbooks,
+    build_strategic_plan,
+    compare_finance_playbooks,
+    run_plan_stress_test,
+    run_plan_sensitivity,
+]
+
+# Finance-operations connector tools (reconciled facts from imported live data).
+OPERATIONS_TOOLS = [
+    list_operations_sources,
+    get_reconciliation_summary,
+    list_open_discrepancies,
+    get_operations_data_confidence,
+]
+
+# Governance tools (read-only previews of controls, approvals, evidence, obligations).
+GOVERNANCE_TOOLS = [
+    required_approvals,
+    check_controls,
+    missing_evidence,
+    obligations_if_approved,
+]
+
+# Financial-OS tools (scenario branches, vector knowledge RAG, operating
+# collections) — defined in src.scenario_tools to keep this module's hot
+# definitions untouched.
+from src.scenario_tools import FINANCIAL_OS_TOOLS
+
+# Full tool surface available to the council.
+ALL_TOOLS = [*FINANCE_TOOLS, *PLANNING_TOOLS, *OPERATIONS_TOOLS, *GOVERNANCE_TOOLS, *FINANCIAL_OS_TOOLS]

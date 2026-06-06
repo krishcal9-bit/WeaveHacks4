@@ -81,4 +81,31 @@ print("OpenAI model preflight passed: reasoning and realtime models are resolvab
 print("Redis Stack preflight passed: PING, RedisJSON, RediSearch.")
 PY
 
+# Finance-operations connectors are OPTIONAL: report their configuration but never
+# fail the core preflight when they are absent (they default to "not configured").
+uv run --directory "${REPO_ROOT}/agent" python - <<'PY' || echo "Connector report skipped (non-fatal)."
+try:
+    from src.integrations import service as OPS
+
+    statuses = OPS.connector_statuses()
+    configured = [s for s in statuses if s["configured"]]
+    imported = [s for s in statuses if s.get("status") in ("imported", "partial", "skipped_unchanged") and (s.get("record_count") or 0) > 0]
+    recon = OPS.reconciliation_summary()
+    print("Finance-operations connectors (optional; not required for the core demo):")
+    for s in statuses:
+        flag = "configured" if s["configured"] else "not configured"
+        print(f"  - {s['source_type']:<18} [{flag:<14}] env {s['env_var']}  status={s['status']}")
+    recon_status = recon.get("status") if recon else "not run"
+    print(
+        f"Connectors: {len(configured)} configured, {len(imported)} source(s) imported, "
+        f"confidence {OPS.import_confidence().score}/100. Reconciliation: {recon_status}."
+    )
+except Exception as exc:  # never fail the core preflight on the optional layer
+    print(f"Connector report unavailable (non-fatal): {exc}")
+PY
+
+# Financial-OS preflight (REQUIRED): Redis Stack modules, financial search/vector
+# indexes, seeded counts, stream length, vector docs, and scenario-branch creation.
+"${SCRIPT_DIR}/financial-os-preflight.sh"
+
 echo "Live preflight passed: root .env keys present, tools available, OpenAI models resolvable, Redis Stack ready."

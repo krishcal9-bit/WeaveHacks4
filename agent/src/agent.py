@@ -1,16 +1,24 @@
 """
 Atlas — the multi-agent finance department debate graph.
 
-A user poses any financial decision. A committee of role-based agents each take a
-grounded position (Treasury, FP&A, Risk & Audit, Procurement), cross-examine each
-other, and the CFO synthesizes a board-ready, quantified recommendation. State
-streams to the frontend (CopilotKit useCoAgent) to drive the boardroom view; every
-node is a @weave.op so the committee appears as named spans in Weave.
+A user poses any financial decision. An OpenAI-native committee classifies the
+decision, plans which Redis-backed evidence each role needs, takes grounded
+positions (Treasury, FP&A, Risk & Audit, Procurement), survives an evidence
+challenge panel, cross-examines, and the CFO synthesizes a board-ready, quantified
+recommendation plus a board memo and operator action checklist. State streams to
+the frontend (CopilotKit useCoAgent) to drive the boardroom view; every node is a
+@weave.op so the committee appears as named spans in Weave.
 
-Flow:  intake → treasury → fpna → risk → procurement → debate → synthesis
-       → reliability → persist
+Flow:  intake → planner → treasury → fpna → risk → procurement → challenge
+       → debate → synthesis → governance → reliability → persist
+
+The OpenAI-native lifting (typed prompts, structured calls with token/cost/refusal
+telemetry, classification, evidence planning, challenge panel, synthesis, board
+memo) lives in ``src/openai_council.py``; this module owns graph orchestration,
+AG-UI state streaming, the operator command layer, and Redis writes.
 """
 
+import asyncio
 import inspect
 import json
 import os
@@ -26,9 +34,32 @@ from langgraph.checkpoint.memory import MemorySaver
 from langgraph.graph import END, START, StateGraph
 from pydantic import BaseModel, Field
 
-from src.env import load_env
+from src.env import load_env, redact_secrets
 from src.health import require_live_ready, sponsor_health, weave_status
 from src import redis_layer as R
+from src import planning as PL
+from src import agui_commands as AGUI
+from src import promotion_gates as PG
+from src import replay_sets as RS
+from src import weave_eval as WE
+from src import governance as GOV
+from src.governance_models import ActorType
+from src.realtime import realtime_health
+from src.structured_models import DecisionPlan, RoleEvidencePlan
+from src.openai_council import (
+    analyst_position,
+    board_memo,
+    cfo_recommendation,
+    challenge_panel,
+    classify_and_plan,
+    cross_examination,
+    gather_role_evidence,
+    init_telemetry,
+    merge_telemetry,
+    model_family,
+    prompt_versions_payload,
+    tool_plan_entries,
+)
 from src.tools import (
     compute_runway,
     get_company_financials,
@@ -37,6 +68,15 @@ from src.tools import (
 )
 
 load_env()
+
+# Single council room for the live demo; command state is scoped by room so a
+# future multi-company build stays compatible (see agui_commands.DEFAULT_ROOM).
+ROOM = AGUI.DEFAULT_ROOM
+# Bounded, cooperative pause: an operator pause is honored between graph nodes
+# for at most this long, and released immediately on resume. Synthesis/persist
+# are never paused, so a decision always completes.
+PAUSE_MAX_SECONDS = float(os.getenv("ATLAS_PAUSE_MAX_SECONDS", "45"))
+PAUSE_POLL_SECONDS = 1.0
 
 LLM_PROVIDER = os.getenv("LLM_PROVIDER", "openai")
 LLM_MODEL = os.getenv("LLM_MODEL", "gpt-5.5")
@@ -112,6 +152,11 @@ ANALYSTS = ["treasury", "fpna", "risk", "procurement"]
 
 # --------------------------------------------------------------------------- #
 # Structured outputs (reliable JSON from the model)
+#
+# These inline models remain the public contract for other modules
+# (promotion_gates, council_commands import Position/llm from here). The
+# OpenAI-native council in src/openai_council.py uses the richer typed models in
+# src/structured_models.py (Position there adds cited_metrics/evidence_used).
 # --------------------------------------------------------------------------- #
 class Position(BaseModel):
     stance: str = Field(description="one of: support, oppose, conditional")
@@ -183,6 +228,36 @@ class DebateState(CopilotKitState):
     sponsor_health: dict
     reliability_scores: list
     learning_report: dict
+    # Governance outcome (policy controls, approval route, audit, obligations).
+    # Set by the governance node; mirrored in frontend/src/lib/types.ts.
+    governance: dict
+    # Deterministic strategic-planning digital twin (see src/planning.py). Set by
+    # the CFO synthesis node when the prompt asks for a multi-month plan.
+    strategic_plan: dict
+    # --- OpenAI-native council expansion (typed + streamed; mirrored in types.ts) #
+    decision_type: str
+    decision_plan: dict
+    evidence_plan: list
+    tool_plan: list
+    follow_up: dict
+    challenge_report: dict
+    evidence_gaps: list
+    board_memo: dict
+    operator_actions: list
+    model_telemetry: dict
+    realtime_status: dict
+    prompt_versions: list
+    # --- AG-UI command-and-control layer (see src/agui_commands.py) --------- #
+    # Operator commands stream back through these eight keys; they are mirrored
+    # in frontend/src/lib/types.ts and appended to STREAM_STATE_KEYS below.
+    command_queue: list
+    active_command: dict
+    pinned_evidence: list
+    requested_scenario: dict
+    agent_focus: dict
+    phase_controls: dict
+    export_status: dict
+    command_audit_log: list
 
 
 def _extract_decision(messages: list) -> str:
@@ -211,6 +286,26 @@ def _company_name(context: dict | None = None) -> str:
     return financials.get("name") or "Acme Corp"
 
 
+def _company_stage(context: dict | None = None) -> str:
+    financials = (context or {}).get("financials") or {}
+    return financials.get("stage") or "Series A"
+
+
+def _role_plan(decision_plan: dict | None, role_key: str) -> RoleEvidencePlan | None:
+    """Reconstruct a role's evidence plan from the planner's streamed plan dict."""
+    for item in (decision_plan or {}).get("role_plans", []) or []:
+        if (item.get("role") or "").lower() == role_key:
+            try:
+                return RoleEvidencePlan(**item)
+            except Exception:
+                return RoleEvidencePlan(role=role_key, **{k: v for k, v in item.items() if k != "role"})
+    return None
+
+
+def _decision_focus(decision_plan: dict | None) -> list[str]:
+    return (decision_plan or {}).get("decision_specific_focus") or []
+
+
 def _event(sponsor: str, label: str, detail: str, tone: str = "info") -> dict:
     return {
         "id": f"{time.time_ns()}-{sponsor.lower().replace(' ', '-')}",
@@ -228,6 +323,24 @@ def _redis_activity(label: str, detail: str, kind: str) -> dict:
 
 OBSERVABILITY_AGENTS = {
     **ROSTER,
+    "planner": {
+        "label": "Evidence Planner",
+        "role": "Chief of Staff · Planning",
+        "monogram": "EP",
+        "mandate": "classifying the decision and routing Redis-backed evidence before the council speaks",
+    },
+    "challenge": {
+        "label": "Evidence Challenge Panel",
+        "role": "Grounding QA",
+        "monogram": "EC",
+        "mandate": "verifying each role cited enough concrete numbers before the CFO rules",
+    },
+    "governance": {
+        "label": "Governance & Controls",
+        "role": "Controls, Approvals & Audit",
+        "monogram": "GV",
+        "mandate": "enforcing board policy, routing approvals, recording the audit trail, and setting obligations",
+    },
     "system": {
         "label": "Atlas Runtime",
         "role": "Persistence & State Streaming",
@@ -251,6 +364,23 @@ STREAM_STATE_KEYS = (
     "sponsor_health",
     "reliability_scores",
     "learning_report",
+    "strategic_plan",
+    "governance",
+    # OpenAI-native council expansion keys (mirrored in frontend types.ts).
+    "decision_type",
+    "decision_plan",
+    "evidence_plan",
+    "tool_plan",
+    "follow_up",
+    "challenge_report",
+    "evidence_gaps",
+    "board_memo",
+    "operator_actions",
+    "model_telemetry",
+    "realtime_status",
+    "prompt_versions",
+    # AG-UI command-and-control keys (single source of truth in agui_commands).
+    *AGUI.COMMAND_STATE_KEYS,
 )
 
 
@@ -285,18 +415,36 @@ def _set_agent_status(statuses: list | None, role_key: str, **updates) -> list[d
     return current
 
 
-def _trace_summary(node: str, status: str, model_calls: int = 0, tool_calls: int = 0) -> dict:
+def _trace_summary(
+    node: str,
+    status: str,
+    model_calls: int = 0,
+    tool_calls: int = 0,
+    telemetry: dict | None = None,
+    tool_plan: list | None = None,
+    evidence_gaps: list | None = None,
+) -> dict:
     weave = weave_status()
+    tel = telemetry or {}
     return {
         "node": node,
         "status": status,
         "model": f"{LLM_PROVIDER}:{LLM_MODEL}",
+        "model_family": tel.get("model_family") or model_family(),
         "reasoning_effort": LLM_REASONING_EFFORT,
         "text_verbosity": LLM_TEXT_VERBOSITY,
         "realtime_model": OPENAI_REALTIME_MODEL,
         "realtime_reasoning_effort": OPENAI_REALTIME_REASONING_EFFORT,
         "model_calls": model_calls,
         "tool_calls": tool_calls,
+        "input_tokens": tel.get("input_tokens"),
+        "output_tokens": tel.get("output_tokens"),
+        "total_tokens": tel.get("total_tokens"),
+        "cost_usd": tel.get("estimated_cost_usd"),
+        "tool_plan_size": len(tool_plan) if tool_plan is not None else None,
+        "evidence_gap_count": len(evidence_gaps) if evidence_gaps is not None else None,
+        "refusals": len(tel.get("refusals") or []) if tel else 0,
+        "errors": len(tel.get("errors") or []) if tel else 0,
         "weave_project": weave.get("project"),
         "weave_url": weave.get("url"),
         "state_streaming": "copilotkit_emit_state" if _copilotkit_emit_state else "langgraph_state_delta",
@@ -308,12 +456,15 @@ def _trace_summary(node: str, status: str, model_calls: int = 0, tool_calls: int
 def _span_statuses(active_node: str, active_status: str) -> list[dict]:
     spans = [
         "intake",
+        "planner",
         "analyst_treasury",
         "analyst_fpna",
         "analyst_risk",
         "analyst_procurement",
+        "challenge_panel",
         "debate_round",
         "cfo_synthesis",
+        "governance",
         "reliability_auditor",
         "persist_decision",
     ]
@@ -464,7 +615,73 @@ def _stream_state(state: DebateState, patch: dict) -> dict:
 
 
 async def _emit_patch(state: DebateState, config: RunnableConfig, **patch) -> None:
-    await _emit(config, _stream_state(state, patch))
+    # Fold the live operator command-state (Redis) into every emit so commands
+    # issued mid-debate stream straight back through the same AG-UI channel.
+    await _emit(config, _stream_state(state, AGUI.merge_command_state(patch, ROOM)))
+
+
+def _with_command_state(return_dict: dict) -> dict:
+    """Attach the live command-state keys to a node's return dict.
+
+    Keeps the eight command keys current in the merged LangGraph state between
+    nodes so the UI never flickers back to empty between streamed emits.
+    """
+    return AGUI.merge_command_state(return_dict, ROOM)
+
+
+def _command_focus_prompt() -> str:
+    """Render outstanding operator commands as a prompt block the council reads.
+
+    This is what makes the command layer a real agent/UI contract rather than a
+    display: pinned evidence, the requested scenario, a routed/clarify focus, and
+    any standing challenge are injected into the live council prompts.
+    """
+    state = AGUI.load_command_state(ROOM)
+    parts: list[str] = []
+    focus = state.get("agent_focus") or {}
+    if focus.get("question"):
+        parts.append(
+            f"OPERATOR {str(focus.get('mode', 'focus')).upper()} → {focus.get('label', focus.get('agent'))}: "
+            f"{focus.get('question')}"
+        )
+    pins = state.get("pinned_evidence") or []
+    if pins:
+        pinned = "; ".join(f"{p.get('title')}: {p.get('detail')}" for p in pins[-4:])
+        parts.append(f"OPERATOR-PINNED EVIDENCE (weigh explicitly): {pinned}")
+    scenario = state.get("requested_scenario") or {}
+    if scenario.get("mode") == "single" and scenario.get("impact"):
+        parts.append(
+            f"OPERATOR SCENARIO '{scenario.get('label')}': {json.dumps(scenario.get('impact'))}"
+        )
+    elif scenario.get("mode") == "compare" and scenario.get("options"):
+        labels = ", ".join(o.get("label", "?") for o in scenario.get("options", []))
+        parts.append(f"OPERATOR IS COMPARING OPTIONS: {labels}")
+    if not parts:
+        return ""
+    return (
+        "\n\nLIVE OPERATOR DIRECTIVES (the human steering this debate — address them "
+        "explicitly and ground any response in the figures):\n- " + "\n- ".join(parts)
+    )
+
+
+async def _honor_pause(state: DebateState, config: RunnableConfig, node_label: str) -> None:
+    """Cooperatively hold at a node boundary while an operator pause is active.
+
+    Bounded by ``PAUSE_MAX_SECONDS`` and released the instant the operator
+    resumes. Only the analysis/debate boundaries call this; synthesis and
+    persistence never pause, so a submitted decision always reaches a ruling.
+    """
+    if not AGUI.is_paused(ROOM):
+        return
+    await _emit_patch(
+        state,
+        config,
+        current_phase=f"Paused by operator before {node_label}",
+    )
+    waited = 0.0
+    while AGUI.is_paused(ROOM) and waited < PAUSE_MAX_SECONDS:
+        await asyncio.sleep(PAUSE_POLL_SECONDS)
+        waited += PAUSE_POLL_SECONDS
 
 
 def _sponsor_event(health: dict) -> dict:
@@ -493,8 +710,13 @@ def _redis_ping_activity(health: dict) -> dict:
 @weave.op(name="intake")
 async def intake_node(state: DebateState, config: RunnableConfig) -> dict:
     require_live_ready()
+    # Fresh debate → clear any command state from a prior run so the operator
+    # command panel starts empty and accumulates commands for this run only.
+    AGUI.reset_command_state(ROOM)
     decision = _extract_decision(state.get("messages", []))
     health = sponsor_health()
+    realtime = realtime_health()
+    telemetry = init_telemetry()
     agent_statuses = _set_agent_status(
         _initial_agent_statuses(),
         "cfo",
@@ -502,8 +724,8 @@ async def intake_node(state: DebateState, config: RunnableConfig) -> dict:
         detail="Convening the council and loading sponsor-backed context",
     )
     events = [
-        _event("OpenAI", "GPT-5.5 reasoning selected", f"{LLM_PROVIDER}:{LLM_MODEL} · {LLM_REASONING_EFFORT}", "positive"),
-        _event("OpenAI", "Realtime 2 voice armed", OPENAI_REALTIME_MODEL, "positive"),
+        _event("OpenAI", "Reasoning model selected", f"{LLM_PROVIDER}:{LLM_MODEL} · {model_family()} · {LLM_REASONING_EFFORT}", "positive"),
+        _event("OpenAI", "Realtime 2 voice armed" if realtime.get("ready") else "Realtime 2 voice config incomplete", realtime.get("detail") or OPENAI_REALTIME_MODEL, "positive" if realtime.get("ready") else "warning"),
         _event("W&B Weave", "Trace span opened", "intake", "positive"),
         _event("CopilotKit", "AG-UI state stream", "finance_department", "positive"),
         _sponsor_event(health),
@@ -516,22 +738,36 @@ async def intake_node(state: DebateState, config: RunnableConfig) -> dict:
         current_phase="Convening council",
         agent_statuses=agent_statuses,
         observability_events=events,
-        trace_summary=_trace_summary("intake", "running", tool_calls=3),
+        trace_summary=_trace_summary("intake", "running", tool_calls=3, telemetry=telemetry),
         redis_activity=[_redis_ping_activity(health)],
         sponsor_health=health,
         reliability_scores=[],
         learning_report={},
+        model_telemetry=telemetry,
+        realtime_status=realtime,
     )
     context = {
         "financials": json.loads(_tool_body(get_company_financials)),
         "vendors": json.loads(_tool_body(list_vendors)),
         "policies": json.loads(_tool_body(search_finance_policies, query=decision or "financial decision")),
     }
+    # Fold in imported finance-operations data + reconciliation, but only when a
+    # connector has actually ingested data — keeps the core demo unchanged and
+    # never invents operations facts. Best-effort: must not fail the debate.
+    try:
+        from src.integrations.service import operations_context_snapshot
+
+        operations = operations_context_snapshot()
+        if operations:
+            context["operations"] = operations
+    except Exception as exc:  # pragma: no cover - defensive
+        print(f"[intake] operations snapshot skipped: {exc}")
+    prompt_versions = prompt_versions_payload(context)
     framing = _turn(
         "cfo",
         type="framing",
         headline="Convening the committee",
-        argument=f"The committee will evaluate: “{decision}”. Treasury, FP&A, Risk & Audit, and Procurement will each weigh in before I rule.",
+        argument=f"The committee will evaluate: “{decision}”. The evidence planner routes Redis-backed facts, then Treasury, FP&A, Risk & Audit, and Procurement weigh in, the challenge panel verifies grounding, and I rule.",
         key_points=[],
     )
     return {
@@ -544,6 +780,19 @@ async def intake_node(state: DebateState, config: RunnableConfig) -> dict:
         "recommendation": {},
         "reliability_scores": [],
         "learning_report": {},
+        "strategic_plan": {},
+        "decision_type": "",
+        "decision_plan": {},
+        "evidence_plan": [],
+        "tool_plan": [],
+        "follow_up": {},
+        "challenge_report": {},
+        "evidence_gaps": [],
+        "board_memo": {},
+        "operator_actions": [],
+        "model_telemetry": telemetry,
+        "realtime_status": realtime,
+        "prompt_versions": prompt_versions,
         "agent_statuses": _set_agent_status(
             agent_statuses,
             "cfo",
@@ -554,9 +803,10 @@ async def intake_node(state: DebateState, config: RunnableConfig) -> dict:
         "observability_events": _append(
             events,
             _event("Redis", "Financial context loaded", "JSON company record, vendor search, vector policy RAG", "positive"),
+            _event("OpenAI", "Prompt versions pinned", f"{len(prompt_versions)} versioned prompts for W&B promotion gates", "info"),
             _event("W&B Weave", "Trace span closed", "intake", "positive"),
         ),
-        "trace_summary": _trace_summary("intake", "complete", tool_calls=3),
+        "trace_summary": _trace_summary("intake", "complete", tool_calls=3, telemetry=telemetry),
         "redis_activity": [
             _redis_ping_activity(health),
             _redis_activity("RedisJSON", f"Loaded {_company_name(context)} financial system of record", "json"),
@@ -567,24 +817,160 @@ async def intake_node(state: DebateState, config: RunnableConfig) -> dict:
     }
 
 
+@weave.op(name="planner")
+async def planner_node(state: DebateState, config: RunnableConfig) -> dict:
+    """Classify the decision and decide which Redis-backed evidence each role needs."""
+    require_live_ready()
+    await _honor_pause(state, config, "evidence planning")
+    health = sponsor_health()
+    company = _company_name(state.get("context"))
+    stage = _company_stage(state.get("context"))
+    agent_statuses = _set_agent_status(
+        state.get("agent_statuses"),
+        "planner",
+        status="thinking",
+        detail="Classifying the decision and routing evidence",
+    )
+    events = _append(
+        state.get("observability_events"),
+        _event("W&B Weave", "Trace span opened", "planner", "positive"),
+        _event("OpenAI", "Structured planning call", "decision type + evidence plan", "info"),
+        _sponsor_event(health),
+    )
+    await _emit_patch(
+        state,
+        config,
+        phase="planning",
+        current_phase="Evidence planning",
+        agent_statuses=agent_statuses,
+        observability_events=events,
+        trace_summary=_trace_summary("planner", "running", model_calls=1, telemetry=state.get("model_telemetry")),
+        sponsor_health=health,
+    )
+
+    result = await classify_and_plan(
+        decision=state.get("decision", ""),
+        context=state.get("context", {}),
+        company=company,
+        stage=stage,
+        config=config,
+    )
+    telemetry = merge_telemetry(state.get("model_telemetry"), result.telemetry)
+
+    if not result.ok:
+        # Honest degradation: no plan → analysts still run on full live context.
+        detail = result.telemetry.error or result.telemetry.refusal or "Planner returned no plan"
+        agent_statuses = _set_agent_status(agent_statuses, "planner", status="warning", headline="Planning unavailable", detail=detail)
+        fallback = DecisionPlan(decision_type="general", title=(state.get("decision", "") or "decision")[:60], summary=state.get("decision", ""))
+        return {
+            "decision_type": "general",
+            "decision_plan": {},
+            "evidence_plan": [],
+            "tool_plan": tool_plan_entries(fallback),
+            "follow_up": {},
+            "phase": "analysis",
+            "current_phase": "Evidence planning degraded",
+            "agent_statuses": agent_statuses,
+            "model_telemetry": telemetry,
+            "observability_events": _append(
+                events,
+                _event("OpenAI", "Planner degraded", detail, "warning"),
+                _event("W&B Weave", "Trace span closed", "planner", "positive"),
+            ),
+            "trace_summary": _trace_summary("planner", "warning", model_calls=1, telemetry=telemetry),
+            "sponsor_health": health,
+        }
+
+    plan: DecisionPlan = result.parsed
+    plan_dict = plan.model_dump()
+    plan_dict["decision_type"] = plan.decision_type.value
+    role_plans = plan_dict.get("role_plans", [])
+    tool_plan = tool_plan_entries(plan)
+    missing_facts = [fact.name for fact in plan.required_facts if not fact.available]
+    follow_up_questions = [question.model_dump() for question in plan.follow_up_questions]
+    follow_up = {
+        "needed": bool(missing_facts or follow_up_questions),
+        "questions": follow_up_questions,
+        "missing_facts": missing_facts,
+        "assumptions": plan.assumptions,
+        "source": "planner",
+    }
+    framing = _turn(
+        "cfo",
+        type="framing",
+        headline=f"Classified: {plan.decision_type.value.replace('_', ' ')}",
+        argument=(
+            f"{plan.summary} "
+            + (
+                f"Proceeding with {len(missing_facts)} required fact(s) missing under explicit assumptions."
+                if missing_facts
+                else "All required facts are present in the system of record."
+            )
+        ),
+        key_points=plan.decision_specific_focus[:3],
+    )
+    agent_statuses = _set_agent_status(
+        agent_statuses,
+        "planner",
+        status="done",
+        stance="conditional" if missing_facts else "support",
+        headline=f"{plan.decision_type.value.replace('_', ' ')} · {len(tool_plan)} planned tool steps",
+        detail=plan.summary,
+    )
+    follow_up_events = []
+    if follow_up["needed"]:
+        follow_up_events.append(
+            _event("CopilotKit", "Follow-up requested via AG-UI", f"{len(follow_up_questions)} clarifying question(s); proceeding under assumptions", "warning")
+        )
+    return {
+        "decision_type": plan.decision_type.value,
+        "decision_plan": plan_dict,
+        "evidence_plan": role_plans,
+        "tool_plan": tool_plan,
+        "follow_up": follow_up,
+        "transcript": state.get("transcript", []) + [framing],
+        "phase": "analysis",
+        "current_phase": f"Evidence plan ready · {plan.decision_type.value.replace('_', ' ')}",
+        "agent_statuses": agent_statuses,
+        "model_telemetry": telemetry,
+        "observability_events": _append(
+            events,
+            *follow_up_events,
+            _event("OpenAI", "Decision classified", plan.decision_type.value, "positive"),
+            _event("Redis", "Evidence routed", f"{len(tool_plan)} planned tool/RAG steps across roles", "positive"),
+            _event("W&B Weave", "Trace span closed", "planner", "positive"),
+        ),
+        "trace_summary": _trace_summary("planner", "complete", model_calls=1, telemetry=telemetry, tool_plan=tool_plan),
+        "redis_activity": _append(
+            state.get("redis_activity"),
+            _redis_ping_activity(health),
+            _redis_activity("Evidence plan", f"{len(role_plans)} role plans, {len(tool_plan)} tool steps", "plan"),
+        ),
+        "sponsor_health": health,
+    }
+
+
 def make_analyst_node(role_key: str):
     persona = ROSTER[role_key]
 
     @weave.op(name=f"analyst_{role_key}")
     async def node(state: DebateState, config: RunnableConfig) -> dict:
         require_live_ready()
+        await _honor_pause(state, config, persona["label"])
         health = sponsor_health()
         company_name = _company_name(state.get("context"))
+        decision_type = state.get("decision_type") or "general"
+        role_plan = _role_plan(state.get("decision_plan"), role_key)
         agent_statuses = _set_agent_status(
             state.get("agent_statuses"),
             role_key,
             status="thinking",
-            detail=f"{persona['label']} is forming a grounded position",
+            detail=f"{persona['label']} is gathering planned evidence",
         )
         events = _append(
             state.get("observability_events"),
             _event("W&B Weave", "Trace span opened", f"analyst_{role_key}", "positive"),
-            _event("OpenAI", "Structured position call", persona["label"], "info"),
+            _event("OpenAI", "Structured position call", f"{persona['label']} · {decision_type}", "info"),
             _event("Redis", "Redis-grounded context active", "Using intake financials, vendors, and policy hits", "positive"),
             _sponsor_event(health),
         )
@@ -595,34 +981,55 @@ def make_analyst_node(role_key: str):
             current_phase=f"{persona['label']} analysis",
             agent_statuses=agent_statuses,
             observability_events=events,
-            trace_summary=_trace_summary(f"analyst_{role_key}", "running", model_calls=1),
+            trace_summary=_trace_summary(f"analyst_{role_key}", "running", model_calls=1, telemetry=state.get("model_telemetry")),
             redis_activity=_append(
                 state.get("redis_activity"),
                 _redis_ping_activity(health),
-                _redis_activity("Redis context", f"{persona['label']} using intake context", "state"),
+                _redis_activity("Evidence gather", f"{persona['label']} executing planned Redis evidence", "state"),
             ),
             sponsor_health=health,
         )
-        model = llm(0.4).with_structured_output(Position)
-        system = SystemMessage(
-            content=(
-                f"You are {persona['label']} at {company_name} (Series A), a member of its "
-                f"investment committee. Your mandate is {persona['mandate']}. Evaluate the decision "
-                f"strictly from your function's perspective. Cite specific figures from the company "
-                f"context, including forecast, cohort, pipeline, audit, vendor, and outcome history when relevant. "
-                f"Take a clear stance (support / oppose / conditional) and defend it crisply. "
-                f"Speak like a senior finance executive in a boardroom — precise, quantified, no fluff. "
-                f"Never mention being an AI or a model."
-            )
+
+        # Multi-step, live evidence gathering against Redis before the model speaks.
+        bundle = gather_role_evidence(role_plan, state.get("context", {}))
+        redis_activity = _append(
+            state.get("redis_activity"),
+            _redis_ping_activity(health),
+            *[_redis_activity(item["label"], item["detail"], item["kind"]) for item in bundle.redis_activity],
         )
-        human = HumanMessage(
-            content=(
-                f"DECISION UNDER REVIEW:\n{state['decision']}\n\n"
-                f"COMPANY CONTEXT ({company_name}):\n{json.dumps(state['context'])}\n\n"
-                f"Give your position."
-            )
+        result = await analyst_position(
+            role_key=role_key,
+            persona=persona,
+            decision=state.get("decision", ""),
+            context=state.get("context", {}),
+            company=company_name,
+            stage=_company_stage(state.get("context")),
+            decision_type=decision_type,
+            decision_focus=_decision_focus(state.get("decision_plan")),
+            evidence=bundle.evidence,
+            operator_directives=_command_focus_prompt(),
+            config=config,
         )
-        pos: Position = await model.ainvoke([system, human], config)
+        telemetry = merge_telemetry(state.get("model_telemetry"), result.telemetry)
+        prompt_version = next((pv for pv in (state.get("prompt_versions") or []) if pv.get("role") == role_key), {})
+
+        if not result.ok:
+            detail = result.telemetry.refusal or result.telemetry.error or "No grounded position produced"
+            entry = _turn(role_key, type="position", headline="Model could not produce a grounded position", argument=detail, key_points=[], cited_metrics=[], prompt_version=prompt_version.get("version"), error=detail)
+            agent_statuses = _set_agent_status(agent_statuses, role_key, status="error", headline="Position unavailable", detail=detail)
+            return {
+                "transcript": state.get("transcript", []) + [entry],
+                "phase": "analysis",
+                "current_phase": f"{persona['label']} position unavailable",
+                "agent_statuses": agent_statuses,
+                "model_telemetry": telemetry,
+                "observability_events": _append(events, _event("OpenAI", f"{persona['label']} call failed", detail, "warning"), _event("W&B Weave", "Trace span closed", f"analyst_{role_key}", "positive")),
+                "trace_summary": _trace_summary(f"analyst_{role_key}", "warning", model_calls=1, telemetry=telemetry),
+                "redis_activity": redis_activity,
+                "sponsor_health": health,
+            }
+
+        pos = result.parsed
         entry = _turn(
             role_key,
             type="position",
@@ -630,6 +1037,11 @@ def make_analyst_node(role_key: str):
             headline=pos.headline,
             argument=pos.argument,
             key_points=pos.key_points,
+            cited_metrics=pos.cited_metrics,
+            evidence_used=pos.evidence_used,
+            prompt_version=prompt_version.get("version"),
+            tokens=result.telemetry.total_tokens,
+            cost_usd=result.telemetry.cost_usd,
         )
         agent_statuses = _set_agent_status(
             agent_statuses,
@@ -645,25 +1057,128 @@ def make_analyst_node(role_key: str):
             "phase": "analysis",
             "current_phase": f"{persona['label']} position recorded",
             "agent_statuses": agent_statuses,
+            "model_telemetry": telemetry,
             "observability_events": _append(
                 events,
+                _event("Redis", "Evidence grounded", f"{persona['label']} cited {len(pos.cited_metrics)} figure(s); {bundle.policy_hits} policy hit(s)", "positive"),
                 _event("W&B Weave", "Trace span closed", f"analyst_{role_key}", "positive"),
             ),
-            "trace_summary": _trace_summary(f"analyst_{role_key}", "complete", model_calls=1),
-            "redis_activity": _append(
-                state.get("redis_activity"),
-                _redis_ping_activity(health),
-                _redis_activity("Redis context", f"{persona['label']} position grounded in intake context", "state"),
-            ),
+            "trace_summary": _trace_summary(f"analyst_{role_key}", "complete", model_calls=1, telemetry=telemetry),
+            "redis_activity": redis_activity,
             "sponsor_health": health,
         }
 
     return node
 
 
+@weave.op(name="challenge_panel")
+async def challenge_node(state: DebateState, config: RunnableConfig) -> dict:
+    """A second model pass that verifies whether each role cited enough concrete numbers."""
+    require_live_ready()
+    await _honor_pause(state, config, "challenge panel")
+    health = sponsor_health()
+    company = _company_name(state.get("context"))
+    positions = state.get("positions", [])
+    agent_statuses = _set_agent_status(
+        state.get("agent_statuses"),
+        "challenge",
+        status="thinking",
+        detail="Verifying each role cited enough concrete numbers",
+    )
+    events = _append(
+        state.get("observability_events"),
+        _event("W&B Weave", "Trace span opened", "challenge_panel", "positive"),
+        _event("OpenAI", "Evidence grounding call", f"{len(positions)} positions audited", "info"),
+        _sponsor_event(health),
+    )
+    await _emit_patch(
+        state,
+        config,
+        phase="challenge",
+        current_phase="Evidence challenge panel",
+        agent_statuses=agent_statuses,
+        observability_events=events,
+        trace_summary=_trace_summary("challenge_panel", "running", model_calls=1, telemetry=state.get("model_telemetry")),
+        sponsor_health=health,
+    )
+
+    result = await challenge_panel(decision=state.get("decision", ""), positions=positions, company=company, config=config)
+    telemetry = merge_telemetry(state.get("model_telemetry"), result.telemetry)
+
+    if not result.ok:
+        detail = result.telemetry.refusal or result.telemetry.error or "Challenge panel unavailable"
+        evidence_gaps = [f"Challenge panel unavailable: {detail}"]
+        challenge_report = {"summary": detail, "overall_grounding": None, "findings": [], "unresolved_gaps": evidence_gaps, "error": detail}
+        agent_statuses = _set_agent_status(agent_statuses, "challenge", status="warning", headline="Challenge unavailable", detail=detail)
+        return {
+            "challenge_report": challenge_report,
+            "evidence_gaps": evidence_gaps,
+            "phase": "challenge",
+            "current_phase": "Evidence challenge degraded",
+            "agent_statuses": agent_statuses,
+            "model_telemetry": telemetry,
+            "observability_events": _append(events, _event("OpenAI", "Challenge panel degraded", detail, "warning"), _event("W&B Weave", "Trace span closed", "challenge_panel", "positive")),
+            "trace_summary": _trace_summary("challenge_panel", "warning", model_calls=1, telemetry=telemetry, evidence_gaps=evidence_gaps),
+            "sponsor_health": health,
+        }
+
+    report = result.parsed
+    challenge_report = report.model_dump()
+    evidence_gaps = list(report.unresolved_gaps)
+    for finding in report.findings:
+        for gap in finding.missing_evidence:
+            evidence_gaps.append(f"{finding.role}: {gap}")
+    weak = [finding.role for finding in report.findings if not finding.cited_enough_numbers]
+
+    challenge_turn = {
+        "agent": "challenge",
+        "label": "Evidence Challenge Panel",
+        "role": "Grounding QA",
+        "monogram": "EC",
+        "type": "challenge",
+        "headline": f"Council grounding · {report.overall_grounding}%",
+        "argument": report.summary,
+        "key_points": [finding.challenge for finding in report.findings][:3],
+    }
+    agent_statuses = _set_agent_status(
+        agent_statuses,
+        "challenge",
+        status="done" if (report.overall_grounding or 0) >= 60 else "warning",
+        headline=f"Grounding {report.overall_grounding}%",
+        detail=report.summary,
+    )
+    # Flag under-grounded analysts on their own seats so the UI reflects it.
+    for finding in report.findings:
+        role = _normalize_agent_id(finding.role)
+        if role in ANALYSTS and not finding.cited_enough_numbers:
+            agent_statuses = _set_agent_status(agent_statuses, role, evidence_flagged=True, grounding_score=finding.grounding_score)
+    return {
+        "challenge_report": challenge_report,
+        "evidence_gaps": evidence_gaps[:24],
+        "transcript": state.get("transcript", []) + [challenge_turn],
+        "phase": "challenge",
+        "current_phase": "Evidence verified" if not weak else f"Evidence gaps flagged ({len(weak)})",
+        "agent_statuses": agent_statuses,
+        "model_telemetry": telemetry,
+        "observability_events": _append(
+            events,
+            _event(
+                "OpenAI",
+                "Grounding verified" if not weak else "Evidence gaps flagged",
+                f"overall {report.overall_grounding}%" + (f"; weak: {', '.join(weak)}" if weak else ""),
+                "positive" if not weak else "warning",
+            ),
+            _event("W&B Weave", "Trace span closed", "challenge_panel", "positive"),
+        ),
+        "trace_summary": _trace_summary("challenge_panel", "complete", model_calls=1, telemetry=telemetry, evidence_gaps=evidence_gaps),
+        "sponsor_health": health,
+    }
+
+
 @weave.op(name="debate_round")
 async def debate_node(state: DebateState, config: RunnableConfig) -> dict:
     require_live_ready()
+    await _honor_pause(state, config, "cross-examination")
     health = sponsor_health()
     company_name = _company_name(state.get("context"))
     positions = state.get("positions", [])
@@ -689,7 +1204,7 @@ async def debate_node(state: DebateState, config: RunnableConfig) -> dict:
         current_phase="Committee cross-examination",
         agent_statuses=agent_statuses,
         observability_events=events,
-        trace_summary=_trace_summary("debate_round", "running", model_calls=1),
+        trace_summary=_trace_summary("debate_round", "running", model_calls=1, telemetry=state.get("model_telemetry")),
         redis_activity=_append(
             state.get("redis_activity"),
             _redis_ping_activity(health),
@@ -697,22 +1212,21 @@ async def debate_node(state: DebateState, config: RunnableConfig) -> dict:
         ),
         sponsor_health=health,
     )
-    model = llm(0.55).with_structured_output(Rebuttals)
-    system = SystemMessage(
-        content=(
-            f"You are moderating an investment-committee debate at {company_name}. Given each "
-            "function's position, produce 3-4 sharp cross-examination exchanges where members "
-            "challenge each other's reasoning with specific numbers and trade-offs. Keep it "
-            "professional, substantive, and concrete — like a real boardroom, not small talk."
-        )
+    result = await cross_examination(
+        decision=state.get("decision", ""),
+        positions=positions,
+        challenge_report=state.get("challenge_report"),
+        company=company_name,
+        operator_directives=_command_focus_prompt(),
+        config=config,
     )
-    slim = [{"role": p["role"], "stance": p.get("stance"), "headline": p.get("headline"), "key_points": p.get("key_points")} for p in positions]
-    human = HumanMessage(content=f"DECISION:\n{state['decision']}\n\nPOSITIONS:\n{json.dumps(slim)}")
-    reb: Rebuttals = await model.ainvoke([system, human], config)
-    turns = [
-        {"agent": "debate", "type": "rebuttal", "from_role": e.from_role, "to_role": e.to_role, "point": e.point}
-        for e in reb.exchanges
-    ]
+    telemetry = merge_telemetry(state.get("model_telemetry"), result.telemetry)
+    turns: list[dict] = []
+    if result.ok:
+        turns = [
+            {"agent": "debate", "type": "rebuttal", "from_role": e.from_role, "to_role": e.to_role, "point": e.point}
+            for e in result.parsed.exchanges
+        ]
     for role_key in ANALYSTS:
         agent_statuses = _set_agent_status(
             agent_statuses,
@@ -720,16 +1234,18 @@ async def debate_node(state: DebateState, config: RunnableConfig) -> dict:
             status="speaking",
             detail="Challenge recorded in the debate transcript",
         )
+    status = "complete" if result.ok else "warning"
+    closing_events = [_event("W&B Weave", "Trace span closed", "debate_round", "positive")]
+    if not result.ok:
+        closing_events.insert(0, _event("OpenAI", "Cross-examination degraded", result.telemetry.error or result.telemetry.refusal or "no exchanges", "warning"))
     return {
         "transcript": state.get("transcript", []) + turns,
         "phase": "debate",
-        "current_phase": "Cross-examination complete",
+        "current_phase": "Cross-examination complete" if result.ok else "Cross-examination degraded",
         "agent_statuses": agent_statuses,
-        "observability_events": _append(
-            events,
-            _event("W&B Weave", "Trace span closed", "debate_round", "positive"),
-        ),
-        "trace_summary": _trace_summary("debate_round", "complete", model_calls=1),
+        "model_telemetry": telemetry,
+        "observability_events": _append(events, *closing_events),
+        "trace_summary": _trace_summary("debate_round", status, model_calls=1, telemetry=telemetry),
         "redis_activity": _append(
             state.get("redis_activity"),
             _redis_ping_activity(health),
@@ -744,6 +1260,7 @@ async def synthesis_node(state: DebateState, config: RunnableConfig) -> dict:
     require_live_ready()
     health = sponsor_health()
     company_name = _company_name(state.get("context"))
+    decision_type = state.get("decision_type") or "general"
     agent_statuses = _set_agent_status(
         state.get("agent_statuses"),
         "cfo",
@@ -764,7 +1281,7 @@ async def synthesis_node(state: DebateState, config: RunnableConfig) -> dict:
         current_phase="CFO synthesis",
         agent_statuses=agent_statuses,
         observability_events=events,
-        trace_summary=_trace_summary("cfo_synthesis", "running", model_calls=1, tool_calls=1),
+        trace_summary=_trace_summary("cfo_synthesis", "running", model_calls=1, tool_calls=1, telemetry=state.get("model_telemetry")),
         redis_activity=_append(
             state.get("redis_activity"),
             _redis_ping_activity(health),
@@ -772,77 +1289,145 @@ async def synthesis_node(state: DebateState, config: RunnableConfig) -> dict:
         ),
         sponsor_health=health,
     )
-    model = llm(0.3).with_structured_output(Recommendation)
     positions = state.get("positions", [])
     debate_turns = [t for t in state.get("transcript", []) if t.get("type") == "rebuttal"]
-    system = SystemMessage(
-        content=(
-            f"You are the Chief Financial Officer of {company_name}, chairing the investment "
-            "committee. You have heard each function's position and the cross-examination. Weigh "
-            "them, resolve the disagreements, and issue a final, board-ready decision. Be decisive "
-            "and quantified. Also estimate the decision's incremental monthly cost, one-time cost, "
-            "and added monthly revenue (numbers only, 0 if none) so runway impact can be computed. "
-            "Use the richer Acme operating data: forecast downside, churn cohorts, pipeline stage risk, "
-            "vendor obligations, security incidents, audit findings, board constraints, and prior outcomes."
-        )
+
+    # Strategic-planning digital twin: when the prompt asks for a multi-month plan,
+    # compute it deterministically *first* (cash / burn / runway / ARR / churn /
+    # hiring ramps / vendor savings / financing, month by month) so the CFO
+    # narrates real figures instead of inventing them. No model output feeds these
+    # numbers; the planning engine persists the plan to Redis with provenance.
+    strategic_plan: dict = {}
+    plan_prompt = ""
+    if PL.is_strategic_request(state.get("decision", "")):
+        try:
+            _plan = PL.plan_from_decision(state["decision"])
+            strategic_plan = _plan.model_dump()
+            plan_prompt = (
+                "\n\nDETERMINISTIC STRATEGIC PLAN (authoritative figures computed by the planning "
+                "engine — ground your recommendation in these and do not invent numbers):\n"
+                + json.dumps(PL.summarize_for_model(_plan), default=str)
+            )
+            events = _append(
+                events,
+                _event(
+                    "Redis",
+                    "Strategic plan computed",
+                    f"{_plan.horizon_months}-month deterministic plan {_plan.id} "
+                    f"({_plan.playbook_label or 'base operating plan'})",
+                    "positive",
+                ),
+            )
+        except Exception as exc:  # planning must never break the debate
+            print(f"[synthesis] strategic plan skipped: {exc}")
+
+    # OpenAI-native CFO synthesis (typed, telemetry-captured). Operator directives
+    # and the deterministic plan are injected so the ruling is grounded, not guessed.
+    rec_result = await cfo_recommendation(
+        decision=state.get("decision", ""),
+        context=state.get("context", {}),
+        positions=positions,
+        debate_turns=debate_turns,
+        challenge_report=state.get("challenge_report"),
+        decision_plan=state.get("decision_plan"),
+        company=company_name,
+        decision_type=decision_type,
+        operator_directives=_command_focus_prompt() + plan_prompt,
+        config=config,
     )
-    human = HumanMessage(
-        content=(
-            f"DECISION:\n{state['decision']}\n\n"
-            f"COMPANY CONTEXT:\n{json.dumps(state['context'])}\n\n"
-            f"POSITIONS:\n{json.dumps([{'role': p['role'], 'stance': p.get('stance'), 'headline': p.get('headline'), 'argument': p.get('argument')} for p in positions])}\n\n"
-            f"CROSS-EXAMINATION:\n{json.dumps([{'from': t['from_role'], 'to': t['to_role'], 'point': t['point']} for t in debate_turns])}"
-        )
-    )
-    rec: Recommendation = await model.ainvoke([system, human], config)
+    telemetry = merge_telemetry(state.get("model_telemetry"), rec_result.telemetry)
+    if rec_result.ok:
+        rec = rec_result.parsed
+        rec_decision, rec_confidence, rec_rationale = rec.decision, rec.confidence, rec.rationale
+        rec_key_risks, rec_conditions = rec.key_risks, rec.conditions
+        extra_monthly, one_time, added_rev = rec.estimated_monthly_cost, rec.estimated_one_time_cost, rec.estimated_added_monthly_revenue
+    else:
+        # Honest surfacing: DEFER with the real error as rationale (not fabricated analysis).
+        detail = rec_result.telemetry.refusal or rec_result.telemetry.error or "CFO synthesis returned no recommendation"
+        rec_decision, rec_confidence, rec_rationale = "DEFER", 0, f"Synthesis could not complete live: {detail}"
+        rec_key_risks, rec_conditions = ["CFO synthesis call did not complete"], []
+        extra_monthly = one_time = added_rev = 0.0
 
     # Precise runway impact, computed (not hallucinated) from the CFO's estimates.
     impact = json.loads(
         _tool_body(
             compute_runway,
-            extra_monthly_spend=rec.estimated_monthly_cost,
-            one_time_cost=rec.estimated_one_time_cost,
-            added_monthly_revenue=rec.estimated_added_monthly_revenue,
+            extra_monthly_spend=extra_monthly,
+            one_time_cost=one_time,
+            added_monthly_revenue=added_rev,
         )
     )
     recommendation = {
-        "decision": rec.decision,
-        "confidence": rec.confidence,
-        "rationale": rec.rationale,
-        "key_risks": rec.key_risks,
-        "conditions": rec.conditions,
+        "decision": rec_decision,
+        "confidence": rec_confidence,
+        "rationale": rec_rationale,
+        "key_risks": rec_key_risks,
+        "conditions": rec_conditions,
         "impact": impact,
+        "decision_type": decision_type,
+        "source": "cfo" if rec_result.ok else "model_error",
     }
+
+    # Board memo + operator action checklist (second structured pass, grounded in computed runway).
+    memo_dict: dict = {}
+    operator_actions: list = []
+    memo_status = "skipped"
+    if rec_result.ok:
+        memo_result = await board_memo(
+            decision=state.get("decision", ""),
+            company=company_name,
+            decision_type=decision_type,
+            recommendation=recommendation,
+            impact=impact,
+            positions=positions,
+            challenge_report=state.get("challenge_report"),
+            config=config,
+        )
+        telemetry = merge_telemetry(telemetry, memo_result.telemetry)
+        if memo_result.ok:
+            memo_dict = memo_result.parsed.model_dump()
+            operator_actions = memo_dict.get("operator_actions", [])
+            memo_status = "ready"
+        else:
+            memo_status = memo_result.telemetry.refusal or memo_result.telemetry.error or "memo unavailable"
+
     closing = _turn(
         "cfo",
         type="decision",
-        headline=f"{rec.decision} · {rec.confidence}% confidence",
-        argument=rec.rationale,
-        key_points=rec.conditions or rec.key_risks,
+        headline=f"{rec_decision} · {rec_confidence}% confidence",
+        argument=rec_rationale,
+        key_points=rec_conditions or rec_key_risks,
+        tokens=telemetry.get("total_tokens"),
+        cost_usd=telemetry.get("estimated_cost_usd"),
     )
     summary = (
-        f"**Recommendation: {rec.decision}** ({rec.confidence}% confidence)\n\n{rec.rationale}"
+        f"**Recommendation: {rec_decision}** ({rec_confidence}% confidence)\n\n{rec_rationale}"
     )
     agent_statuses = _set_agent_status(
         agent_statuses,
         "cfo",
-        status="speaking",
-        stance=rec.decision.lower(),
-        headline=f"{rec.decision} · {rec.confidence}% confidence",
-        detail=rec.rationale,
+        status="speaking" if rec_result.ok else "warning",
+        stance=rec_decision.lower(),
+        headline=f"{rec_decision} · {rec_confidence}% confidence",
+        detail=rec_rationale,
     )
     return {
         "recommendation": recommendation,
+        "board_memo": memo_dict,
+        "operator_actions": operator_actions,
+        "strategic_plan": strategic_plan,
         "transcript": state.get("transcript", []) + [closing],
         "phase": "synthesis",
         "current_phase": "Committee resolution issued",
         "agent_statuses": agent_statuses,
+        "model_telemetry": telemetry,
         "observability_events": _append(
             events,
             _event("Redis", "Runway impact computed", "compute_runway tool returned scenario deltas", "positive"),
+            _event("OpenAI", "Board memo ready" if memo_status == "ready" else "Board memo skipped", f"{len(operator_actions)} operator actions" if memo_status == "ready" else memo_status, "positive" if memo_status == "ready" else "warning"),
             _event("W&B Weave", "Trace span closed", "cfo_synthesis", "positive"),
         ),
-        "trace_summary": _trace_summary("cfo_synthesis", "complete", model_calls=1, tool_calls=1),
+        "trace_summary": _trace_summary("cfo_synthesis", "complete" if rec_result.ok else "warning", model_calls=2, tool_calls=1, telemetry=telemetry),
         "redis_activity": _append(
             state.get("redis_activity"),
             _redis_ping_activity(health),
@@ -851,6 +1436,110 @@ async def synthesis_node(state: DebateState, config: RunnableConfig) -> dict:
         "sponsor_health": health,
         "messages": [AIMessage(content=summary)],
     }
+
+
+@weave.op(name="governance")
+async def governance_node(state: DebateState, config: RunnableConfig) -> dict:
+    """Turn the CFO recommendation into a governed decision: evaluate board policy
+    controls, route the approval, write the immutable audit trail, and set
+    obligations + monitoring. Deterministic and grounded in the Redis policy rules —
+    no LLM call, and no human approval is ever fabricated (the request is recorded as
+    pending or system-cleared)."""
+    require_live_ready()
+    health = sponsor_health()
+    rec = state.get("recommendation") or {}
+    decision = state.get("decision") or ""
+    agent_statuses = _set_agent_status(
+        state.get("agent_statuses"),
+        "governance",
+        status="thinking",
+        detail="Checking policy controls, routing approvals, and writing the audit trail",
+    )
+    events = _append(
+        state.get("observability_events"),
+        _event("W&B Weave", "Trace span opened", "governance", "positive"),
+        _event("Redis", "Policy controls active", "RediSearch board policy rules + approval matrix", "positive"),
+        _sponsor_event(health),
+    )
+    await _emit_patch(
+        state,
+        config,
+        phase="governance",
+        current_phase="Governance & controls",
+        agent_statuses=agent_statuses,
+        observability_events=events,
+        trace_summary=_trace_summary("governance", "running", tool_calls=3),
+        redis_activity=_append(
+            state.get("redis_activity"),
+            _redis_ping_activity(health),
+            _redis_activity("Policy rules", "Evaluating board controls (RediSearch)", "search"),
+        ),
+        sponsor_health=health,
+    )
+    try:
+        req = GOV.govern_recommendation(
+            decision,
+            rec,
+            state.get("context"),
+            created_by="Atlas Council",
+            created_by_type=ActorType.AGENT,
+            source="council_debate",
+        )
+        governance_payload = GOV.governance_state(req)
+        gov_turn = GOV.governance_turn(req)
+        blocking = sum(1 for v in req.violations if v.blocking)
+        stance = "oppose" if req.blocked else ("conditional" if req.human_approvals_pending() else "support")
+        agent_statuses = _set_agent_status(
+            agent_statuses,
+            "governance",
+            status="done",
+            stance=stance,
+            headline=gov_turn["headline"],
+            detail=governance_payload["summary"],
+        )
+        return {
+            "governance": governance_payload,
+            "transcript": state.get("transcript", []) + [gov_turn],
+            "phase": "governance",
+            "current_phase": "Governance controls applied",
+            "agent_statuses": agent_statuses,
+            "observability_events": _append(
+                events,
+                _event("Redis", "Approval request recorded", f"atlas:approval:{req.id} · {req.status.value}", "positive"),
+                _event("Redis", "Audit trail appended", f"atlas:stream:audit · {len(req.violations) + 1} event(s)", "positive"),
+                _event("W&B Weave", "Trace span closed", "governance", "positive"),
+            ),
+            "trace_summary": _trace_summary("governance", "complete", tool_calls=3),
+            "redis_activity": _append(
+                state.get("redis_activity"),
+                _redis_activity("RedisJSON", f"Approval {req.id} · {req.status.value} ({len(req.route)} step route)", "json"),
+                _redis_activity("Redis Stream", f"Audit events for {req.id} ({blocking} blocking control)", "stream"),
+                _redis_activity("Redis Pub/Sub", "Published governance dashboard update", "pubsub"),
+            ),
+            "sponsor_health": health,
+        }
+    except Exception as exc:  # governance must not fail the debate
+        print(f"[governance] warning: {exc}")
+        agent_statuses = _set_agent_status(
+            agent_statuses,
+            "governance",
+            status="warning",
+            detail=f"Governance completed with warning: {exc}",
+        )
+        return {
+            "governance": {"status": "error", "error": str(exc)},
+            "phase": "governance",
+            "current_phase": "Governance warning",
+            "agent_statuses": agent_statuses,
+            "observability_events": _append(events, _event("Redis", "Governance warning", str(exc), "warning")),
+            "trace_summary": _trace_summary("governance", "warning", tool_calls=3),
+            "redis_activity": _append(
+                state.get("redis_activity"),
+                _redis_ping_activity(health),
+                _redis_activity("Governance warning", str(exc), "warning"),
+            ),
+            "sponsor_health": health,
+        }
 
 
 @weave.op(name="reliability_auditor")
@@ -879,7 +1568,7 @@ async def reliability_node(state: DebateState, config: RunnableConfig) -> dict:
         current_phase="Reliability audit and W&B eval packaging",
         agent_statuses=agent_statuses,
         observability_events=events,
-        trace_summary=_trace_summary("reliability_auditor", "running", model_calls=1, tool_calls=2),
+        trace_summary=_trace_summary("reliability_auditor", "running", model_calls=1, tool_calls=2, telemetry=state.get("model_telemetry")),
         redis_activity=_append(
             state.get("redis_activity"),
             _redis_ping_activity(health),
@@ -917,6 +1606,18 @@ async def reliability_node(state: DebateState, config: RunnableConfig) -> dict:
     report: ReliabilityReport = await model.ainvoke([system, human], config)
     scorecard = _normalize_reliability_scores(report.scores)
     average_score = round(sum(score["reliability"] for score in scorecard) / len(scorecard)) if scorecard else 0
+    # W&B Weave learning layer: enrich the report with replay-set + promotion-gate
+    # context so the streamed scorecard carries the eval/replay/gate story.
+    weave_meta = weave_status()
+    try:
+        replay = RS.replay_summary()
+    except Exception:
+        replay = {}
+    try:
+        gate_status = PG.promotion_status_summary()
+    except Exception:
+        gate_status = {}
+    latest_gate = (gate_status or {}).get("latest") or {}
     learning_report = {
         "summary": report.summary,
         "eval_dataset": report.eval_dataset,
@@ -931,25 +1632,63 @@ async def reliability_node(state: DebateState, config: RunnableConfig) -> dict:
             "confidence_calibration": 0.05,
             "trace_quality": 0.05,
         },
-        "weave_project": weave_status().get("project"),
-        "weave_url": weave_status().get("url"),
+        "weave_project": weave_meta.get("project"),
+        "weave_entity": weave_meta.get("entity"),
+        "weave_url": weave_meta.get("url"),
+        "replay_set": RS.DEFAULT_REPLAY_SET,
+        "replay_set_slug": RS.DEFAULT_SLUG,
+        "replay_sets": replay.get("sets", []),
+        "enforced_gates": (gate_status or {}).get("enforced_gates") or PG.summarize_gates(),
+        "gate_status": (gate_status or {}).get("counts", {}),
+        "promotion_candidates": (gate_status or {}).get("candidate_count", 0),
+        "score_deltas": latest_gate.get("score_deltas"),
+        "latest_gate": (
+            {
+                "candidate": latest_gate.get("candidate_label"),
+                "status": latest_gate.get("status"),
+                "replay_set": latest_gate.get("replay_set"),
+            }
+            if latest_gate
+            else None
+        ),
+        # OpenAI-native council provenance: prompt versions + model telemetry feed the gate.
+        "prompt_versions": state.get("prompt_versions", []),
+        "model_telemetry": state.get("model_telemetry", {}),
+        "evidence_gaps": state.get("evidence_gaps", []),
     }
-    eval_packet = {
-        "decision": state.get("decision"),
-        "recommendation": state.get("recommendation"),
-        "scores": scorecard,
-        "learning_report": learning_report,
-        "source": "reliability_auditor",
-    }
+
+    # Capture this run as a durable, queryable W&B Weave eval packet. The six rubric
+    # scorers run as nested @weave.op child spans under the reliability_auditor span.
     eval_event_id = None
     eval_warning = None
     try:
-        eval_event_id = R.append_event("evals", eval_packet)
-        R.set_json(f"{R.NS}:reliability:latest", eval_packet)
+        eval_meta = WE.capture_eval_packet(
+            decision=state.get("decision") or "",
+            context=state.get("context") or {},
+            positions=state.get("positions") or [],
+            transcript=state.get("transcript") or [],
+            recommendation=state.get("recommendation") or {},
+            reliability_scores=scorecard,
+            trace_summary=state.get("trace_summary") or {},
+            learning_report=learning_report,
+            source="live",
+            replay_set=RS.DEFAULT_SLUG,
+            prompt_versions=state.get("prompt_versions") or ((state.get("context") or {}).get("financials") or {}).get("prompt_versions") or [],
+        )
+        eval_event_id = eval_meta.get("event_id")
+        packet = eval_meta.get("packet") or {}
+        learning_report["eval_packet_id"] = packet.get("id")
+        learning_report["eval_overall_score"] = packet.get("overall_score")
+        learning_report["rubric_scores"] = [
+            {"dimension": s.get("dimension"), "label": s.get("label"), "score": s.get("score"), "passed": s.get("passed")}
+            for s in (packet.get("rubric_scores") or [])
+        ]
+        learning_report["trace_quality_issues"] = packet.get("trace_quality_issues") or []
+        learning_report["weave_eval"] = eval_meta.get("weave") or {}
         R.publish("dashboard", {"event": "reliability", "average_score": average_score})
     except Exception as exc:
-        eval_warning = str(exc)
-        print(f"[reliability] warning: {exc}")
+        eval_warning = redact_secrets(exc)
+        print(f"[reliability] eval capture warning: {eval_warning}")
 
     agent_statuses = _attach_reliability_to_statuses(agent_statuses, scorecard)
     agent_statuses = _set_agent_status(
@@ -978,14 +1717,20 @@ async def reliability_node(state: DebateState, config: RunnableConfig) -> dict:
             events,
             _event("W&B Weave", "Reliability eval ready", report.promotion_gate, "positive"),
             _event(
+                "W&B Weave",
+                "Replay + promotion gates",
+                f"{RS.DEFAULT_REPLAY_SET} · {len(PG.summarize_gates())} enforced gates",
+                "positive",
+            ),
+            _event(
                 "Redis",
                 "Reliability eval persisted" if eval_event_id else "Reliability eval persistence warning",
-                f"atlas:stream:evals · {eval_event_id}" if eval_event_id else (eval_warning or "Unknown warning"),
+                f"atlas:stream:eval_packets · {eval_event_id}" if eval_event_id else (eval_warning or "Unknown warning"),
                 "positive" if eval_event_id else "warning",
             ),
             _event("W&B Weave", "Trace span closed", "reliability_auditor", "positive"),
         ),
-        "trace_summary": _trace_summary("reliability_auditor", "complete" if not eval_warning else "warning", model_calls=1, tool_calls=2),
+        "trace_summary": _trace_summary("reliability_auditor", "complete" if not eval_warning else "warning", model_calls=1, tool_calls=2, telemetry=state.get("model_telemetry")),
         "redis_activity": _append(
             state.get("redis_activity"),
             _redis_ping_activity(health),
@@ -1004,6 +1749,7 @@ async def persist_node(state: DebateState, config: RunnableConfig) -> dict:
     require_live_ready()
     health = sponsor_health()
     rec = state.get("recommendation", {})
+    telemetry = state.get("model_telemetry") or {}
     agent_statuses = _set_agent_status(
         state.get("agent_statuses"),
         "system",
@@ -1023,7 +1769,7 @@ async def persist_node(state: DebateState, config: RunnableConfig) -> dict:
         current_phase="Persisting decision",
         agent_statuses=agent_statuses,
         observability_events=events,
-        trace_summary=_trace_summary("persist_decision", "running", tool_calls=2),
+        trace_summary=_trace_summary("persist_decision", "running", tool_calls=2, telemetry=telemetry),
         redis_activity=_append(
             state.get("redis_activity"),
             _redis_ping_activity(health),
@@ -1032,14 +1778,60 @@ async def persist_node(state: DebateState, config: RunnableConfig) -> dict:
         ),
         sponsor_health=health,
     )
+    gov = state.get("governance") or {}
     try:
+        # Full debate snapshot for the export-memo command (server-authoritative,
+        # so the board memo is assembled from Redis, not browser-supplied data).
+        R.set_json(
+            f"{R.NS}:debate:latest",
+            {
+                "decision": state.get("decision"),
+                "decision_type": state.get("decision_type"),
+                "company": _company_name(state.get("context")),
+                "positions": state.get("positions", []),
+                "transcript": state.get("transcript", []),
+                "recommendation": rec,
+                "board_memo": state.get("board_memo", {}),
+                "operator_actions": state.get("operator_actions", []),
+                "challenge_report": state.get("challenge_report", {}),
+                "evidence_gaps": state.get("evidence_gaps", []),
+                "tool_plan": state.get("tool_plan", []),
+                "follow_up": state.get("follow_up", {}),
+                "prompt_versions": state.get("prompt_versions", []),
+                "model_telemetry": telemetry,
+                "reliability_scores": state.get("reliability_scores", []),
+                "learning_report": state.get("learning_report", {}),
+                "governance": gov,
+                "pinned_evidence": AGUI.load_command_state(ROOM).get("pinned_evidence", []),
+                "generated_at": _now(),
+            },
+        )
         event_id = R.append_event("decisions", {
             "title": (state.get("decision") or "")[:140],
             "summary": (rec.get("rationale") or "")[:400],
             "decision": rec.get("decision"),
+            "decision_type": state.get("decision_type"),
             "confidence": rec.get("confidence"),
+            "board_memo": state.get("board_memo", {}),
+            "operator_actions": state.get("operator_actions", []),
+            "evidence_gaps": state.get("evidence_gaps", []),
             "reliability_scores": state.get("reliability_scores", []),
             "learning_report": state.get("learning_report", {}),
+            "prompt_versions": state.get("prompt_versions", []),
+            "model_telemetry": {
+                "model": telemetry.get("model"),
+                "model_family": telemetry.get("model_family"),
+                "total_tokens": telemetry.get("total_tokens"),
+                "estimated_cost_usd": telemetry.get("estimated_cost_usd"),
+                "model_calls": telemetry.get("model_calls"),
+            },
+            # Governance status so the decision log shows how the recommendation is
+            # being governed (pending sign-off vs. system-cleared) — never "approved by a human".
+            "approval_status": gov.get("status"),
+            "approval_id": gov.get("id"),
+            "approval_status_label": gov.get("status_label"),
+            "controls_flagged": len(gov.get("violations", []) or []),
+            "human_approvals_pending": gov.get("human_approvals_pending"),
             "source": "debate",
         })
         R.publish("dashboard", {"event": "decision", "decision": rec.get("decision")})
@@ -1064,7 +1856,7 @@ async def persist_node(state: DebateState, config: RunnableConfig) -> dict:
                 _redis_activity("Redis Stream", f"Decision event {event_id}", "stream"),
                 _redis_activity("Redis Pub/Sub", "Published dashboard update", "pubsub"),
             ),
-            "trace_summary": _trace_summary("persist_decision", "complete", tool_calls=2),
+            "trace_summary": _trace_summary("persist_decision", "complete", tool_calls=2, telemetry=telemetry),
             "sponsor_health": health,
         }
     except Exception as exc:  # persistence must not fail the run
@@ -1088,7 +1880,7 @@ async def persist_node(state: DebateState, config: RunnableConfig) -> dict:
                 _redis_ping_activity(health),
                 _redis_activity("Redis persistence warning", str(exc), "warning"),
             ),
-            "trace_summary": _trace_summary("persist_decision", "warning", tool_calls=2),
+            "trace_summary": _trace_summary("persist_decision", "warning", tool_calls=2, telemetry=telemetry),
             "sponsor_health": health,
         }
 
@@ -1096,23 +1888,49 @@ async def persist_node(state: DebateState, config: RunnableConfig) -> dict:
 # --------------------------------------------------------------------------- #
 # Graph
 # --------------------------------------------------------------------------- #
+def _command_wrapped(node):
+    """Augment a node's return with the live command-state keys.
+
+    Keeps the eight AG-UI command keys present and current in the merged
+    LangGraph state at every node boundary (the weave.op span still fires inside
+    the wrapped node, so tracing is unchanged). The wrapper keeps an explicit
+    ``(state, config)`` signature — we deliberately do not use functools.wraps,
+    so LangGraph's signature inspection sees ``config`` here and keeps injecting
+    the RunnableConfig rather than following ``__wrapped__`` into the weave op.
+    """
+
+    async def wrapper(state: DebateState, config: RunnableConfig) -> dict:
+        result = await node(state, config)
+        if isinstance(result, dict):
+            return _with_command_state(result)
+        return result
+
+    return wrapper
+
+
 workflow = StateGraph(DebateState)
-workflow.add_node("intake", intake_node)
+workflow.add_node("intake", _command_wrapped(intake_node))
+workflow.add_node("planner", _command_wrapped(planner_node))
 for _a in ANALYSTS:
-    workflow.add_node(_a, make_analyst_node(_a))
-workflow.add_node("debate", debate_node)
-workflow.add_node("synthesis", synthesis_node)
-workflow.add_node("reliability", reliability_node)
-workflow.add_node("persist", persist_node)
+    workflow.add_node(_a, _command_wrapped(make_analyst_node(_a)))
+workflow.add_node("challenge", _command_wrapped(challenge_node))
+workflow.add_node("debate", _command_wrapped(debate_node))
+workflow.add_node("synthesis", _command_wrapped(synthesis_node))
+workflow.add_node("governance", _command_wrapped(governance_node))
+workflow.add_node("reliability", _command_wrapped(reliability_node))
+workflow.add_node("persist", _command_wrapped(persist_node))
 
 workflow.add_edge(START, "intake")
-workflow.add_edge("intake", "treasury")
+workflow.add_edge("intake", "planner")
+workflow.add_edge("planner", "treasury")
 workflow.add_edge("treasury", "fpna")
 workflow.add_edge("fpna", "risk")
 workflow.add_edge("risk", "procurement")
-workflow.add_edge("procurement", "debate")
+workflow.add_edge("procurement", "challenge")
+workflow.add_edge("challenge", "debate")
 workflow.add_edge("debate", "synthesis")
-workflow.add_edge("synthesis", "reliability")
+workflow.add_edge("synthesis", "governance")
+workflow.add_edge("governance", "reliability")
 workflow.add_edge("reliability", "persist")
 workflow.add_edge("persist", END)
 

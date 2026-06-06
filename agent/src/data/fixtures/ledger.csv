@@ -1,0 +1,7 @@
+txn_id,date,account,description,amount,currency,category,vendor_id,vendor_name
+GL-5001,2026-05-01,6000 Payroll,May payroll run,-612000,USD,payroll,,
+GL-5002,2026-05-03,6500 SaaS,Datadog May usage,-21500,USD,software,datadog,Datadog
+GL-5003,2026-05-03,6500 Infrastructure,AWS May usage,-28500,USD,infrastructure,aws,Amazon Web Services
+GL-5004,2026-05-15,6500 SaaS,Pinecone vector DB,-4800,USD,software,pinecone,Pinecone Systems
+GL-5005,2026-05-31,4000 Revenue,May recurring revenue,312000,USD,revenue,,
+GL-5006,2026-05-31,6500 SaaS,Snowflake May,-9000,USD,data,snowflake,Snowflake

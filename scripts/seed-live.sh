@@ -40,3 +40,15 @@ for host in ("api.openai.com", "api.wandb.ai"):
 PY
 
 uv run --directory "${REPO_ROOT}/agent" python -m src.data.seed
+
+# Financial-OS seed summary (counts straight from the Redis system of record).
+uv run --directory "${REPO_ROOT}/agent" python - <<'PY'
+from src import redis_store as S
+
+ov = S.redis_overview()
+print("Financial-OS seeded:")
+print("  collections:", ov["collections"])
+print("  indexes:", {r["name"].rsplit(":", 1)[-1]: r["num_docs"] for r in ov["indexes"]})
+print("  knowledge vector docs:", ov["knowledge_docs"], "| scenarios:", ov["scenarios"])
+print("  streams:", ov["streams"])
+PY
