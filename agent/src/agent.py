@@ -32,7 +32,7 @@ from langchain_core.messages import AIMessage, HumanMessage, SystemMessage
 from langchain_core.runnables import RunnableConfig
 from langgraph.checkpoint.memory import MemorySaver
 from langgraph.graph import END, START, StateGraph
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, ConfigDict, Field
 
 from src.env import load_env, redact_secrets
 from src.health import require_live_ready, sponsor_health, weave_status
@@ -158,35 +158,41 @@ ANALYSTS = ["treasury", "fpna", "risk", "procurement"]
 # OpenAI-native council in src/openai_council.py uses the richer typed models in
 # src/structured_models.py (Position there adds cited_metrics/evidence_used).
 # --------------------------------------------------------------------------- #
-class Position(BaseModel):
+class StrictStructuredModel(BaseModel):
+    """OpenAI strict structured outputs require closed, fully-required schemas."""
+
+    model_config = ConfigDict(extra="forbid")
+
+
+class Position(StrictStructuredModel):
     stance: str = Field(description="one of: support, oppose, conditional")
     headline: str = Field(description="one-line position, <= 12 words")
     argument: str = Field(description="2-4 sentences citing specific figures")
-    key_points: list[str] = Field(default_factory=list, description="2-3 crisp bullets")
+    key_points: list[str] = Field(description="2-3 crisp bullets")
 
 
-class Exchange(BaseModel):
+class Exchange(StrictStructuredModel):
     from_role: str = Field(description="the function raising the challenge")
     to_role: str = Field(description="the function being challenged")
     point: str = Field(description="a sharp, specific, quantified challenge")
 
 
-class Rebuttals(BaseModel):
-    exchanges: list[Exchange] = Field(default_factory=list)
+class Rebuttals(StrictStructuredModel):
+    exchanges: list[Exchange] = Field(description="cross-examination exchanges")
 
 
-class Recommendation(BaseModel):
+class Recommendation(StrictStructuredModel):
     decision: str = Field(description="one of: APPROVE, REJECT, CONDITIONAL, DEFER")
     confidence: int = Field(ge=0, le=100)
     rationale: str = Field(description="3-5 sentences, decisive and quantified")
-    key_risks: list[str] = Field(default_factory=list)
-    conditions: list[str] = Field(default_factory=list)
-    estimated_monthly_cost: float = Field(default=0, description="incremental recurring monthly cost; 0 if none")
-    estimated_one_time_cost: float = Field(default=0, description="upfront one-time cost; 0 if none")
-    estimated_added_monthly_revenue: float = Field(default=0, description="incremental monthly revenue; 0 if none")
+    key_risks: list[str] = Field(description="key risks to monitor")
+    conditions: list[str] = Field(description="conditions for approval; empty if none")
+    estimated_monthly_cost: float = Field(description="incremental recurring monthly cost; 0 if none")
+    estimated_one_time_cost: float = Field(description="upfront one-time cost; 0 if none")
+    estimated_added_monthly_revenue: float = Field(description="incremental monthly revenue; 0 if none")
 
 
-class ReliabilityScore(BaseModel):
+class ReliabilityScore(StrictStructuredModel):
     agent_id: str = Field(description="one of: cfo, treasury, fpna, risk, procurement")
     evidence_grounding: int = Field(ge=0, le=100)
     forecast_calibration: int = Field(ge=0, le=100)
@@ -197,16 +203,16 @@ class ReliabilityScore(BaseModel):
     trace_quality: int = Field(ge=0, le=100)
     reliability: int = Field(ge=0, le=100, description="weighted overall score")
     rationale: str = Field(description="specific evidence-backed reason for the score")
-    known_weaknesses: list[str] = Field(default_factory=list)
+    known_weaknesses: list[str] = Field(description="known weaknesses to replay or improve")
     prompt_adjustment: str = Field(description="specific prompt or policy improvement to replay")
     promotion_gate: str = Field(description="how W&B Weave evals should decide whether this agent improves")
 
 
-class ReliabilityReport(BaseModel):
+class ReliabilityReport(StrictStructuredModel):
     summary: str = Field(description="board-ready summary of council reliability")
-    scores: list[ReliabilityScore] = Field(default_factory=list)
+    scores: list[ReliabilityScore] = Field(description="per-agent reliability scores")
     eval_dataset: str = Field(description="W&B/Weave eval dataset or replay-set label")
-    replay_plan: list[str] = Field(default_factory=list)
+    replay_plan: list[str] = Field(description="replay cases or eval steps to run")
     promotion_gate: str = Field(description="global gate for accepting future prompt/model changes")
 
 
@@ -298,7 +304,14 @@ def _role_plan(decision_plan: dict | None, role_key: str) -> RoleEvidencePlan | 
             try:
                 return RoleEvidencePlan(**item)
             except Exception:
-                return RoleEvidencePlan(role=role_key, **{k: v for k, v in item.items() if k != "role"})
+                return RoleEvidencePlan(
+                    role=role_key,
+                    tools=item.get("tools") or [],
+                    policy_queries=item.get("policy_queries") or [],
+                    focus_slices=item.get("focus_slices") or [],
+                    prior_decisions=item.get("prior_decisions") or [],
+                    rationale=item.get("rationale") or "",
+                )
     return None
 
 
@@ -861,7 +874,17 @@ async def planner_node(state: DebateState, config: RunnableConfig) -> dict:
         # Honest degradation: no plan → analysts still run on full live context.
         detail = result.telemetry.error or result.telemetry.refusal or "Planner returned no plan"
         agent_statuses = _set_agent_status(agent_statuses, "planner", status="warning", headline="Planning unavailable", detail=detail)
-        fallback = DecisionPlan(decision_type="general", title=(state.get("decision", "") or "decision")[:60], summary=state.get("decision", ""))
+        fallback = DecisionPlan(
+            decision_type="general",
+            title=(state.get("decision", "") or "decision")[:60],
+            summary=state.get("decision", ""),
+            entities=[],
+            required_facts=[],
+            assumptions=[],
+            follow_up_questions=[],
+            role_plans=[],
+            decision_specific_focus=[],
+        )
         return {
             "decision_type": "general",
             "decision_plan": {},

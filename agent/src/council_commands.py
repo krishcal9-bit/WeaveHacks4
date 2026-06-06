@@ -27,7 +27,7 @@ from typing import Any, Callable
 
 import weave
 from langchain_core.messages import HumanMessage, SystemMessage
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, ConfigDict, Field
 
 from src import agui_commands as C
 from src import redis_layer as R
@@ -48,11 +48,12 @@ MEMO_KEY_PREFIX = f"{R.NS}:memo:"
 # Structured model output for the conversational commands
 # --------------------------------------------------------------------------- #
 class CommandReply(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
     headline: str = Field(description="one-line answer, <= 14 words")
     response: str = Field(description="2-4 sentences, quantified, citing specific figures")
-    key_points: list[str] = Field(default_factory=list, description="0-3 crisp supporting bullets")
+    key_points: list[str] = Field(description="0-3 crisp supporting bullets")
     revised_stance: str = Field(
-        default="",
         description="for challenges only: support / oppose / conditional / unchanged",
     )
 

@@ -36,7 +36,7 @@ import time
 from dataclasses import dataclass, field
 from typing import Any, Literal
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, ConfigDict, Field
 
 from src import redis_layer as R
 
@@ -1121,12 +1121,14 @@ def list_plans(limit: int = 25) -> list[dict[str, Any]]:
 # Board narrative (the ONLY model-generated part — runs after the math is fixed)
 # --------------------------------------------------------------------------- #
 class _BoardNarrativeDraft(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
     headline: str = Field(description="one-line board headline, <= 14 words")
     narrative: str = Field(description="4-7 sentence CFO strategic narrative grounded in the figures")
-    key_metrics: list[str] = Field(default_factory=list, description="3-5 'Label: value' bullets pulled from the figures")
-    risks: list[str] = Field(default_factory=list)
-    asks: list[str] = Field(default_factory=list, description="what the CFO asks the board to approve")
-    recommended_decision: str = Field(default="", description="ADOPT | ADOPT_WITH_CONDITIONS | REVISE | REJECT")
+    key_metrics: list[str] = Field(description="3-5 'Label: value' bullets pulled from the figures")
+    risks: list[str] = Field(description="risks the board should understand")
+    asks: list[str] = Field(description="what the CFO asks the board to approve")
+    recommended_decision: str = Field(description="ADOPT | ADOPT_WITH_CONDITIONS | REVISE | REJECT")
 
 
 def _narrative_llm():
