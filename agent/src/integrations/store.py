@@ -90,6 +90,17 @@ def mark_reconciled(connector_id: str) -> None:
     R.set_json(_source_key(connector_id), doc)
 
 
+def clear_sources(connector_ids: list[str]) -> dict[str, int]:
+    """Delete only connector provenance + payload docs for the provided ids."""
+    deleted: dict[str, int] = {}
+    for connector_id in connector_ids:
+        source_key = _source_key(connector_id)
+        dataset_key = _dataset_key(connector_id)
+        deleted[source_key] = R.delete_key(source_key)
+        deleted[dataset_key] = R.delete_key(dataset_key)
+    return deleted
+
+
 # --------------------------------------------------------------------------- #
 # Reconciliation reports
 # --------------------------------------------------------------------------- #
@@ -115,3 +126,8 @@ def save_reconciliation(report: ReconciliationReport) -> Optional[str]:
 
 def load_reconciliation() -> Optional[dict[str, Any]]:
     return R.get_json(R.RECON_LATEST)
+
+
+def clear_reconciliation() -> dict[str, int]:
+    """Delete the latest reconciliation singleton, preserving the audit stream."""
+    return {R.RECON_LATEST: R.delete_key(R.RECON_LATEST)}

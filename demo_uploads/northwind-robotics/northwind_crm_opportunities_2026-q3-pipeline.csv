@@ -1,0 +1,8 @@
+entity,export_id,pipeline_snapshot,prepared_by,opportunity_id,name,account,stage,arr,probability,weighted_arr,close_date,owner
+Northwind Robotics,NR-REVOPS-Q3-PIPE,2026-06-01,Revenue Operations,OPP-201,3PL Robotics Rollout,Northgate 3PL,Procurement,900000,0.70,630000,2026-09-15,A. Rivera
+Northwind Robotics,NR-REVOPS-Q3-PIPE,2026-06-01,Revenue Operations,OPP-202,Fulfillment AI Expansion,Cardinal Fulfillment,Contracting,820000,0.85,697000,2026-08-30,A. Rivera
+Northwind Robotics,NR-REVOPS-Q3-PIPE,2026-06-01,Revenue Operations,OPP-203,Warehouse Vision Pilot,Beacon Logistics,Technical validation,760000,0.50,380000,2026-10-20,J. Chen
+Northwind Robotics,NR-REVOPS-Q3-PIPE,2026-06-01,Revenue Operations,OPP-204,Regional 3PL Automation,Summit Supply,Procurement,700000,0.75,525000,2026-09-30,J. Chen
+Northwind Robotics,NR-REVOPS-Q3-PIPE,2026-06-01,Revenue Operations,OPP-205,Enterprise Robotics Platform,Atlas Freight,Discovery,1200000,0.25,300000,2026-12-01,M. Osei
+Northwind Robotics,NR-REVOPS-Q3-PIPE,2026-06-01,Revenue Operations,OPP-206,Mid-market Autonomy,Delta Depot,Technical validation,600000,0.55,330000,2026-11-10,M. Osei
+Northwind Robotics,NR-REVOPS-Q3-PIPE,2026-06-01,Revenue Operations,OPP-207,Ops AI Suite,Vertex Goods,Contracting,680000,0.85,578000,2026-08-25,A. Rivera

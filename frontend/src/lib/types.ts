@@ -939,6 +939,18 @@ export interface SourceDetail {
   sample: Record<string, unknown>[];
 }
 
+export interface ConnectorImportResult {
+  provenance: SourceProvenance;
+  records: Record<string, unknown>[];
+}
+
+export interface ConnectorImportResponse {
+  import_result: ConnectorImportResult;
+  connectors: ConnectorStatus[];
+  confidence: ImportConfidence;
+  reconciliation: ReconciliationReport;
+}
+
 export interface Discrepancy {
   id: string;
   kind: string;
@@ -976,6 +988,14 @@ export interface ReconciliationReport {
   blockers?: string[];
   detail?: string;
   [k: string]: unknown;
+}
+
+export interface DemoResetResponse {
+  status: string;
+  deleted: Record<string, number>;
+  connectors: ConnectorStatus[];
+  confidence: ImportConfidence;
+  command_state?: CommandState;
 }
 
 // --------------------------------------------------------------------------- //

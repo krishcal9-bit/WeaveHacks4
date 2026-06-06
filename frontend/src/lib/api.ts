@@ -2,7 +2,9 @@ import type {
   CommandResult,
   CommandState,
   CompanyFinancials,
+  ConnectorImportResponse,
   ConnectorInventory,
+  DemoResetResponse,
   DecisionEvent,
   Discrepancy,
   ObservabilitySnapshot,
@@ -31,16 +33,62 @@ import type {
 
 const BASE = process.env.NEXT_PUBLIC_AGENT_URL || "http://localhost:8123";
 
+async function responseError(path: string, res: Response): Promise<Error> {
+  let detail = "";
+  try {
+    const body = (await res.json()) as { detail?: unknown; message?: unknown };
+    detail = String(body.detail ?? body.message ?? "");
+  } catch {
+    try {
+      detail = await res.text();
+    } catch {
+      detail = "";
+    }
+  }
+  const suffix = detail ? `: ${detail}` : "";
+  return new Error(`${path} failed (${res.status})${suffix}`);
+}
+
+function networkError(path: string, err: unknown): Error {
+  const message = err instanceof Error ? err.message : String(err);
+  if (/failed to fetch|load failed|networkerror|network error/i.test(message)) {
+    return new Error(`The demo service is offline. Start the demo server, then try again. (${BASE}${path})`);
+  }
+  return err instanceof Error ? err : new Error(message);
+}
+
 async function getJSON<T>(path: string): Promise<T> {
-  const res = await fetch(`${BASE}${path}`, { cache: "no-store" });
-  if (!res.ok) throw new Error(`${path} → ${res.status}`);
-  return res.json() as Promise<T>;
+  try {
+    const res = await fetch(`${BASE}${path}`, { cache: "no-store" });
+    if (!res.ok) throw await responseError(path, res);
+    return res.json() as Promise<T>;
+  } catch (err) {
+    throw networkError(path, err);
+  }
 }
 
 async function postJSON<T>(path: string): Promise<T> {
-  const res = await fetch(`${BASE}${path}`, { method: "POST", cache: "no-store" });
-  if (!res.ok) throw new Error(`${path} → ${res.status}`);
-  return res.json() as Promise<T>;
+  try {
+    const res = await fetch(`${BASE}${path}`, { method: "POST", cache: "no-store" });
+    if (!res.ok) throw await responseError(path, res);
+    return res.json() as Promise<T>;
+  } catch (err) {
+    throw networkError(path, err);
+  }
+}
+
+async function postForm<T>(path: string, formData: FormData): Promise<T> {
+  try {
+    const res = await fetch(`${BASE}${path}`, {
+      method: "POST",
+      cache: "no-store",
+      body: formData,
+    });
+    if (!res.ok) throw await responseError(path, res);
+    return res.json() as Promise<T>;
+  } catch (err) {
+    throw networkError(path, err);
+  }
 }
 
 // Readiness payloads come back with the full body even on 503 (not-ready), so the
@@ -82,6 +130,11 @@ export const api = {
     ),
   // Finance-operations connectors: ingestion status, source inventory, reconciliation.
   connectors: () => getJSON<ConnectorInventory>("/api/connectors"),
+  uploadConnectorFile: (id: string, file: File) => {
+    const formData = new FormData();
+    formData.append("file", file);
+    return postForm<ConnectorImportResponse>(`/api/connectors/import/${encodeURIComponent(id)}`, formData);
+  },
   sources: () => getJSON<{ count: number; sources: SourceProvenance[] }>("/api/sources"),
   sourceDetail: (id: string, sample = 10) =>
     getJSON<SourceDetail>(`/api/sources/${encodeURIComponent(id)}?sample=${sample}`),
@@ -98,6 +151,7 @@ export const api = {
   },
   discrepancy: (id: string) =>
     getJSON<Discrepancy>(`/api/reconciliation/discrepancies/${encodeURIComponent(id)}`),
+  resetDemo: () => postJSON<DemoResetResponse>("/api/demo/reset"),
   // Strategic planning digital twin: plans, playbooks, stress tests, sensitivity,
   // portfolios, and (model-generated) board narratives. The compute calls are
   // deterministic; planNarrative is the one OpenAI-backed call.

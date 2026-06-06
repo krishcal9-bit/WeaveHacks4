@@ -1,0 +1,42 @@
+{
+  "metadata": {
+    "entity": "Northwind Robotics",
+    "export_id": "NR-SEC-SOC2-Q2-2026",
+    "source_system": "Security Evidence Register",
+    "prepared_by": "Security Operations",
+    "classification": "Synthetic demo artifact"
+  },
+  "records": [
+    {
+      "control_id": "CC6.1",
+      "framework": "SOC 2",
+      "title": "Logical access controls",
+      "status": "satisfied",
+      "owner": "Security",
+      "evidence_date": "2026-05-01",
+      "blocks_revenue": false,
+      "summary": "Access reviews completed for Q2."
+    },
+    {
+      "control_id": "CC7.2",
+      "framework": "SOC 2",
+      "title": "Continuous monitoring evidence",
+      "status": "gap",
+      "owner": "Security",
+      "evidence_date": null,
+      "blocks_revenue": true,
+      "blocked_arr": 310000,
+      "summary": "SOC 2 evidence gap blocking two enterprise procurements."
+    },
+    {
+      "control_id": "CC8.1",
+      "framework": "SOC 2",
+      "title": "Change management",
+      "status": "in_progress",
+      "owner": "Engineering",
+      "evidence_date": "2026-05-20",
+      "blocks_revenue": false,
+      "summary": "Change tickets being backfilled with approvals."
+    }
+  ]
+}

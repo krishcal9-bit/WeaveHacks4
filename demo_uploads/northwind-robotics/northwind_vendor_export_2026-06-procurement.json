@@ -1,0 +1,53 @@
+{
+  "metadata": {
+    "entity": "Northwind Robotics",
+    "export_id": "NR-PROC-2026-06",
+    "source_system": "Northwind Procurement Register",
+    "prepared_by": "Procurement Operations",
+    "classification": "Synthetic demo artifact"
+  },
+  "records": [
+    {
+      "vendor_id": "acme-analytics",
+      "name": "Acme Analytics Platform",
+      "category": "data",
+      "annual_cost": 250000,
+      "monthly_cost": 20833,
+      "renewal_date": "2027-06-01",
+      "status": "active",
+      "owner": "Data",
+      "termination_notice_days": 90,
+      "auto_renew": true,
+      "board_approved": false,
+      "notes": "New analytics platform; vendor requesting annual prepay."
+    },
+    {
+      "vendor_id": "datadog",
+      "name": "Datadog",
+      "category": "observability",
+      "annual_cost": 180000,
+      "monthly_cost": 15000,
+      "renewal_date": "2026-07-25",
+      "status": "up_for_renewal",
+      "owner": "Engineering",
+      "termination_notice_days": 45,
+      "auto_renew": true,
+      "board_approved": true,
+      "notes": "Usage-based; trending over committed tier ahead of renewal."
+    },
+    {
+      "vendor_id": "salesforce",
+      "name": "Salesforce",
+      "category": "crm",
+      "annual_cost": 74400,
+      "monthly_cost": 6200,
+      "renewal_date": "2026-09-30",
+      "status": "active",
+      "owner": "Revenue",
+      "termination_notice_days": 30,
+      "auto_renew": false,
+      "board_approved": true,
+      "notes": "32 seats; ~9 underused."
+    }
+  ]
+}

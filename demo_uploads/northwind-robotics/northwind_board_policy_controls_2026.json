@@ -1,0 +1,53 @@
+{
+  "metadata": {
+    "entity": "Northwind Robotics",
+    "export_id": "NR-BOARD-POLICY-2026",
+    "source_system": "Board Operating Policy Register",
+    "prepared_by": "Office of the CFO",
+    "classification": "Synthetic demo artifact"
+  },
+  "records": [
+    {
+      "policy_id": "BP-1",
+      "title": "Vendor commitment board notification",
+      "category": "governance",
+      "text": "Any single vendor commitment above $150K annualized requires board notification before signing.",
+      "rule": "vendor_commitment_board_notification",
+      "threshold": 150000,
+      "unit": "usd_per_year"
+    },
+    {
+      "policy_id": "BP-2",
+      "title": "Vendor competitive review value",
+      "category": "procurement",
+      "text": "Vendor contracts over $100,000 per year must be competitively reviewed before renewal.",
+      "rule": "vendor_competitive_review_value",
+      "threshold": 100000,
+      "unit": "usd_per_year"
+    },
+    {
+      "policy_id": "BP-3",
+      "title": "Vendor competitive review window",
+      "category": "procurement",
+      "text": "High-value vendor contracts must be competitively reviewed at least 60 days before their renewal date.",
+      "rule": "vendor_competitive_review_days",
+      "threshold": 60,
+      "unit": "days"
+    },
+    {
+      "policy_id": "BP-4",
+      "title": "Minimum runway guardrail",
+      "category": "treasury",
+      "text": "Maintain at least 9 months runway unless a signed financing term sheet is in hand.",
+      "rule": "min_runway_months",
+      "threshold": 9,
+      "unit": "months"
+    },
+    {
+      "policy_id": "BP-5",
+      "title": "Headcount funding basis",
+      "category": "people",
+      "text": "New headcount must map to signed revenue, security compliance, or runway-positive automation."
+    }
+  ]
+}

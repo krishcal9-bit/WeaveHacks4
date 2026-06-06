@@ -2,29 +2,18 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Activity, Database, FileText, Scale, Settings, Workflow } from "lucide-react";
-import { useEffect, useState, type ReactNode } from "react";
-import { cx, StatusDot } from "@/components/ui";
+import { Database, Scale, Settings } from "lucide-react";
+import type { ReactNode } from "react";
+import { cx } from "@/components/ui";
 
 const NAV = [
-  { href: "/decisions", label: "Council", icon: Scale },
-  { href: "/activity", label: "Decisions", icon: FileText },
-  { href: "/department", label: "Memory", icon: Workflow },
-  { href: "/decisions#evals", label: "Evals", icon: Activity },
   { href: "/", label: "Data", icon: Database },
-  { href: "/decisions#settings", label: "Settings", icon: Settings },
+  { href: "/decisions", label: "Run", icon: Scale },
+  { href: "/settings", label: "Settings", icon: Settings },
 ];
 
 export function AppShell({ children }: { children: ReactNode }) {
   const pathname = usePathname();
-  const [hash, setHash] = useState("");
-
-  useEffect(() => {
-    const syncHash = () => setHash(window.location.hash);
-    syncHash();
-    window.addEventListener("hashchange", syncHash);
-    return () => window.removeEventListener("hashchange", syncHash);
-  }, []);
 
   return (
     <div className="flex min-h-dvh flex-col bg-background md:h-dvh md:overflow-hidden">
@@ -33,14 +22,12 @@ export function AppShell({ children }: { children: ReactNode }) {
           <AtlasMark />
           <div className="min-w-0 leading-tight">
             <div className="truncate text-[16px] font-semibold">Atlas Finance OS</div>
-            <div className="hidden truncate text-[10px] text-subtle-foreground sm:block">Acme Corp self-improving finance council</div>
+            <div className="hidden truncate text-[10px] text-subtle-foreground sm:block">Upload files, then run the council</div>
           </div>
 
           <nav className="ml-auto flex max-w-full gap-1 overflow-x-auto rounded-full border border-border bg-background p-1">
             {NAV.map((item) => {
-              const itemPath = item.href.split("#")[0];
-              const itemHash = item.href.includes("#") ? `#${item.href.split("#")[1]}` : "";
-              const active = itemHash ? pathname === itemPath && hash === itemHash : pathname === itemPath && (!hash || itemPath !== "/decisions");
+              const active = pathname === item.href;
               const Icon = item.icon;
               return (
                 <Link
@@ -61,11 +48,6 @@ export function AppShell({ children }: { children: ReactNode }) {
             })}
           </nav>
 
-          <div className="hidden items-center gap-2 rounded-full border border-border bg-background px-3 py-1.5 text-[11px] text-muted-foreground lg:flex">
-            <span className="grid h-5 w-5 place-items-center rounded-full bg-foreground text-[9px] font-semibold text-background">AC</span>
-            <span>Workspace</span>
-            <StatusDot tone="positive" label="Live" />
-          </div>
         </div>
       </header>
 

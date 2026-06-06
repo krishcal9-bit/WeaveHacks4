@@ -240,12 +240,16 @@ uv run --directory agent python -m src.integrations.cli reconcile
 uv run --directory agent python -m src.integrations.cli inspect invoices
 ```
 
-REST (read-only, served by `agent/src/api.py`): `GET /api/connectors`, `GET /api/sources`,
-`GET /api/sources/{id}`, `GET /api/reconciliation`, `POST /api/reconciliation/run`,
-`GET /api/reconciliation/discrepancies[?severity=&kind=]`,
+REST (served by `agent/src/api.py`): `GET /api/connectors`, `GET /api/sources`,
+`POST /api/connectors/import/{connector_id}` (multipart upload), `GET /api/sources/{id}`,
+`GET /api/reconciliation`, `POST /api/reconciliation/run`, `GET /api/reconciliation/discrepancies[?severity=&kind=]`,
 `GET /api/reconciliation/discrepancies/{id}`. The council can also query reconciled facts
 through the LangChain tools `list_operations_sources`, `get_reconciliation_summary`,
 `list_open_discrepancies`, and `get_operations_data_confidence`.
+
+For the upload-first demo, use the synthetic Northwind upload pack in
+`demo_uploads/northwind-robotics/`. Uploading through the Data Room imports the matching
+connector and immediately runs reconciliation so the next council intake sees the facts.
 
 ### Limitations
 
@@ -256,8 +260,7 @@ through the LangChain tools `list_operations_sources`, `get_reconciliation_summa
   fuzzy-guess; unmatched invoices are reported as discrepancies for a human to resolve.
 - `board_policy` rules drive the policy thresholds when imported; otherwise the workflow
   falls back to defaults mirroring the seeded board constraints.
-- Reconciliation runs on demand (CLI / `POST /api/reconciliation/run`); it is not yet
-  triggered automatically after every import.
+- Reconciliation runs on demand for CLI/env imports, and automatically after browser uploads.
 - The bundled fixtures are **demo data**, opt-in only, and never auto-loaded — see
   `agent/src/data/fixtures/README.md`.
 

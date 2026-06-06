@@ -171,6 +171,78 @@ def import_connector(
     return ImportResult(provenance=base, records=payload)
 
 
+def import_uploaded_file(
+    connector_id: str,
+    *,
+    source_name: str,
+    raw: bytes,
+    fmt_override: Optional[SourceFormat] = None,
+) -> ImportResult:
+    """Import one browser-uploaded CSV/JSON file through the normal connector path."""
+    if connector_id not in C.CONNECTORS:
+        raise ValueError(f"unknown connector: {connector_id}; valid: {', '.join(C.CONNECTORS)}")
+
+    spec = C.CONNECTORS[connector_id]
+    safe_name = Path(source_name or spec.fixture_filename).name
+    base = ImportProvenance(
+        connector_id=spec.connector_id,
+        source_type=spec.source_type,
+        origin=Origin.EXTERNAL_FILE,
+        status=ImportStatus.ERROR,
+        env_var=spec.env_var,
+        source_name=safe_name,
+        source_timestamp=_now(),
+    )
+
+    try:
+        fmt = C.detect_format(Path(safe_name), fmt_override)
+    except ValueError as exc:
+        base.blockers = [redact_secrets(exc)]
+        store.save_provenance(base)
+        return ImportResult(provenance=base)
+
+    checksum = C.checksum_bytes(raw)
+    base.checksum_sha256 = checksum
+    base.source_format = fmt
+
+    if store.existing_checksum(spec.connector_id) == checksum:
+        prior = store.load_provenance(spec.connector_id) or {}
+        base.status = ImportStatus.SKIPPED_UNCHANGED
+        base.record_count = int(prior.get("record_count") or 0)
+        base.accepted_count = int(prior.get("accepted_count") or 0)
+        base.rejected_count = int(prior.get("rejected_count") or 0)
+        base.duplicate_count = int(prior.get("duplicate_count") or 0)
+        base.imported_at = _now()
+        store.save_provenance(base)
+        return ImportResult(provenance=base, records=store.load_dataset(spec.connector_id))
+
+    try:
+        records, issues, duplicates = C.parse_records(spec, raw, fmt)
+    except (ValueError, TypeError) as exc:
+        base.blockers = [redact_secrets(exc)]
+        store.save_provenance(base)
+        return ImportResult(provenance=base)
+
+    payload = [r.model_dump(mode="json") for r in records]
+    base.imported_at = _now()
+    base.record_count = len(records) + len(issues)
+    base.accepted_count = len(records)
+    base.rejected_count = len(issues)
+    base.duplicate_count = duplicates
+    base.validation_errors = issues
+    if not records and not issues:
+        base.status = ImportStatus.EMPTY
+        base.blockers = ["Source parsed but contained zero records."]
+    elif issues:
+        base.status = ImportStatus.PARTIAL
+        base.blockers = [f"{len(issues)} row(s) rejected during validation; see validation_errors."]
+    else:
+        base.status = ImportStatus.IMPORTED
+
+    store.save_source(base, payload)
+    return ImportResult(provenance=base, records=payload)
+
+
 def run_import(
     connector_ids: Optional[list[str]] = None,
     *,
@@ -363,6 +435,20 @@ def import_confidence() -> ImportConfidence:
 
 def reconciliation_summary() -> Optional[dict[str, Any]]:
     return store.load_reconciliation()
+
+
+def reset_demo_state() -> dict[str, Any]:
+    """Clear bounded uploaded-demo state without touching the seeded system of record."""
+    connector_ids = list(C.CONNECTORS.keys())
+    deleted = {}
+    deleted.update(store.clear_sources(connector_ids))
+    deleted.update(store.clear_reconciliation())
+    return {
+        "status": "reset",
+        "deleted": deleted,
+        "connectors": connector_statuses(),
+        "confidence": import_confidence().model_dump(mode="json"),
+    }
 
 
 def list_discrepancies(severity: Optional[str] = None, kind: Optional[str] = None) -> list[dict[str, Any]]:

@@ -9,7 +9,7 @@ from __future__ import annotations
 import os
 from typing import Any
 
-from fastapi import APIRouter, Body, HTTPException, Response
+from fastapi import APIRouter, Body, File, HTTPException, Response, UploadFile
 from openai import AsyncOpenAI
 
 from src.env import redact_secrets
@@ -324,6 +324,30 @@ def connectors() -> dict:
     }
 
 
+@router.post("/connectors/import/{connector_id}")
+async def connector_import(response: Response, connector_id: str, file: UploadFile = File(...)) -> dict:
+    """Import one uploaded connector file, then immediately reconcile."""
+    try:
+        raw = await file.read()
+        result = OPS.import_uploaded_file(
+            connector_id,
+            source_name=file.filename or connector_id,
+            raw=raw,
+        )
+        report = OPS.run_reconciliation()
+    except ValueError as exc:
+        raise HTTPException(status_code=404, detail=str(exc)) from exc
+    except Exception as exc:
+        response.status_code = 503
+        raise HTTPException(status_code=503, detail=redact_secrets(exc)) from exc
+    return {
+        "import_result": result.model_dump(mode="json"),
+        "connectors": OPS.connector_statuses(),
+        "confidence": OPS.import_confidence().model_dump(mode="json"),
+        "reconciliation": report.model_dump(mode="json"),
+    }
+
+
 @router.get("/sources")
 def sources() -> dict:
     """Inventory of imported sources with provenance (paths redacted)."""
@@ -378,6 +402,19 @@ def discrepancy_detail(discrepancy_id: str) -> dict:
     if disc is None:
         raise HTTPException(status_code=404, detail=f"Unknown discrepancy: {discrepancy_id}")
     return disc
+
+
+@router.post("/demo/reset")
+def demo_reset(response: Response) -> dict:
+    """Clear uploaded connector, reconciliation, and command-panel state only."""
+    try:
+        payload = OPS.reset_demo_state()
+        payload["deleted"][AGUI.command_state_key()] = R.delete_key(AGUI.command_state_key())
+        payload["command_state"] = AGUI.default_command_state()
+        return payload
+    except Exception as exc:
+        response.status_code = 503
+        raise HTTPException(status_code=503, detail=redact_secrets(exc)) from exc
 
 
 # --------------------------------------------------------------------------- #
