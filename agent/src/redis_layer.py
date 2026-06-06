@@ -31,6 +31,32 @@ POLICY_PREFIX = f"{NS}:policy:"
 VENDOR_INDEX = f"{NS}:idx:vendors"
 POLICY_INDEX = f"{NS}:idx:policies"
 
+# Finance-operations connector namespaces (data ingestion + reconciliation).
+#   atlas:source:<connector_id> ..... JSON provenance/metadata for an imported feed
+#   atlas:dataset:<connector_id> .... JSON validated record payload for that feed
+#   atlas:reconciliation:latest ..... JSON the most recent reconciliation report
+#   atlas:stream:reconciliation ..... append-only reconciliation run log (provenance)
+SOURCE_PREFIX = f"{NS}:source:"
+DATASET_PREFIX = f"{NS}:dataset:"
+RECON_LATEST = f"{NS}:reconciliation:latest"
+RECON_STREAM = "reconciliation"
+
+# Governance namespace — board policy rules, approval requests, obligations.
+#   atlas:govpolicy:<id> ......... JSON structured board/finance policy rule
+#   atlas:approval:<id> .......... JSON the governed approval request (route + audit state)
+#   atlas:obligation:<id> ........ JSON a post-decision obligation (queryable for monitoring)
+#   atlas:approval_matrix:northwind  JSON the company's approval matrix (thresholds → approvers)
+#   atlas:idx:govpolicies ........ RediSearch over policy rules (lookup by category/threshold)
+#   atlas:stream:audit ........... append-only immutable governance audit trail
+GOVPOLICY_PREFIX = f"{NS}:govpolicy:"
+APPROVAL_PREFIX = f"{NS}:approval:"
+OBLIGATION_PREFIX = f"{NS}:obligation:"
+GOVPOLICY_INDEX = f"{NS}:idx:govpolicies"
+APPROVAL_INDEX = f"{NS}:idx:approvals"
+OBLIGATION_INDEX = f"{NS}:idx:obligations"
+MATRIX_KEY = f"{NS}:approval_matrix:northwind"
+AUDIT_STREAM = "audit"
+
 EMBED_MODEL = os.getenv("EMBED_MODEL", "text-embedding-3-small")
 EMBED_DIM = 1536
 
@@ -225,6 +251,129 @@ def read_events(stream: str, count: int = 25) -> list[dict]:
 # --------------------------------------------------------------------------- #
 def publish(channel: str, payload: dict) -> None:
     client().publish(f"{NS}:{channel}", json.dumps(payload))
+
+
+# --------------------------------------------------------------------------- #
+# Governance — policy rules (RediSearch lookup), approvals & obligations (JSON)
+# --------------------------------------------------------------------------- #
+def _index_definition():
+    try:
+        from redis.commands.search.index_definition import IndexDefinition, IndexType
+    except Exception:  # older redis-py module name
+        from redis.commands.search.indexDefinition import (  # type: ignore
+            IndexDefinition,
+            IndexType,
+        )
+    return IndexDefinition, IndexType
+
+
+def _create_json_index(index: str, prefix: str, schema) -> None:
+    IndexDefinition, IndexType = _index_definition()
+    try:
+        client().ft(index).create_index(
+            schema,
+            definition=IndexDefinition(prefix=[prefix], index_type=IndexType.JSON),
+        )
+    except redis.exceptions.ResponseError as exc:
+        if "Index already exists" not in str(exc):
+            raise
+
+
+def ensure_govpolicy_index() -> None:
+    """RediSearch over structured board-policy rules so agents and the engine can
+    look up applicable controls by category, threshold, or scope."""
+    from redis.commands.search.field import NumericField, TagField, TextField
+
+    schema = (
+        TextField("$.title", as_name="title"),
+        TextField("$.text", as_name="text"),
+        TextField("$.control_id", as_name="control_id"),
+        TagField("$.category", as_name="category"),
+        TagField("$.severity", as_name="severity"),
+        TagField("$.applies_to[*]", as_name="applies_to"),
+        NumericField("$.amount_threshold", as_name="amount_threshold"),
+        NumericField("$.runway_floor_months", as_name="runway_floor_months"),
+        NumericField("$.margin_floor", as_name="margin_floor"),
+    )
+    _create_json_index(GOVPOLICY_INDEX, GOVPOLICY_PREFIX, schema)
+
+
+def ensure_approval_index() -> None:
+    """RediSearch over approval requests — filter by status, department, risk, amount."""
+    from redis.commands.search.field import NumericField, TagField, TextField
+
+    schema = (
+        TextField("$.title", as_name="title"),
+        TagField("$.status", as_name="status"),
+        TagField("$.department", as_name="department"),
+        TagField("$.risk_tier", as_name="risk_tier"),
+        TagField("$.data_sensitivity", as_name="data_sensitivity"),
+        NumericField("$.amount_annualized", as_name="amount_annualized"),
+        TextField("$.created_at", as_name="created_at"),
+    )
+    _create_json_index(APPROVAL_INDEX, APPROVAL_PREFIX, schema)
+
+
+def ensure_obligation_index() -> None:
+    """RediSearch over obligations — power the monitoring view (upcoming/overdue)."""
+    from redis.commands.search.field import TagField, TextField
+
+    schema = (
+        TagField("$.status", as_name="status"),
+        TagField("$.kind", as_name="kind"),
+        TagField("$.owner_role", as_name="owner_role"),
+        TextField("$.due_date", as_name="due_date"),
+        TextField("$.request_id", as_name="request_id"),
+    )
+    _create_json_index(OBLIGATION_INDEX, OBLIGATION_PREFIX, schema)
+
+
+def ensure_governance_indices() -> None:
+    ensure_govpolicy_index()
+    ensure_approval_index()
+    ensure_obligation_index()
+
+
+def search_json_index(index: str, query: str = "*", limit: int = 50, sort_by: str | None = None) -> list[dict]:
+    """Run a RediSearch query over a JSON index and return the parsed JSON docs."""
+    from redis.commands.search.query import Query
+
+    q = Query(query).paging(0, limit)
+    if sort_by:
+        q = q.sort_by(sort_by)
+    res = client().ft(index).search(q)
+    out: list[dict] = []
+    for doc in res.docs:
+        try:
+            out.append(json.loads(doc.json))
+        except Exception:
+            out.append({"id": doc.id})
+    return out
+
+
+def search_govpolicies(query: str = "*", limit: int = 25) -> list[dict]:
+    """Structured policy-rule lookup (RediSearch). Falls back to a key scan if the
+    index is unavailable so policy reads never hard-fail the governance path."""
+    try:
+        return search_json_index(GOVPOLICY_INDEX, query, limit)
+    except Exception:
+        return list_json(GOVPOLICY_PREFIX, limit)
+
+
+def list_json(prefix: str, limit: int = 200) -> list[dict]:
+    """Scan + load every JSON doc under a key prefix (small-N governance reads)."""
+    out: list[dict] = []
+    for key in keys(f"{prefix}*"):
+        doc = get_json(key)
+        if doc is not None:
+            out.append(doc)
+        if len(out) >= limit:
+            break
+    return out
+
+
+def delete_key(key: str) -> int:
+    return int(client().delete(key))
 
 
 # --------------------------------------------------------------------------- #

@@ -14,6 +14,20 @@ export const ROSTER_BY_ID: Record<string, RosterMember> = Object.fromEntries(
   ROSTER.map((r) => [r.id, r]),
 );
 
+// Display order with the CFO chair first — used by the matrix and inspector.
+export const COUNCIL_ORDER = ["cfo", "treasury", "fpna", "risk", "procurement", "reliability"] as const;
+
+// Faint identity hue per seat — a wayfinding aid only. Information color (stance,
+// decision, reliability) always overrides this where it carries meaning.
+export const AGENT_TONE: Record<string, "accent" | "info" | "warning" | "risk" | "positive" | "neutral"> = {
+  cfo: "accent",
+  treasury: "info",
+  fpna: "warning",
+  risk: "risk",
+  procurement: "positive",
+  reliability: "neutral",
+};
+
 export interface CouncilMember extends RosterMember {
   status?: AgentStatus;
   statusLabel: string;

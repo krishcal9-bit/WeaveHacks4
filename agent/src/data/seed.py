@@ -7,6 +7,8 @@ Loads:
   • finance policies & past
     board decisions ............. HASH + vector index  (atlas:policy:*) → RAG
   • recent decisions feed ....... Stream     (atlas:stream:decisions)
+  • governance policy rules ..... RedisJSON + RediSearch (atlas:govpolicy:*) → lookup
+  • approval matrix ............. RedisJSON  (atlas:approval_matrix:northwind)
 
 Run:  uv run --directory agent python -m src.data.seed
 """
@@ -14,6 +16,9 @@ Run:  uv run --directory agent python -m src.data.seed
 from __future__ import annotations
 
 from src import redis_layer as R
+from src.data import financial_seed as FS
+from src.approvals import DEFAULT_MATRIX
+from src.policies import DEFAULT_POLICY_RULES
 
 COMPANY_KEY = f"{R.NS}:company:northwind"
 
@@ -214,6 +219,95 @@ POLICIES: list[dict] = [
 ]
 
 
+def _ensure_weave() -> bool:
+    """Best-effort Weave init so seeded replay sets publish as live weave.Datasets."""
+    import os
+
+    if not (os.getenv("WANDB_API_KEY") and os.getenv("WANDB_PROJECT")):
+        return False
+    try:
+        import weave
+
+        from src.env import redact_secrets  # noqa: F401 (ensures redaction module is importable)
+
+        entity = os.getenv("WANDB_ENTITY")
+        project = os.getenv("WANDB_PROJECT")
+        weave.init(f"{entity}/{project}" if entity else project)
+        # Mark health status so weave_status()/weave_links() reflect reality outside main.py.
+        from src.health import set_weave_status
+
+        set_weave_status(initialized=True, error=None)
+        return True
+    except Exception as exc:  # publishing simply degrades to Redis-only metadata
+        from src.env import redact_secrets
+
+        print(f"[seed] Weave init skipped (replay set stays Redis-only): {redact_secrets(exc)}")
+        return False
+
+
+def seed_evaluation(verbose: bool = True) -> dict:
+    """Seed the W&B Weave eval subsystem: promotion candidates + default replay set.
+
+    Idempotent. Unproven candidates are blocked by default so the promotion gates
+    visibly hold the line until a live replay proves an improvement.
+    """
+    from src import promotion_gates as PG
+    from src import replay_sets as RS
+
+    publish = _ensure_weave()
+    candidates = PG.upsert_candidates_from_prompt_versions()
+    replay = RS.ensure_default_replay_set(publish=publish)
+
+    blocked = 0
+    for candidate in candidates:
+        if candidate.get("status") == "proposed" and not candidate.get("last_gate_id"):
+            try:
+                PG.block_unproven_candidate(candidate["id"], publish=publish)
+                blocked += 1
+            except Exception as exc:
+                from src.env import redact_secrets
+
+                print(f"[seed] gate seed warning: {redact_secrets(exc)}")
+
+    summary = {
+        "promotion_candidates": len(candidates),
+        "blocked_unproven": blocked,
+        "replay_set": replay.get("slug"),
+        "replay_cases": replay.get("case_count"),
+        "weave_dataset_published": bool((replay.get("weave") or {}).get("published")),
+    }
+    if verbose:
+        print("[seed] evaluation:", summary)
+    return summary
+
+
+def seed_governance(verbose: bool = True) -> dict:
+    """Seed Acme Corp's governance layer: structured board policy rules (RedisJSON +
+    RediSearch lookup index) and the board-approved approval matrix. Idempotent and
+    deterministic — no embeddings or external calls required. Never seeds approval
+    requests or audit evidence; those are created live by the governance engine."""
+    # Structured board / finance policy rules → RedisJSON + RediSearch index.
+    for rule in DEFAULT_POLICY_RULES:
+        R.set_json(f"{R.GOVPOLICY_PREFIX}{rule.id}", rule.model_dump(mode="json"))
+    R.ensure_govpolicy_index()
+
+    # Board-approved approval matrix (thresholds → approver chains).
+    R.set_json(R.MATRIX_KEY, DEFAULT_MATRIX)
+
+    # Indices that back the approvals/obligations REST + monitoring views.
+    R.ensure_approval_index()
+    R.ensure_obligation_index()
+
+    summary = {
+        "policy_rules": len(DEFAULT_POLICY_RULES),
+        "approval_tiers": len(DEFAULT_MATRIX.get("amount_tiers", [])),
+        "matrix_key": R.MATRIX_KEY,
+    }
+    if verbose:
+        print("[seed] governance loaded:", summary)
+    return summary
+
+
 def seed(verbose: bool = True) -> dict:
     """Idempotently load the demo company into Redis."""
     if not R.ping():
@@ -238,11 +332,37 @@ def seed(verbose: bool = True) -> dict:
         for d in [p for p in POLICIES if p["kind"] == "decision"]:
             R.append_event("decisions", {"title": d["title"], "summary": d["text"], "source": "history"})
 
+    # 5) Seed the W&B Weave eval/replay/promotion subsystem (non-fatal).
+    evaluation: dict = {}
+    try:
+        evaluation = seed_evaluation(verbose=verbose)
+    except Exception as exc:
+        from src.env import redact_secrets
+
+        print(f"[seed] evaluation seeding warning: {redact_secrets(exc)}")
+
+    # 6) Seed the governance layer (board policy rules + approval matrix + indices).
+    governance = seed_governance(verbose=verbose)
+
+    # 7) Seed the financial-OS layer (departments, invoices, POs, contracts, ARR
+    #    movements, vendor clauses, knowledge corpus, scenarios) — non-fatal; the
+    #    live preflight independently asserts the seeded counts.
+    financial_os: dict = {}
+    try:
+        financial_os = FS.seed_financial_os(COMPANY, VENDORS, POLICIES, verbose=verbose)
+    except Exception as exc:
+        from src.env import redact_secrets
+
+        print(f"[seed] financial-OS seeding warning: {redact_secrets(exc)}")
+
     summary = {
         "company": COMPANY["name"],
         "vendors": len(VENDORS),
         "policies": len(POLICIES),
         "runway_months": COMPANY["runway_months"],
+        "evaluation": evaluation,
+        "governance": governance,
+        "financial_os": financial_os,
     }
     if verbose:
         print("[seed] loaded:", summary)

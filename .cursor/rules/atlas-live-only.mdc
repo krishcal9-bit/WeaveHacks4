@@ -11,3 +11,11 @@ alwaysApply: true
 - Use `scripts/live-setup.sh` for repeatable judge prep: Redis Stack Docker container, `npm ci`, `uv sync`, live seed, and sponsor/Redis preflight.
 - If Docker is unavailable, say that the Docker daemon is not running and stop the Redis setup path until Docker Desktop is started.
 - Keep generated setup artifacts non-secret and reversible. Do not alter unrelated worker files.
+
+## W&B Weave evaluation / replay / promotion subsystem
+
+- The eval layer is **live**: `agent/src/weave_eval.py`, `replay_sets.py`, and `promotion_gates.py` use real `weave.op`/`weave.Dataset`/`weave.Model`/`weave.Scorer`/`weave.Evaluation`/`weave.publish`. Never add fake eval packets, pretend replay results, mocked `weave.*` calls, or secret-printing diagnostics. Surface Weave/network failures redacted (`src.env.redact_secrets`), never fabricate a passing result.
+- Non-secret eval metadata lives under the `atlas:evaluation:*` Redis namespace; promotion decisions append to `atlas:stream:promotions` and eval packets to `atlas:stream:eval_packets`. Keep new eval state inside `atlas:evaluation:*`.
+- Preserve the `weave.init` import ordering (`main.py` inits Weave before importing `src.agent`). The eval child-span scorers must remain nested under the existing node `@weave.op` spans; do not move Weave init after agent import.
+- Promotion is gated: candidates are **blocked** unless every hard no-regression gate passes (reliability / policy / evidence / calibration / coverage / trace quality) and **auto-approved** only with a reliability gain ≥ 3 (else held for human review). Do not weaken or bypass these gates to force a promotion.
+- Verify eval changes with `scripts/eval-smoke.sh` (creates + lists eval metadata, redacted, and asserts `WANDB_API_KEY` never appears in output). The smoke check must never print secrets.

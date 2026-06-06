@@ -393,6 +393,33 @@ def observability_health() -> dict[str, Any]:
     }
 
 
+def evaluation_health() -> dict[str, Any]:
+    """Live readiness + non-secret counts for the W&B Weave eval/replay/promotion subsystem.
+
+    Kept out of the hot-path :func:`sponsor_health` so the 15s health poll stays
+    cheap; the eval modules are imported lazily to avoid an import cycle.
+    """
+    weave = weave_status()
+    ready = bool(weave["configured"] and weave["initialized"])
+    payload: dict[str, Any] = {
+        "ready": ready,
+        "mode": "strict-live",
+        "weave": weave,
+        "blockers": [] if ready else ["W&B Weave: tracing is not initialized."],
+    }
+    try:
+        from src import promotion_gates as PG
+        from src import replay_sets as RS
+        from src import weave_eval as WE
+
+        payload["evals"] = WE.eval_summary()
+        payload["replay_sets"] = RS.replay_summary()
+        payload["promotions"] = PG.promotion_status_summary()
+    except Exception as exc:
+        payload["error"] = redact_secrets(exc)
+    return payload
+
+
 def require_live_ready() -> None:
     health = sponsor_health()
     if not health["ready"]:
