@@ -1,13 +1,16 @@
 # Atlas — Autonomous Finance Operations
 
-Atlas is an AI **finance department** for startups. Pose any financial decision — a vendor
-renewal, a hire, a capital commitment — and a committee of role-based agents (Treasury, FP&A,
-Risk & Audit, Procurement) analyzes it against your real numbers, **debates it like an
-investment committee**, and the CFO issues a board-ready, quantified recommendation.
+Atlas is an AI **finance council** for real operating decisions. Pose any financial decision —
+a vendor renewal, a hire, a capital commitment, a security blocker — and a committee of
+role-based agents (Treasury, FP&A, Risk & Audit, Procurement, Reliability Auditor) analyzes it
+against Acme Corp's operating data, **debates it like an investment committee**, and the CFO
+issues a board-ready, quantified recommendation.
 
-Built for **WeaveHacks 4 — Multi-Agent Orchestration**.
+Atlas is framed as Acme Corp's live finance governance system, not a prototype. W&B Weave is
+the self-improvement layer: every run produces trace evidence, reliability scores, replay plans,
+and prompt-promotion gates.
 
-🔗 **W&B Weave traces (judges):** https://wandb.ai/krishcal9-uc-irvine-anteaters/atlas-finance-os/weave
+🔗 **W&B Weave traces:** https://wandb.ai/krishcal9-uc-irvine-anteaters/atlas-finance-os/weave
 
 ---
 
@@ -15,8 +18,11 @@ Built for **WeaveHacks 4 — Multi-Agent Orchestration**.
 
 - **Open-ended decision input → live multi-agent debate → quantified resolution.** The committee
   argues with real figures and the CFO rules with a confidence score and exact runway/burn impact.
-- Ships with a seeded demo company, **Northwind Robotics** (Series A SaaS), so the agents reason
-  over a real balance sheet, vendor contracts, finance policies, and past board decisions.
+- Ships with seeded Acme Corp operating data: 18-month cash forecast, customer cohorts, pipeline
+  risk, hiring plans, vendor obligations, audit findings, incidents, board constraints, and prior
+  decision outcomes.
+- A Reliability Auditor scores each agent on evidence grounding, forecast calibration, policy
+  compliance, debate value, outcome accuracy, confidence calibration, and trace quality.
 - Four surfaces: **Executive Dashboard**, **Decision Room** (the debate), **Department** (org chart),
   **Activity** (decision log).
 
@@ -25,14 +31,14 @@ Built for **WeaveHacks 4 — Multi-Agent Orchestration**.
 | Tool | Role in Atlas |
 | --- | --- |
 | **OpenAI** | Powers the agents and policy embeddings from live environment credentials. `LLM_PROVIDER`, `LLM_MODEL`, and `EMBED_MODEL` are configurable, but the demo must not fall back to canned model output. |
-| **W&B Weave** | Every agent turn and model call is traced with `weave.init()` plus `@weave.op` spans per committee member (`intake`, `analyst_*`, `debate_round`, `cfo_synthesis`, `persist`). |
+| **W&B Weave** | Every agent turn and model call is traced with `weave.init()` plus `@weave.op` spans per committee member (`intake`, `analyst_*`, `debate_round`, `cfo_synthesis`, `reliability_auditor`, `persist`). Reliability scorecards become replay/eval packets for prompt promotion gates. |
 | **Redis** (load-bearing) | RedisJSON system-of-record (financials, vendors); RediSearch structured queries; vector RAG over finance policies & past decisions; Streams as the decision log; Pub/Sub for live updates. |
 | **CopilotKit** | AG-UI shared-state streaming drives the live boardroom (`useCoAgent`); the Next.js runtime proxies to the FastAPI LangGraph agent. |
 | **Cursor** | Project workflow rules in `.cursor/rules/` preserve the strict live-only setup, sponsor checklist, root `.env` contract, and no-secret handling. |
 
 ## Live-only contract
 
-Atlas is a strict live sponsor demo. Do not run or present it with mocked LLM output, fake
+Atlas is a strict live system. Do not run or present it with mocked LLM output, fake
 Weave traces, a non-Stack Redis server, browser-only data, or hard-coded sponsor responses.
 The required live environment keys are loaded from the workspace root `.env`:
 
@@ -56,7 +62,7 @@ Browser (Next.js 16 + CopilotKit)
 FastAPI + LangGraph agent  (:8123, AG-UI)        ← Weave traces every node
       │
       ├── debate graph: intake → treasury → fpna → risk → procurement
-      │                 → cross-examination → CFO synthesis → persist
+      │                 → cross-examination → CFO synthesis → reliability audit → persist
       ├── tools: get_company_financials, compute_runway, list_vendors, search_finance_policies
       └── Redis: JSON records · vendor search · vector RAG · decision stream · pub/sub
 ```
@@ -128,7 +134,7 @@ agent/      FastAPI + LangGraph + Weave + Redis (Python 3.12, uv)
   main.py             server: weave.init + AG-UI mount + dashboard data API
   src/agent.py        the multi-agent debate graph
   src/redis_layer.py  Redis: JSON, search, vector RAG, streams, pub/sub, cache
-  src/data/seed.py    Northwind Robotics dataset + loader
+  src/data/seed.py    Acme Corp operating dataset + loader
   src/tools.py        finance tools (all grounded in Redis)
   src/api.py          /api/company · /api/vendors · /api/decisions · /api/roster
 ```

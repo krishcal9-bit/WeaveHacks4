@@ -29,7 +29,14 @@ def _init_weave() -> None:
     try:
         import weave
 
-        weave.init(f"{entity}/{project}" if entity else project)
+        target = f"{entity}/{project}" if entity else project
+        try:
+            weave.init(target)
+        except Exception:
+            if not entity:
+                raise
+            print("[atlas] Weave entity/project init failed; retrying with API key default entity.")
+            weave.init(project)
         set_weave_status(initialized=True, error=None)
         print("[atlas] Weave tracing initialized.")
     except Exception as exc:

@@ -36,6 +36,64 @@ export interface CompanyFinancials {
     post_money: number;
   };
   cash_history: { month: string; cash: number; net_burn: number }[];
+  cash_forecast?: {
+    month: string;
+    base_cash: number;
+    downside_cash: number;
+    net_burn: number;
+    weighted_pipeline_arr?: number;
+  }[];
+  pipeline_by_stage?: {
+    stage: string;
+    opportunities: number;
+    arr: number;
+    weighted_arr: number;
+    risk?: string;
+  }[];
+  customer_cohorts?: {
+    segment: string;
+    customers: number;
+    mrr: number;
+    logo_churn_mom?: number;
+    ndr?: number;
+    risk?: string;
+  }[];
+  hiring_plan?: {
+    team: string;
+    roles: number;
+    monthly_cost: number;
+    start_month: string;
+    dependency?: string;
+  }[];
+  security_incidents?: {
+    date: string;
+    severity: string;
+    summary: string;
+    cash_risk?: number;
+    status?: string;
+  }[];
+  audit_findings?: {
+    id: string;
+    area: string;
+    severity: string;
+    finding: string;
+    due?: string;
+  }[];
+  board_constraints?: string[];
+  decision_outcomes?: {
+    decision_id: string;
+    owner: string;
+    predicted: string;
+    actual: string;
+    outcome: string;
+    calibration_score?: number;
+  }[];
+  prompt_versions?: {
+    agent: string;
+    current: string;
+    candidate: string;
+    promotion_gate: string;
+  }[];
 }
 
 export interface Vendor {
@@ -46,6 +104,10 @@ export interface Vendor {
   monthly_cost: number;
   renewal_date: string;
   status: string;
+  owner?: string;
+  termination_notice_days?: number;
+  switching_cost?: number;
+  data_sensitivity?: string;
   notes?: string;
 }
 
@@ -55,14 +117,23 @@ export interface DecisionEvent {
   summary?: string;
   decision?: string;
   confidence?: number;
+  reliability_scores?: ReliabilityScore[];
+  learning_report?: LearningReport;
   source?: string;
   [k: string]: unknown;
 }
 
-export type TurnType = "framing" | "position" | "rebuttal" | "decision";
+export type TurnType = "framing" | "position" | "rebuttal" | "decision" | "reliability";
 export type Stance = "support" | "oppose" | "conditional";
 
 export interface TranscriptTurn {
+  id?: string;
+  at?: string;
+  timestamp?: string;
+  node?: string;
+  trace_id?: string;
+  tokens?: number;
+  cost_usd?: number;
   agent?: string;
   label?: string;
   role?: string;
@@ -113,6 +184,8 @@ export interface DebateState {
   trace_summary?: TraceSummary;
   redis_activity?: RedisActivity[];
   sponsor_health?: SponsorHealth | SponsorCheck[];
+  reliability_scores?: ReliabilityScore[];
+  learning_report?: LearningReport;
 }
 
 export interface RosterMember {
@@ -131,6 +204,14 @@ export interface SponsorCheck {
   error?: string | null;
   url?: string | null;
   checks?: SponsorCheck[];
+  capabilities?: string[];
+  realtime?: {
+    model?: string;
+    reasoning_effort?: string;
+    voice?: string;
+    endpoint?: string;
+    [k: string]: unknown;
+  };
   [k: string]: unknown;
 }
 
@@ -184,6 +265,55 @@ export interface AgentStatus {
   last_seen?: string;
   last_update?: string;
   current_turn?: TranscriptTurn;
+  uds?: AgentUdsSnapshot;
+  reliability_score?: number;
+  reliability_dimensions?: ReliabilityDimensions;
+  reliability_rationale?: string;
+  known_weaknesses?: string[];
+  prompt_adjustment?: string;
+  promotion_gate?: string;
+  [k: string]: unknown;
+}
+
+export interface ReliabilityDimensions {
+  outcome_accuracy?: number;
+  evidence_grounding?: number;
+  forecast_calibration?: number;
+  policy_compliance?: number;
+  debate_value?: number;
+  confidence_calibration?: number;
+  trace_quality?: number;
+}
+
+export interface ReliabilityScore extends ReliabilityDimensions {
+  agent_id: string;
+  reliability: number;
+  rationale: string;
+  known_weaknesses?: string[];
+  prompt_adjustment?: string;
+  promotion_gate?: string;
+}
+
+export interface LearningReport {
+  summary?: string;
+  eval_dataset?: string;
+  replay_plan?: string[];
+  promotion_gate?: string;
+  score_formula?: Record<string, number>;
+  weave_project?: string | null;
+  weave_url?: string | null;
+  [k: string]: unknown;
+}
+
+export interface AgentUdsSnapshot {
+  current_task?: string;
+  inputs?: string[];
+  outputs?: string[];
+  tools?: string[];
+  trace_node?: string;
+  redis_keys?: string[];
+  sponsor_events?: string[];
+  updated_at?: string;
   [k: string]: unknown;
 }
 
@@ -222,6 +352,10 @@ export interface TraceSummary {
   op_name?: string;
   node?: string;
   model?: string;
+  reasoning_effort?: string;
+  text_verbosity?: string;
+  realtime_model?: string;
+  realtime_reasoning_effort?: string;
   model_calls?: number;
   tool_calls?: number;
   weave_project?: string;
@@ -278,4 +412,13 @@ export interface ObservabilitySnapshot {
   redis?: RedisActivity | RedisActivity[];
   redis_activity?: RedisActivity[];
   [k: string]: unknown;
+}
+
+export interface RealtimeSession {
+  ready: boolean;
+  model: string;
+  reasoning_effort?: string;
+  voice?: string;
+  expires_at?: number | string | null;
+  client_secret: string;
 }

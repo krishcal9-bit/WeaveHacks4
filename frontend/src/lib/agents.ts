@@ -7,6 +7,7 @@ export const ROSTER: RosterMember[] = [
   { id: "fpna", label: "FP&A", role: "Financial Planning & Analysis", monogram: "FP", mandate: "Growth, ROI, forecast, payback, and unit economics." },
   { id: "risk", label: "Risk & Audit", role: "Risk & Audit", monogram: "RA", mandate: "Downside scenarios, compliance, controls, and policy." },
   { id: "procurement", label: "Procurement", role: "Procurement", monogram: "PR", mandate: "Vendor terms, cost efficiency, and negotiation leverage." },
+  { id: "reliability", label: "Reliability Auditor", role: "Reliability & Learning", monogram: "RL", mandate: "Scores agent reliability, packages W&B evals, and gates prompt promotion." },
 ];
 
 export const ROSTER_BY_ID: Record<string, RosterMember> = Object.fromEntries(
@@ -33,6 +34,9 @@ const ROLE_ALIASES: Record<string, string> = {
   "risk and audit": "risk",
   "risk & audit": "risk",
   procurement: "procurement",
+  "reliability auditor": "reliability",
+  reliability: "reliability",
+  "reliability and learning": "reliability",
 };
 
 function normalizeLookup(value: string): string {

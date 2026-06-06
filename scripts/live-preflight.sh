@@ -16,7 +16,18 @@ source "${ENV_FILE}"
 set +a
 
 missing=()
-for key in OPENAI_API_KEY WANDB_API_KEY REDIS_URL; do
+for key in \
+  OPENAI_API_KEY \
+  LLM_PROVIDER \
+  LLM_MODEL \
+  LLM_REASONING_EFFORT \
+  LLM_TEXT_VERBOSITY \
+  OPENAI_REALTIME_MODEL \
+  OPENAI_REALTIME_REASONING_EFFORT \
+  OPENAI_REALTIME_VOICE \
+  WANDB_API_KEY \
+  WANDB_PROJECT \
+  REDIS_URL; do
   if [[ -z "${!key:-}" ]]; then
     missing+=("${key}")
   fi
@@ -47,6 +58,7 @@ if [[ ! -f "${REPO_ROOT}/frontend/package-lock.json" ]]; then
 fi
 
 uv run --directory "${REPO_ROOT}/agent" python - <<'PY'
+import os
 import socket
 
 for host in ("api.openai.com", "api.wandb.ai"):
@@ -56,13 +68,17 @@ for host in ("api.openai.com", "api.wandb.ai"):
         raise SystemExit(f"Sponsor host is not resolvable: {host} ({exc})")
 
 from src import redis_layer as R
+from openai import OpenAI
 
 client = R.client()
 client.ping()
 client.execute_command("JSON.GET", "__atlas:missing__")
 client.execute_command("FT._LIST")
+OpenAI().models.retrieve(os.environ["LLM_MODEL"])
+OpenAI().models.retrieve(os.environ["OPENAI_REALTIME_MODEL"])
 print("Sponsor network preflight passed: api.openai.com and api.wandb.ai resolve.")
+print("OpenAI model preflight passed: reasoning and realtime models are resolvable.")
 print("Redis Stack preflight passed: PING, RedisJSON, RediSearch.")
 PY
 
-echo "Live preflight passed: root .env keys present, tools available, Redis Stack ready."
+echo "Live preflight passed: root .env keys present, tools available, OpenAI models resolvable, Redis Stack ready."

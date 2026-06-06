@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useState, type ReactNode } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import { useCoAgent, useCopilotChat } from "@copilotkit/react-core";
 import { MessageRole, TextMessage } from "@copilotkit/runtime-client-gql";
 import {
@@ -9,12 +9,13 @@ import {
   ArrowUp,
   BarChart3,
   Bell,
-  CheckCircle2,
   Clock,
   Database,
   ExternalLink,
   Landmark,
   Loader2,
+  Mic,
+  MicOff,
   Radio,
   Scale,
   ServerCog,
@@ -29,8 +30,11 @@ import {
 import type {
   AgentStatus,
   DebateState,
+  LearningReport,
   ObservabilityEvent,
   RedisActivity,
+  RealtimeSession,
+  ReliabilityScore,
   RosterMember,
   TraceSummary,
   TranscriptTurn,
@@ -41,12 +45,6 @@ import { fmtMonths, fmtSignedMonths } from "@/lib/format";
 
 const AGENT_BASE = process.env.NEXT_PUBLIC_AGENT_URL || "http://localhost:8123";
 
-const EXAMPLES = [
-  "Should we renew the $180k/yr Datadog contract as-is, or renegotiate it down?",
-  "Should we hire 5 engineers next quarter (~$95k/mo) or extend runway?",
-  "A vendor wants $250k upfront for a year of an analytics platform - approve it?",
-];
-
 const NODE_LABEL: Record<string, string> = {
   intake: "Convening the committee",
   treasury: "Treasury is forming its position",
@@ -55,6 +53,8 @@ const NODE_LABEL: Record<string, string> = {
   procurement: "Procurement is forming its position",
   debate: "Committee cross-examination",
   synthesis: "The CFO is deliberating",
+  reliability: "Reliability auditor is scoring the council",
+  reliability_auditor: "Reliability auditor is scoring the council",
   persist: "Recording the decision",
 };
 
@@ -65,6 +65,8 @@ const NODE_TO_AGENT: Record<string, string> = {
   risk: "risk",
   procurement: "procurement",
   synthesis: "cfo",
+  reliability: "reliability",
+  reliability_auditor: "reliability",
   persist: "cfo",
 };
 
@@ -72,6 +74,7 @@ const PHASE_LABEL: Record<string, string> = {
   analysis: "Functional analysis",
   debate: "Cross-examination",
   synthesis: "CFO synthesis",
+  reliability: "Reliability eval",
   done: "Decision recorded",
 };
 
@@ -89,6 +92,7 @@ const AGENT_ICONS = {
   fpna: BarChart3,
   risk: ShieldCheck,
   procurement: ShoppingCart,
+  reliability: Activity,
 } as const;
 
 type HealthStatus = "loading" | "ready" | "blocked" | "unavailable";
@@ -102,6 +106,25 @@ type HealthCheck = {
   error?: string | null;
   url?: string | null;
   checks?: HealthCheck[];
+  capabilities?: string[];
+  realtime?: {
+    model?: string;
+    reasoning_effort?: string;
+    voice?: string;
+    endpoint?: string;
+  };
+  sandbox?: {
+    configured?: boolean;
+    id?: string | null;
+    url?: string | null;
+    detail?: string;
+  };
+  modules?: Record<string, string>;
+  indices?: Record<string, Record<string, unknown>>;
+  streams?: Record<string, Record<string, unknown>>;
+  model?: string;
+  reasoning_effort?: string;
+  verbosity?: string;
 };
 
 type HealthPayload = {
@@ -135,22 +158,45 @@ type SponsorView = {
   url?: string | null;
   status: SponsorStatus;
   checks?: HealthCheck[];
+  capabilities?: string[];
+  realtime?: HealthCheck["realtime"];
   sandbox?: {
     configured?: boolean;
     id?: string | null;
     url?: string | null;
     detail?: string;
   };
+  modules?: Record<string, string>;
+  indices?: Record<string, Record<string, unknown>>;
+  streams?: Record<string, Record<string, unknown>>;
+  model?: string;
+  reasoning_effort?: string;
+  verbosity?: string;
   icon: (typeof SPONSOR_DEFAULTS)[number]["icon"];
 };
 
 type TimelineStatus = "complete" | "active" | "pending" | "blocked";
+type RealtimeStatus = "idle" | "connecting" | "connected" | "blocked";
+type RealtimeView = {
+  status: RealtimeStatus;
+  detail: string;
+  model?: string;
+  voice?: string;
+};
 
 export default function DecisionsPage() {
   const [input, setInput] = useState("");
   const [health, setHealth] = useState<HealthView>({ status: "loading", refreshing: true });
-  const [selectedAgentId, setSelectedAgentId] = useState("cfo");
+  const [selectedAgentId, setSelectedAgentId] = useState<string | null>(null);
   const [nowLabel, setNowLabel] = useState("");
+  const [realtime, setRealtime] = useState<RealtimeView>({
+    status: "idle",
+    detail: "Realtime 2 voice idle",
+  });
+  const realtimePeerRef = useRef<RTCPeerConnection | null>(null);
+  const realtimeStreamRef = useRef<MediaStream | null>(null);
+  const realtimeAudioRef = useRef<HTMLAudioElement | null>(null);
+  const realtimeDataRef = useRef<RTCDataChannel | null>(null);
   const { state, running, nodeName } = useCoAgent<DebateState>({ name: "finance_department" });
   const { appendMessage } = useCopilotChat();
 
@@ -160,6 +206,8 @@ export default function DecisionsPage() {
   const traceSummary = state?.trace_summary;
   const redisActivity = state?.redis_activity ?? [];
   const recommendation = state?.recommendation;
+  const reliabilityScores = state?.reliability_scores ?? [];
+  const learningReport = state?.learning_report;
   const started = transcript.length > 0 || running;
   const healthReady = health.status === "ready" && health.data?.ready === true;
   const currentPhase = getCurrentPhaseLabel({
@@ -229,6 +277,146 @@ export default function DecisionsPage() {
     return () => window.clearInterval(interval);
   }, []);
 
+  const stopRealtime = useCallback(() => {
+    realtimeDataRef.current?.close();
+    realtimePeerRef.current?.close();
+    realtimeStreamRef.current?.getTracks().forEach((track) => track.stop());
+    if (realtimeAudioRef.current) {
+      realtimeAudioRef.current.srcObject = null;
+    }
+    realtimeDataRef.current = null;
+    realtimePeerRef.current = null;
+    realtimeStreamRef.current = null;
+    setRealtime((prev) => ({
+      status: "idle",
+      detail: prev.status === "connected" ? "Realtime 2 voice disconnected" : prev.detail,
+      model: prev.model,
+      voice: prev.voice,
+    }));
+  }, []);
+
+  useEffect(() => stopRealtime, [stopRealtime]);
+
+  const startRealtime = useCallback(async () => {
+    if (!healthReady) {
+      setRealtime({ status: "blocked", detail: "Strict live preflight must pass before voice starts." });
+      return;
+    }
+    if (typeof navigator === "undefined" || !navigator.mediaDevices?.getUserMedia) {
+      setRealtime({ status: "blocked", detail: "This browser does not expose microphone capture." });
+      return;
+    }
+
+    stopRealtime();
+    setRealtime({ status: "connecting", detail: "Minting OpenAI Realtime 2 session..." });
+
+    try {
+      const sessionRes = await fetch(`${AGENT_BASE}/api/realtime/session`, {
+        method: "POST",
+        cache: "no-store",
+      });
+      const session = (await sessionRes.json().catch(() => null)) as RealtimeSession | null;
+      if (!sessionRes.ok || !session?.client_secret) {
+        throw new Error(`Realtime session failed: ${sessionRes.status}`);
+      }
+
+      setRealtime({
+        status: "connecting",
+        detail: `Connecting microphone to ${session.model}...`,
+        model: session.model,
+        voice: session.voice,
+      });
+
+      const peer = new RTCPeerConnection();
+      const audio = new Audio();
+      audio.autoplay = true;
+      audio.setAttribute("data-atlas-realtime", "true");
+      realtimeAudioRef.current = audio;
+
+      peer.ontrack = (event) => {
+        const [stream] = event.streams;
+        if (stream) {
+          audio.srcObject = stream;
+          void audio.play().catch(() => undefined);
+        }
+      };
+      peer.onconnectionstatechange = () => {
+        if (peer.connectionState === "connected") {
+          setRealtime({
+            status: "connected",
+            detail: `Realtime voice live on ${session.model}`,
+            model: session.model,
+            voice: session.voice,
+          });
+        }
+        if (["failed", "disconnected", "closed"].includes(peer.connectionState)) {
+          setRealtime((prev) =>
+            prev.status === "connected"
+              ? { ...prev, status: "idle", detail: "Realtime voice disconnected" }
+              : prev,
+          );
+        }
+      };
+
+      const media = await navigator.mediaDevices.getUserMedia({ audio: true });
+      media.getTracks().forEach((track) => peer.addTrack(track, media));
+      realtimeStreamRef.current = media;
+
+      const dataChannel = peer.createDataChannel("oai-events");
+      dataChannel.onopen = () => {
+        dataChannel.send(
+          JSON.stringify({
+            type: "response.create",
+            response: {
+              modalities: ["audio", "text"],
+              instructions:
+                "Greet the operator and ask which council agent they want to inspect or question.",
+            },
+          }),
+        );
+      };
+      dataChannel.onmessage = (event) => {
+        try {
+          const payload = JSON.parse(String(event.data)) as { type?: string; transcript?: string; text?: string };
+          if (payload.type?.includes("transcript") && (payload.transcript || payload.text)) {
+            setRealtime((prev) => ({
+              ...prev,
+              detail: payload.transcript || payload.text || prev.detail,
+            }));
+          }
+        } catch {
+          // Ignore non-JSON realtime control frames.
+        }
+      };
+      realtimeDataRef.current = dataChannel;
+
+      const offer = await peer.createOffer();
+      await peer.setLocalDescription(offer);
+      const sdpRes = await fetch(
+        `https://api.openai.com/v1/realtime?model=${encodeURIComponent(session.model)}`,
+        {
+          method: "POST",
+          body: offer.sdp ?? "",
+          headers: {
+            Authorization: `Bearer ${session.client_secret}`,
+            "Content-Type": "application/sdp",
+          },
+        },
+      );
+      if (!sdpRes.ok) {
+        throw new Error(`Realtime SDP exchange failed: ${sdpRes.status}`);
+      }
+      await peer.setRemoteDescription({ type: "answer", sdp: await sdpRes.text() });
+      realtimePeerRef.current = peer;
+    } catch (err) {
+      stopRealtime();
+      setRealtime({
+        status: "blocked",
+        detail: err instanceof Error ? err.message : String(err),
+      });
+    }
+  }, [healthReady, stopRealtime]);
+
   async function submit(text: string) {
     const content = text.trim();
     if (!content || running || !healthReady) return;
@@ -240,7 +428,13 @@ export default function DecisionsPage() {
 
   return (
     <main className="flex min-h-full flex-col bg-background">
-      <CouncilTopBar healthReady={healthReady} nowLabel={nowLabel} />
+      <CouncilTopBar
+        healthReady={healthReady}
+        learningReport={learningReport}
+        nowLabel={nowLabel}
+        reliabilityScores={reliabilityScores}
+        sponsorRows={sponsorRows}
+      />
 
       <CouncilBriefStrip
         currentPhase={currentPhase}
@@ -248,6 +442,7 @@ export default function DecisionsPage() {
         health={health}
         healthReady={healthReady}
         nodeName={nodeName}
+        phase={state?.phase}
         recommendation={recommendation}
         running={running}
         transcript={transcript}
@@ -259,34 +454,26 @@ export default function DecisionsPage() {
         </div>
       )}
 
-      <div className="grid flex-1 items-start gap-2 p-2 xl:grid-cols-[286px_minmax(0,1fr)_390px]">
-        <LiveEventPanel
-          events={observabilityEvents}
-          nodeName={nodeName}
-          running={running}
-          transcript={transcript}
-        />
-
+      <div className="grid flex-1 items-start gap-2 p-2">
         <div className="min-w-0 space-y-2">
-          <CommandComposer
-            input={input}
-            onInput={setInput}
-            onSubmit={submit}
-            running={running}
-            healthReady={healthReady}
-            started={started}
-          />
-
           <CouncilStage
             agentStatuses={agentStatuses}
             currentPhase={currentPhase}
             decision={state?.decision}
             events={observabilityEvents}
             healthReady={healthReady}
+            input={input}
             nodeName={nodeName}
+            onInput={setInput}
             onSelectAgent={setSelectedAgentId}
+            onStartRealtime={startRealtime}
+            onStopRealtime={stopRealtime}
+            onSubmit={submit}
+            learningReport={learningReport}
             recommendation={recommendation}
             redisActivity={redisActivity}
+            reliabilityScores={reliabilityScores}
+            realtime={realtime}
             running={running}
             selectedAgentId={selectedAgentId}
             started={started}
@@ -294,26 +481,36 @@ export default function DecisionsPage() {
             transcript={transcript}
           />
 
-          <SponsorProofStrip sponsorRows={sponsorRows} />
+          <LiveEventPanel
+            events={observabilityEvents}
+            nodeName={nodeName}
+            running={running}
+            transcript={transcript}
+          />
         </div>
-
-        <ObservabilityRail
-          events={observabilityEvents}
-          health={health}
-          nodeName={nodeName}
-          redisActivity={redisActivity}
-          running={running}
-          sponsorRows={sponsorRows}
-          traceSummary={traceSummary}
-        />
       </div>
     </main>
   );
 }
 
-function CouncilTopBar({ healthReady, nowLabel }: { healthReady: boolean; nowLabel: string }) {
+function CouncilTopBar({
+  healthReady,
+  learningReport,
+  nowLabel,
+  reliabilityScores,
+  sponsorRows,
+}: {
+  healthReady: boolean;
+  learningReport?: LearningReport;
+  nowLabel: string;
+  reliabilityScores: ReliabilityScore[];
+  sponsorRows: SponsorView[];
+}) {
+  const avgReliability = averageReliability(reliabilityScores);
+  const weave = sponsorRows.find((row) => row.id === "weave");
+  const redis = sponsorRows.find((row) => row.id === "redis");
   return (
-    <header className="flex min-h-14 items-center justify-between gap-3 border-b border-border bg-surface px-4 lg:px-5">
+    <header id="settings" className="flex min-h-14 items-center justify-between gap-3 border-b border-border bg-surface px-4 lg:px-5">
       <div className="min-w-0">
         <h1 className="truncate text-[18px] font-semibold">AI Council</h1>
       </div>
@@ -323,6 +520,9 @@ function CouncilTopBar({ healthReady, nowLabel }: { healthReady: boolean; nowLab
           <span>{healthReady ? "System Healthy" : "Preflight Checking"}</span>
         </div>
         <div className="hidden tabular-nums md:block">{nowLabel}</div>
+        <SystemSignal label="W&B" status={weave?.status ?? "checking"} value={learningReport?.eval_dataset ?? weave?.detail ?? "Weave"} />
+        <SystemSignal label="Redis" status={redis?.status ?? "checking"} value={redis?.detail ?? "Memory"} />
+        <SystemSignal label="Reliability" status={avgReliability ? "ready" : "checking"} value={avgReliability ? `${avgReliability}%` : "Pending"} />
         <span className="inline-flex items-center gap-1.5 rounded-md border border-positive/20 bg-positive-bg px-2.5 py-1 text-[12px] font-semibold text-positive">
           <Radio className="h-3.5 w-3.5" strokeWidth={2.25} />
           Live
@@ -337,11 +537,28 @@ function CouncilTopBar({ healthReady, nowLabel }: { healthReady: boolean; nowLab
   );
 }
 
+function SystemSignal({ label, status, value }: { label: string; status: SponsorStatus; value: string }) {
+  const tone =
+    status === "ready"
+      ? "border-positive/20 bg-positive-bg text-positive"
+      : status === "blocked"
+        ? "border-risk/20 bg-risk-bg text-risk"
+        : "border-warning/20 bg-warning-bg text-warning";
+  return (
+    <span className={`hidden max-w-[190px] items-center gap-1.5 rounded-md border px-2 py-1 text-[11px] font-semibold lg:inline-flex ${tone}`}>
+      <span className="h-1.5 w-1.5 shrink-0 rounded-full bg-current" />
+      <span>{label}</span>
+      <span className="truncate font-medium opacity-75">{value}</span>
+    </span>
+  );
+}
+
 function CouncilBriefStrip({
   currentPhase,
   health,
   healthReady,
   nodeName,
+  phase,
   decision,
   recommendation,
   running,
@@ -351,6 +568,7 @@ function CouncilBriefStrip({
   health: HealthView;
   healthReady: boolean;
   nodeName?: string;
+  phase?: string;
   decision?: string;
   recommendation?: DebateState["recommendation"];
   running: boolean;
@@ -360,7 +578,7 @@ function CouncilBriefStrip({
     health,
     healthReady,
     nodeName,
-    phase: recommendation?.decision ? "done" : undefined,
+    phase,
     recommendation,
     running,
     transcript,
@@ -369,18 +587,26 @@ function CouncilBriefStrip({
 
   return (
     <section className="border-b border-border bg-surface px-4 py-4 lg:px-5">
-      <div className="grid gap-4 xl:grid-cols-[minmax(260px,1fr)_300px_220px_460px] xl:items-center">
+      <div className="grid gap-4 xl:grid-cols-[minmax(280px,1fr)_300px_210px_410px] xl:items-center">
         <div>
-          <h2 className="text-[22px] font-semibold tracking-tight">AI Council Room</h2>
+          <div className="flex min-w-0 items-center gap-2">
+            <h2 className="truncate text-[22px] font-semibold tracking-tight">AI Council Room</h2>
+            <span className="inline-flex shrink-0 items-center gap-1 rounded-md border border-positive/20 bg-positive-bg px-2 py-0.5 text-[11px] font-semibold uppercase text-positive">
+              <span className="h-1.5 w-1.5 rounded-full bg-positive" />
+              Live
+            </span>
+          </div>
           <p className="mt-1 text-[13px] leading-relaxed text-muted-foreground">
-            Autonomous finance council debating a company decision with live agent telemetry.
+            Autonomous finance council debating a company decision.
           </p>
         </div>
 
-        <div className="border-l border-border pl-4">
-          <div className="text-[11px] font-medium text-muted-foreground">Decision Under Debate</div>
-          <div className="mt-1 text-[14px] font-semibold leading-snug">
-            {decision || "No decision submitted"}
+        <div className="flex min-w-0 gap-3 border-l border-border pl-4">
+          <div className="min-w-0 flex-1">
+            <div className="text-[11px] font-medium text-muted-foreground">Decision Under Debate</div>
+            <div className="mt-1 text-[14px] font-semibold leading-snug">
+              {decision || "Awaiting live decision command"}
+            </div>
           </div>
         </div>
 
@@ -398,8 +624,8 @@ function CouncilBriefStrip({
             <span>{activeStep}</span>
           </div>
           <div className="grid grid-cols-5 gap-2">
-            {progress.slice(0, 5).map((step) => (
-              <div key={step.id} className="min-w-0">
+            {buildReferenceProgress(progress).map((step) => (
+              <div key={step.label} className="min-w-0">
                 <div
                   className={`mx-auto h-4 w-4 rounded-full border ${
                     step.status === "complete"
@@ -468,91 +694,24 @@ function PreflightPanel({ health, onRefresh }: { health: HealthView; onRefresh: 
   );
 }
 
-function CommandComposer({
-  input,
-  onInput,
-  onSubmit,
-  running,
-  healthReady,
-  started,
-}: {
-  input: string;
-  onInput: (value: string) => void;
-  onSubmit: (value: string) => void;
-  running: boolean;
-  healthReady: boolean;
-  started: boolean;
-}) {
-  const disabled = running || !healthReady;
-
-  return (
-    <section id="decisions" className="rounded-lg border border-border bg-surface p-3 shadow-sm">
-      <form
-        onSubmit={(e) => {
-          e.preventDefault();
-          onSubmit(input);
-        }}
-      >
-        <div className="flex flex-col gap-3 lg:flex-row lg:items-end">
-          <div className="min-w-0 flex-1">
-            <label className="text-[11px] font-semibold uppercase tracking-[0.08em] text-subtle-foreground">
-              Decision command
-            </label>
-            <textarea
-              value={input}
-              onChange={(e) => onInput(e.target.value)}
-              onKeyDown={(e) => {
-                if (e.key === "Enter" && !e.shiftKey) {
-                  e.preventDefault();
-                  onSubmit(input);
-                }
-              }}
-              rows={1}
-              disabled={running}
-              placeholder="e.g. Should we sign the $250k enterprise security audit, or defer to next quarter?"
-              className="mt-2 max-h-28 min-h-[48px] w-full resize-none rounded-lg border border-border bg-background px-4 py-3 text-[14px] leading-relaxed outline-none transition-colors placeholder:text-subtle-foreground focus:border-border-strong disabled:opacity-60"
-            />
-          </div>
-          <button
-            type="submit"
-            disabled={disabled || !input.trim()}
-            className="inline-flex h-12 items-center justify-center gap-2 rounded-lg bg-accent px-5 text-[14px] font-semibold text-accent-foreground transition-opacity hover:opacity-90 disabled:opacity-40"
-          >
-            {running ? <Loader2 className="h-4 w-4 animate-spin" /> : <ArrowUp className="h-4 w-4" strokeWidth={2.25} />}
-            Send to council
-          </button>
-        </div>
-      </form>
-
-      {!started && (
-        <div className="mt-3 flex flex-wrap gap-2">
-          {EXAMPLES.map((ex) => (
-            <button
-              key={ex}
-              type="button"
-              onClick={() => onSubmit(ex)}
-              disabled={disabled}
-              className="rounded-md border border-border bg-background px-3 py-2 text-left text-[12px] font-medium text-muted-foreground transition-colors hover:border-border-strong hover:text-foreground disabled:opacity-45"
-            >
-              {ex}
-            </button>
-          ))}
-        </div>
-      )}
-    </section>
-  );
-}
-
 function CouncilStage({
   agentStatuses,
   currentPhase,
   decision,
   events,
   healthReady,
+  input,
   nodeName,
+  onInput,
   onSelectAgent,
+  onStartRealtime,
+  onStopRealtime,
+  onSubmit,
+  learningReport,
   recommendation,
   redisActivity,
+  reliabilityScores,
+  realtime,
   running,
   selectedAgentId,
   started,
@@ -564,30 +723,41 @@ function CouncilStage({
   decision?: string;
   events: ObservabilityEvent[];
   healthReady: boolean;
+  input: string;
   nodeName?: string;
+  onInput: (value: string) => void;
   onSelectAgent: (agentId: string) => void;
+  onStartRealtime: () => void;
+  onStopRealtime: () => void;
+  onSubmit: (value: string) => void;
+  learningReport?: LearningReport;
   recommendation?: DebateState["recommendation"];
   redisActivity: RedisActivity[];
+  reliabilityScores: ReliabilityScore[];
+  realtime: RealtimeView;
   running: boolean;
-  selectedAgentId: string;
+  selectedAgentId: string | null;
   started: boolean;
   traceSummary?: TraceSummary;
   transcript: TranscriptTurn[];
 }) {
   const members = [ROSTER_BY_ID.cfo, ...ROSTER.filter((member) => member.id !== "cfo")];
-  const selectedMember = ROSTER_BY_ID[selectedAgentId] ?? ROSTER_BY_ID.cfo;
   const latestSpeaker = latestSpeakerId(transcript);
+  const activeAgentId = NODE_TO_AGENT[nodeName ?? ""];
+  const selectedMember =
+    ROSTER_BY_ID[selectedAgentId ?? activeAgentId ?? latestSpeaker ?? "cfo"] ?? ROSTER_BY_ID.cfo;
   const statusById = Object.fromEntries(agentStatuses.map((status) => [status.id, status]));
+  const scoreById = Object.fromEntries(reliabilityScores.map((score) => [score.agent_id, score]));
 
   return (
-    <section className="overflow-hidden rounded-lg border border-border bg-surface shadow-sm">
-      <div className="relative min-h-[620px] border-b border-border p-4 md:p-6">
+    <section id="evals" className="overflow-hidden rounded-lg border border-border bg-surface shadow-sm">
+      <div className="relative min-h-[760px] border-b border-border p-4 md:p-6">
         <div className="pointer-events-none absolute inset-0 hidden md:block">
           <span className="absolute left-[27%] top-[34%] h-px w-[23%] rotate-[28deg] border-t border-dashed border-border-strong" />
           <span className="absolute right-[25%] top-[34%] h-px w-[23%] rotate-[-28deg] border-t border-dashed border-border-strong" />
           <span className="absolute left-[28%] bottom-[28%] h-px w-[22%] rotate-[-6deg] border-t border-dashed border-border-strong" />
           <span className="absolute right-[25%] bottom-[28%] h-px w-[22%] rotate-[4deg] border-t border-dashed border-border-strong" />
-          <span className="absolute left-1/2 top-[25%] h-[150px] border-l border-dashed border-border-strong" />
+          <span className="absolute left-1/2 top-[25%] h-[120px] border-l border-dashed border-border-strong" />
         </div>
 
         <div className="grid gap-4 md:hidden">
@@ -601,8 +771,9 @@ function CouncilStage({
               nodeName={nodeName}
               onSelect={() => onSelectAgent(member.id)}
               recommendation={recommendation}
+              reliabilityScore={scoreById[member.id]}
               running={running}
-              selected={selectedAgentId === member.id}
+              selected={selectedMember.id === member.id}
               started={started}
               transcript={transcript}
             />
@@ -621,8 +792,9 @@ function CouncilStage({
               nodeName={nodeName}
               onSelect={() => onSelectAgent(member.id)}
               recommendation={recommendation}
+              reliabilityScore={scoreById[member.id]}
               running={running}
-              selected={selectedAgentId === member.id}
+              selected={selectedMember.id === member.id}
               started={started}
               transcript={transcript}
             />
@@ -631,7 +803,14 @@ function CouncilStage({
           <DecisionThreadPanel
             currentPhase={currentPhase}
             decision={decision}
+            healthReady={healthReady}
+            input={input}
+            onInput={onInput}
+            onStartRealtime={onStartRealtime}
+            onStopRealtime={onStopRealtime}
+            onSubmit={onSubmit}
             recommendation={recommendation}
+            realtime={realtime}
             running={running}
             selectedMember={selectedMember}
             started={started}
@@ -646,8 +825,10 @@ function CouncilStage({
         healthReady={healthReady}
         member={selectedMember}
         nodeName={nodeName}
+        learningReport={learningReport}
         recommendation={recommendation}
         redisActivity={redisActivity}
+        reliabilityScore={scoreById[selectedMember.id]}
         running={running}
         started={started}
         traceSummary={traceSummary}
@@ -655,10 +836,10 @@ function CouncilStage({
       />
 
       <div className="grid gap-0 border-t border-border bg-surface-quiet md:grid-cols-4">
-        <CouncilStat label="Council Mode" value="Balanced debate" icon={<Scale className="h-4 w-4" />} />
-        <CouncilStat label="Active Node" value={nodeName ? NODE_LABEL[nodeName] ?? nodeName : "Idle"} />
-        <CouncilStat label="Weave Node" value={traceSummary?.node ?? "Awaiting trace"} />
-        <CouncilStat label="Redis Stream" value={redisActivity.some((item) => item.kind === "stream") ? "Decision event" : "Listening"} />
+        <CouncilStat label="Council Mode" value="Balanced Debate" icon={<Scale className="h-4 w-4" />} />
+        <CouncilStat label="Reliability Avg" value={formatReliability(averageReliability(reliabilityScores))} spark />
+        <CouncilStat label="Active Tokens" value={formatTelemetry(traceSummary?.total_tokens)} spark />
+        <CouncilStat label="Latency (p95)" value={formatTelemetry(traceSummary?.latency_ms, "ms")} spark />
       </div>
     </section>
   );
@@ -673,6 +854,7 @@ function AgentNode({
   nodeName,
   onSelect,
   recommendation,
+  reliabilityScore,
   running,
   selected,
   started,
@@ -686,6 +868,7 @@ function AgentNode({
   nodeName?: string;
   onSelect: () => void;
   recommendation?: DebateState["recommendation"];
+  reliabilityScore?: ReliabilityScore;
   running: boolean;
   selected: boolean;
   started: boolean;
@@ -711,33 +894,48 @@ function AgentNode({
   const stanceLabel = getAgentStanceLabel(member, latestTurn, recommendation);
   const placement = agentPlacement(member.id);
   const Icon = AGENT_ICONS[member.id as keyof typeof AGENT_ICONS] ?? ServerCog;
+  const pillClass = agentStatusPillClass({ active, status, memberId: member.id });
+  const scoreValue = resolveReliabilityValue(agentStatus, reliabilityScore);
+  const scoreStyle = scoreValue
+    ? { background: `conic-gradient(${reliabilityColor(scoreValue)} ${scoreValue * 3.6}deg, var(--border) 0deg)` }
+    : undefined;
 
   return (
     <button
       type="button"
       onClick={onSelect}
+      aria-controls="agent-uds-panel"
+      aria-pressed={selected}
+      data-agent-id={member.id}
       className={`group text-left ${
         absolute ? `absolute ${placement} w-[260px]` : ""
       } ${selected ? "z-20" : "z-10"}`}
     >
       <article
-        className={`rounded-lg border bg-surface/95 p-3 transition-all ${
+        className={`rounded-lg border p-2 transition-all ${
           selected
-            ? "border-info shadow-[0_0_0_3px_rgba(47,91,183,0.12)]"
+            ? "border-info/30 bg-info-bg/35 shadow-[0_0_0_3px_rgba(47,91,183,0.10)]"
             : active
-              ? "border-positive/50 shadow-sm"
-              : "border-transparent hover:border-border"
+              ? "border-transparent bg-transparent"
+              : "border-transparent bg-transparent hover:border-border hover:bg-surface"
         }`}
       >
         <div className="flex items-center gap-3">
-          <div className={`grid h-[76px] w-[76px] shrink-0 place-items-center rounded-full border-[3px] ${agentRingClass(member.id, latestTurn, recommendation, active)}`}>
-            <div className="grid h-[54px] w-[54px] place-items-center rounded-full border border-border bg-surface">
+          <div
+            className={`relative grid h-[86px] w-[86px] shrink-0 place-items-center rounded-full border-[3px] p-[3px] ${agentRingClass(member.id, latestTurn, recommendation, active)}`}
+            style={scoreStyle}
+            title={scoreValue ? `Reliability ${scoreValue}%` : "Reliability pending"}
+          >
+            <div className="grid h-[56px] w-[56px] place-items-center rounded-full border border-border bg-surface">
               <Icon className="h-8 w-8" strokeWidth={1.9} />
             </div>
+            <span className="absolute -bottom-1 -right-1 rounded-full border border-border bg-background px-1.5 py-0.5 text-[10px] font-bold tabular-nums text-foreground shadow-sm">
+              {scoreValue ? `${scoreValue}%` : "EVAL"}
+            </span>
           </div>
           <div className="min-w-0">
             <div className="text-[17px] font-semibold leading-tight">{member.label}</div>
-            <div className={`mt-1 inline-flex rounded px-1.5 py-0.5 text-[10px] font-semibold uppercase ${active ? "bg-positive-bg text-positive" : "bg-info-bg text-info"}`}>
+            <div className={`mt-1 inline-flex rounded px-1.5 py-0.5 text-[10px] font-semibold uppercase ${pillClass}`}>
               {status}
             </div>
             <Waveform active={active} />
@@ -757,7 +955,14 @@ function AgentNode({
 function DecisionThreadPanel({
   currentPhase,
   decision,
+  healthReady,
+  input,
+  onInput,
+  onStartRealtime,
+  onStopRealtime,
+  onSubmit,
   recommendation,
+  realtime,
   running,
   selectedMember,
   started,
@@ -765,15 +970,23 @@ function DecisionThreadPanel({
 }: {
   currentPhase: string;
   decision?: string;
+  healthReady: boolean;
+  input: string;
+  onInput: (value: string) => void;
+  onStartRealtime: () => void;
+  onStopRealtime: () => void;
+  onSubmit: (value: string) => void;
   recommendation?: DebateState["recommendation"];
+  realtime: RealtimeView;
   running: boolean;
-  selectedMember: RosterMember;
+  selectedMember?: RosterMember;
   started: boolean;
   transcript: TranscriptTurn[];
 }) {
   const turns = transcript.slice(-4);
+  const sendDisabled = running || !healthReady || !input.trim();
   return (
-    <div className="absolute left-1/2 top-[46%] w-[260px] -translate-x-1/2 -translate-y-1/2 rounded-lg border border-border bg-surface px-4 py-4 shadow-sm">
+    <div className="absolute left-1/2 top-[48%] w-[300px] -translate-x-1/2 -translate-y-1/2 rounded-lg border border-border bg-surface px-3.5 py-3.5 shadow-sm">
       <div className="text-center text-[12px] font-medium text-muted-foreground">Decision Thread (Live)</div>
       <div className="mt-3 space-y-2">
         {turns.length === 0 ? (
@@ -800,9 +1013,63 @@ function DecisionThreadPanel({
         )}
         {running && <div className="mt-2 text-warning">Live stream active</div>}
       </div>
-      <button type="button" className="mt-3 text-[12px] font-semibold text-info">
-        Viewing {selectedMember.label} details →
-      </button>
+
+      <form
+        className="mt-3 border-t border-border pt-3"
+        onSubmit={(event) => {
+          event.preventDefault();
+          onSubmit(input);
+        }}
+      >
+        <textarea
+          value={input}
+          onChange={(event) => onInput(event.target.value)}
+          onKeyDown={(event) => {
+            if (event.key === "Enter" && !event.shiftKey) {
+              event.preventDefault();
+              onSubmit(input);
+            }
+          }}
+          rows={2}
+          disabled={running}
+          placeholder={started ? "Ask the council a follow-up..." : "Send a decision to the council..."}
+          className="min-h-[58px] w-full resize-none rounded-md border border-border bg-background px-2.5 py-2 text-[12px] leading-relaxed outline-none placeholder:text-subtle-foreground focus:border-border-strong disabled:opacity-50"
+        />
+        <div className="mt-2 flex items-center gap-2">
+          <button
+            type="submit"
+            disabled={sendDisabled}
+            className="inline-flex h-8 flex-1 items-center justify-center gap-1.5 rounded-md bg-accent px-2.5 text-[12px] font-semibold text-accent-foreground transition-opacity disabled:opacity-40"
+          >
+            {running ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <ArrowUp className="h-3.5 w-3.5" />}
+            Send
+          </button>
+          <button
+            type="button"
+            onClick={realtime.status === "connected" ? onStopRealtime : onStartRealtime}
+            disabled={!healthReady || realtime.status === "connecting"}
+            className="inline-flex h-8 items-center justify-center gap-1.5 rounded-md border border-info/20 bg-info-bg px-2.5 text-[12px] font-semibold text-info disabled:opacity-40"
+          >
+            {realtime.status === "connecting" ? (
+              <Loader2 className="h-3.5 w-3.5 animate-spin" />
+            ) : realtime.status === "connected" ? (
+              <MicOff className="h-3.5 w-3.5" />
+            ) : (
+              <Mic className="h-3.5 w-3.5" />
+            )}
+            Realtime 2
+          </button>
+        </div>
+        <div className="mt-1.5 line-clamp-2 text-[10px] leading-relaxed text-subtle-foreground">
+          {realtime.detail}
+        </div>
+      </form>
+
+      {selectedMember && (
+        <div className="mt-3 truncate text-[12px] font-semibold text-info">
+          Viewing {selectedMember.label} details
+        </div>
+      )}
     </div>
   );
 }
@@ -813,8 +1080,10 @@ function AgentDetailPanel({
   healthReady,
   member,
   nodeName,
+  learningReport,
   recommendation,
   redisActivity,
+  reliabilityScore,
   running,
   started,
   traceSummary,
@@ -825,8 +1094,10 @@ function AgentDetailPanel({
   healthReady: boolean;
   member: RosterMember;
   nodeName?: string;
+  learningReport?: LearningReport;
   recommendation?: DebateState["recommendation"];
   redisActivity: RedisActivity[];
+  reliabilityScore?: ReliabilityScore;
   running: boolean;
   started: boolean;
   traceSummary?: TraceSummary;
@@ -835,13 +1106,14 @@ function AgentDetailPanel({
   const turn = findLatestTurnForMember(member.id, transcript);
   const isActive = running && NODE_TO_AGENT[nodeName ?? ""] === member.id;
   const snippet = getAgentSnippet({ agentStatus, member, turn, recommendation, healthReady, started });
+  const scoreValue = resolveReliabilityValue(agentStatus, reliabilityScore);
   const agentEvents = events
     .filter((event) => `${event.label ?? ""} ${event.detail ?? ""}`.toLowerCase().includes(member.label.toLowerCase().split(" ")[0].toLowerCase()))
     .slice(-3)
     .reverse();
 
   return (
-    <div className="grid gap-0 border-t border-border bg-background lg:grid-cols-[minmax(0,1.1fr)_minmax(260px,0.9fr)]">
+    <div id="agent-uds-panel" className="grid gap-0 border-t border-border bg-background lg:grid-cols-[minmax(0,1.1fr)_minmax(260px,0.9fr)]">
       <div className="min-w-0 p-4">
         <div className="flex flex-wrap items-center justify-between gap-3">
           <div>
@@ -853,6 +1125,12 @@ function AgentDetailPanel({
           </span>
         </div>
         <p className="mt-3 text-[14px] leading-relaxed text-foreground">{snippet}</p>
+        <ReliabilityDetail
+          agentStatus={agentStatus}
+          learningReport={learningReport}
+          member={member}
+          score={reliabilityScore}
+        />
         {turn?.key_points && turn.key_points.length > 0 && (
           <div className="mt-3 grid gap-2 md:grid-cols-2">
             {turn.key_points.slice(0, 4).map((point) => (
@@ -869,7 +1147,7 @@ function AgentDetailPanel({
           <RailMetric label="Node" value={isActive ? NODE_LABEL[nodeName ?? ""] ?? nodeName ?? "Active" : traceSummary?.node ?? "Idle"} />
           <RailMetric label="Trace" value={traceSummary?.status ?? "Waiting"} />
           <RailMetric label="Redis" value={redisActivity.at(-1)?.label ?? "No event"} />
-          <RailMetric label="Weave" value={traceSummary?.weave_project ?? "Project ready"} />
+          <RailMetric label="Reliability" value={scoreValue ? `${scoreValue}%` : "Pending"} />
         </div>
         <div className="mt-3 space-y-2">
           {(agentEvents.length ? agentEvents : events.slice(-2).reverse()).map((event, index) => (
@@ -886,16 +1164,113 @@ function AgentDetailPanel({
   );
 }
 
-function CouncilStat({ label, value, icon }: { label: string; value: string; icon?: ReactNode }) {
+function ReliabilityDetail({
+  agentStatus,
+  learningReport,
+  member,
+  score,
+}: {
+  agentStatus?: AgentStatus;
+  learningReport?: LearningReport;
+  member: RosterMember;
+  score?: ReliabilityScore;
+}) {
+  const scoreValue = resolveReliabilityValue(agentStatus, score);
+  const dimensions = score?.agent_id
+    ? reliabilityDimensionsFromScore(score)
+    : agentStatus?.reliability_dimensions;
+  const weaknesses = score?.known_weaknesses ?? agentStatus?.known_weaknesses ?? [];
+  const promptAdjustment = score?.prompt_adjustment ?? agentStatus?.prompt_adjustment;
+  const promotionGate = score?.promotion_gate ?? agentStatus?.promotion_gate ?? learningReport?.promotion_gate;
+  const rationale = score?.rationale ?? agentStatus?.reliability_rationale ?? learningReport?.summary;
+
+  return (
+    <section className="mt-4 rounded-lg border border-border bg-surface px-3 py-3">
+      <div className="flex flex-wrap items-start justify-between gap-3">
+        <div>
+          <SectionTitle>W&B Self-Improvement</SectionTitle>
+          <div className="mt-1 text-[14px] font-semibold">Reliability scorecard</div>
+        </div>
+        <div
+          className="rounded-full border px-3 py-1 text-[13px] font-bold tabular-nums"
+          style={{
+            borderColor: scoreValue ? reliabilityColor(scoreValue) : "var(--border)",
+            color: scoreValue ? reliabilityColor(scoreValue) : "var(--muted-foreground)",
+          }}
+        >
+          {scoreValue ? `${scoreValue}%` : "Pending"}
+        </div>
+      </div>
+      <p className="mt-2 text-[12px] leading-relaxed text-muted-foreground">
+        {rationale ?? `${member.label} will receive a score after the reliability auditor runs.`}
+      </p>
+
+      {dimensions && (
+        <div className="mt-3 grid gap-2 sm:grid-cols-2 xl:grid-cols-3">
+          {Object.entries(dimensions).map(([key, value]) => (
+            <div key={key} className="rounded-md border border-border bg-background px-2.5 py-2">
+              <div className="text-[10px] text-subtle-foreground">{formatDimensionLabel(key)}</div>
+              <div className="mt-1 text-[15px] font-semibold tabular-nums">{typeof value === "number" ? `${value}%` : "Pending"}</div>
+            </div>
+          ))}
+        </div>
+      )}
+
+      {(weaknesses.length > 0 || promptAdjustment || promotionGate || learningReport?.replay_plan?.length) && (
+        <div className="mt-3 grid gap-3 md:grid-cols-2">
+          <div className="rounded-md border border-border bg-background px-3 py-2">
+            <div className="text-[11px] font-semibold text-muted-foreground">Known Weaknesses</div>
+            <div className="mt-1 text-[12px] leading-relaxed text-foreground">
+              {weaknesses.length ? weaknesses.slice(0, 2).join(" · ") : "No weaknesses recorded yet."}
+            </div>
+          </div>
+          <div className="rounded-md border border-border bg-background px-3 py-2">
+            <div className="text-[11px] font-semibold text-muted-foreground">Prompt Adjustment</div>
+            <div className="mt-1 line-clamp-3 text-[12px] leading-relaxed text-foreground">
+              {promptAdjustment ?? "Replay gate pending."}
+            </div>
+          </div>
+          <div className="rounded-md border border-border bg-background px-3 py-2 md:col-span-2">
+            <div className="flex flex-wrap items-center justify-between gap-2">
+              <div className="text-[11px] font-semibold text-muted-foreground">Promotion Gate</div>
+              {learningReport?.weave_url && (
+                <a
+                  href={learningReport.weave_url}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="inline-flex items-center gap-1 text-[11px] font-semibold text-info"
+                >
+                  W&B Weave
+                  <ExternalLink className="h-3 w-3" strokeWidth={2.25} />
+                </a>
+              )}
+            </div>
+            <div className="mt-1 text-[12px] leading-relaxed text-foreground">
+              {promotionGate ?? "No promotion gate produced yet."}
+            </div>
+            {learningReport?.replay_plan && learningReport.replay_plan.length > 0 && (
+              <div className="mt-2 text-[11px] leading-relaxed text-muted-foreground">
+                Replay plan: {learningReport.replay_plan.slice(0, 2).join(" · ")}
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+    </section>
+  );
+}
+
+function CouncilStat({ label, value, icon, spark = false }: { label: string; value: string; icon?: ReactNode; spark?: boolean }) {
   return (
     <div className="flex min-w-0 items-center gap-3 border-b border-border px-4 py-3 last:border-b-0 md:border-b-0 md:border-r md:last:border-r-0">
       <div className="grid h-8 w-8 shrink-0 place-items-center rounded-full bg-surface text-muted-foreground">
         {icon ?? <Activity className="h-4 w-4" />}
       </div>
-      <div className="min-w-0">
+      <div className="min-w-0 flex-1">
         <div className="text-[11px] text-muted-foreground">{label}</div>
         <div className="truncate text-[12px] font-semibold">{value}</div>
       </div>
+      {spark && value !== "Waiting" && <MiniSparkline />}
     </div>
   );
 }
@@ -909,9 +1284,11 @@ function agentPlacement(id: string) {
     case "fpna":
       return "right-[4%] top-[9%]";
     case "risk":
-      return "left-[4%] bottom-[12%]";
+      return "left-[4%] bottom-[9%]";
     case "procurement":
-      return "right-[4%] bottom-[12%]";
+      return "right-[4%] bottom-[9%]";
+    case "reliability":
+      return "left-1/2 bottom-[4%] -translate-x-1/2";
     default:
       return "left-4 top-4";
   }
@@ -924,17 +1301,35 @@ function agentRingClass(
   active?: boolean,
 ) {
   const stance = getAgentStanceLabel(ROSTER_BY_ID[id] ?? ROSTER_BY_ID.cfo, turn, recommendation).toLowerCase();
-  if (active) return "border-positive text-positive shadow-[0_0_0_6px_rgba(24,121,78,0.12)]";
+  const activeGlow = active ? " shadow-[0_0_0_7px_rgba(24,121,78,0.12)]" : "";
+  if (id === "treasury") return `border-info text-info shadow-[0_0_0_6px_rgba(47,91,183,0.10)]${activeGlow}`;
+  if (id === "fpna") return `border-warning text-warning shadow-[0_0_0_6px_rgba(181,71,8,0.10)]${activeGlow}`;
+  if (id === "risk") return `border-risk text-risk shadow-[0_0_0_6px_rgba(180,35,24,0.10)]${activeGlow}`;
+  if (id === "procurement") return `border-positive text-positive shadow-[0_0_0_6px_rgba(24,121,78,0.10)]${activeGlow}`;
+  if (id === "reliability") return `border-info text-info shadow-[0_0_0_6px_rgba(47,91,183,0.10)]${activeGlow}`;
   if (stance.includes("oppose") || stance.includes("reject")) {
-    return "border-risk text-risk shadow-[0_0_0_6px_rgba(180,35,24,0.10)]";
+    return `border-risk text-risk shadow-[0_0_0_6px_rgba(180,35,24,0.10)]${activeGlow}`;
   }
   if (stance.includes("caution") || stance.includes("conditional") || stance.includes("defer")) {
-    return "border-warning text-warning shadow-[0_0_0_6px_rgba(181,71,8,0.10)]";
+    return `border-warning text-warning shadow-[0_0_0_6px_rgba(181,71,8,0.10)]${activeGlow}`;
   }
-  if (stance.includes("support") || stance.includes("approve")) {
-    return "border-positive text-positive shadow-[0_0_0_6px_rgba(24,121,78,0.10)]";
-  }
-  return "border-info text-info shadow-[0_0_0_6px_rgba(47,91,183,0.10)]";
+  return `border-positive text-positive shadow-[0_0_0_6px_rgba(24,121,78,0.10)]${activeGlow}`;
+}
+
+function agentStatusPillClass({
+  active,
+  memberId,
+  status,
+}: {
+  active: boolean;
+  memberId: string;
+  status: string;
+}) {
+  const normalized = status.toLowerCase();
+  if (normalized.includes("thinking")) return "bg-violet-100 text-violet-700";
+  if (active || normalized.includes("speaking")) return "bg-positive-bg text-positive";
+  if (memberId === "risk" || normalized.includes("blocked") || normalized.includes("error")) return "bg-risk-bg text-risk";
+  return "bg-info-bg text-info";
 }
 
 function stanceColor(
@@ -955,6 +1350,7 @@ function getAgentStanceLabel(
   recommendation?: DebateState["recommendation"],
 ) {
   if (member.id === "cfo" && recommendation?.decision) return recommendation.decision;
+  if (member.id === "reliability") return "Auditor";
   if (turn?.stance) {
     if (turn.stance === "conditional") return "Caution";
     return String(turn.stance).toUpperCase();
@@ -971,6 +1367,16 @@ function Waveform({ active }: { active: boolean }) {
           className={`w-[2px] rounded-full bg-current ${active ? "animate-pulse" : "opacity-75"}`}
           style={{ height }}
         />
+      ))}
+    </div>
+  );
+}
+
+function MiniSparkline() {
+  return (
+    <div className="hidden h-7 w-12 items-end gap-[2px] text-positive sm:flex" aria-hidden="true">
+      {[5, 7, 4, 9, 6, 12, 15, 10, 18, 22, 27].map((height, index) => (
+        <span key={`${height}-${index}`} className="w-[2px] rounded-full bg-current/75" style={{ height }} />
       ))}
     </div>
   );
@@ -1238,10 +1644,10 @@ function LiveEventPanel({
     label: `${event.sponsor ?? "Atlas"}: ${event.label ?? event.event ?? "event"}`,
     tone: event.tone ?? "info",
   }));
-  const rows = [...latestTurns, ...latestEvents].slice(-8).reverse();
+  const rows = [...latestTurns, ...latestEvents].slice(-5).reverse();
 
   return (
-    <aside className="rounded-lg border border-border bg-surface p-3 shadow-sm xl:sticky xl:top-2">
+    <aside className="rounded-lg border border-border bg-surface p-3 shadow-sm">
       <div className="flex items-center justify-between gap-3">
         <div>
           <h2 className="text-[14px] font-semibold">Event Timeline</h2>
@@ -1253,7 +1659,7 @@ function LiveEventPanel({
         </span>
       </div>
 
-      <div className="mt-4 space-y-3">
+      <div className="mt-3 space-y-2">
         <RailEvent
           label={running ? NODE_LABEL[nodeName ?? ""] ?? "Council running" : "Council room ready"}
           detail={running ? "Graph state is streaming through AG-UI." : "Submit a decision to begin a live run."}
@@ -1261,7 +1667,7 @@ function LiveEventPanel({
         />
         {rows.length === 0 ? (
           <p className="rounded-md border border-dashed border-border bg-background px-3 py-6 text-[12px] leading-relaxed text-muted-foreground">
-            Live council and sponsor events will appear here as the graph runs.
+            Live council and sponsor events appear here as the graph runs.
           </p>
         ) : (
           rows.map((row) => (
@@ -1269,169 +1675,28 @@ function LiveEventPanel({
           ))
         )}
       </div>
-      <button type="button" className="mt-4 text-[12px] font-semibold text-info">
-        View full timeline →
-      </button>
     </aside>
   );
 }
 
-function ObservabilityRail({
-  events,
-  health,
-  nodeName,
-  redisActivity,
-  running,
-  sponsorRows,
-  traceSummary,
+function RailMetric({
+  delta,
+  label,
+  spark = false,
+  value,
+  warn = false,
 }: {
-  events: ObservabilityEvent[];
-  health: HealthView;
-  nodeName?: string;
-  redisActivity: RedisActivity[];
-  running: boolean;
-  sponsorRows: SponsorView[];
-  traceSummary?: TraceSummary;
-}) {
-  const visibleEvents = events.slice(-5).reverse();
-  const visibleRedis = redisActivity.slice(-4).reverse();
-  const weave = sponsorRows.find((row) => row.id === "weave");
-  const openai = sponsorRows.find((row) => row.id === "openai");
-  const redis = sponsorRows.find((row) => row.id === "redis");
-  const copilot = sponsorRows.find((row) => row.id === "copilotkit");
-  const sandbox = (weave as SponsorView & { sandbox?: { configured?: boolean; id?: string; url?: string; detail?: string } })?.sandbox;
-
-  return (
-    <aside id="observability" className="rounded-lg border border-border bg-surface p-3 shadow-sm xl:sticky xl:top-2">
-      <div className="flex items-start justify-between gap-3">
-        <div>
-          <h2 className="text-[15px] font-semibold tracking-tight">Observability Rail</h2>
-          <div className="mt-0.5 text-[11px] text-positive">
-            {healthReadyFromRows(sponsorRows) ? "All systems streaming" : "Preflight signals visible"}
-          </div>
-        </div>
-        {health.refreshing && <Loader2 className="h-4 w-4 animate-spin text-subtle-foreground" />}
-      </div>
-
-      <RailBox title="W&B Weave Traces" status={weave?.status ?? "checking"}>
-        <TraceTree traceSummary={traceSummary} />
-        <div className="mt-3 rounded-md border border-border bg-surface px-3 py-2">
-          <div className="flex items-center justify-between gap-2">
-            <span className="text-[12px] font-semibold">Serverless Sandbox</span>
-            <SponsorStatusPill status={sandbox?.configured ? "ready" : "checking"} />
-          </div>
-          <p className="mt-1 text-[11px] leading-relaxed text-muted-foreground">
-            {sandbox?.detail ?? "No W&B Serverless Sandbox env linked; Weave traces remain live."}
-          </p>
-        </div>
-      </RailBox>
-
-      <RailBox title="Latency / Tokens / Cost (USD)" status={traceSummary ? "ready" : "checking"}>
-        <div className="grid grid-cols-3 gap-2">
-          <RailMetric label="Latency" value={formatTelemetry(traceSummary?.latency_ms, "ms")} />
-          <RailMetric label="Tokens" value={formatTelemetry(traceSummary?.total_tokens)} />
-          <RailMetric label="Cost" value={formatCost(traceSummary?.cost_usd)} />
-        </div>
-      </RailBox>
-
-      <RailBox title="Redis Stack" status={redis?.status ?? "checking"}>
-        <div className="grid grid-cols-3 gap-2">
-          <RailMetric label="Memory" value="Live" />
-          <RailMetric label="Search" value={visibleRedis.some((item) => item.kind === "search") ? "Seen" : "Waiting"} />
-          <RailMetric label="Streams" value={visibleRedis.some((item) => item.kind === "stream") ? "Seen" : "Ready"} />
-        </div>
-        <div className="mt-2 space-y-2">
-          {visibleRedis.slice(0, 3).map((item, index) => (
-            <RailEvent
-              key={`${item.kind}-${item.label}-${index}`}
-              label={item.label ?? item.kind ?? "Redis"}
-              detail={item.detail ?? item.name ?? item.key ?? "Activity recorded"}
-              tone="positive"
-            />
-          ))}
-        </div>
-      </RailBox>
-
-      <RailBox title="CopilotKit AG-UI Event Stream" status={copilot?.status ?? "checking"}>
-        <div className="mb-2 text-[12px] font-semibold">
-          {running ? NODE_LABEL[nodeName ?? ""] ?? "Streaming" : "Idle"}
-        </div>
-        <div className="grid grid-cols-2 gap-x-3 gap-y-1 text-[11px] text-muted-foreground">
-          {visibleEvents.slice(0, 6).map((event, index) => (
-            <div key={event.id ?? `${event.label}-${index}`} className="truncate">
-              {event.at ?? "--"} · {event.label ?? event.event ?? "state"}
-            </div>
-          ))}
-        </div>
-      </RailBox>
-
-      <RailBox title={`OpenAI (${traceSummary?.model ?? openai?.detail ?? "model"}) Health`} status={openai?.status ?? "checking"}>
-        <div className="grid grid-cols-3 gap-2">
-          <RailMetric label="Model" value={openai?.detail?.replace("openai:", "") ?? "Live"} />
-          <RailMetric label="Structured" value="Valid" />
-          <RailMetric label="Rate" value="OK" />
-        </div>
-      </RailBox>
-    </aside>
-  );
-}
-
-function RailMetric({ label, value }: { label: string; value: string }) {
-  return (
-    <div className="min-w-0 rounded-lg border border-border bg-surface px-2.5 py-2">
-      <div className="text-[10px] font-semibold uppercase tracking-[0.08em] text-subtle-foreground">{label}</div>
-      <div className="mt-1 break-words text-[12px] font-semibold">{value}</div>
-    </div>
-  );
-}
-
-function RailBox({
-  children,
-  status,
-  title,
-}: {
-  children: ReactNode;
-  status: SponsorStatus;
-  title: string;
+  delta?: string;
+  label: string;
+  spark?: boolean;
+  value: string;
+  warn?: boolean;
 }) {
   return (
-    <section className="mt-2 rounded-lg border border-border bg-background p-3">
-      <div className="mb-2 flex items-center justify-between gap-3">
-        <h3 className="text-[13px] font-semibold">{title}</h3>
-        <SponsorStatusPill status={status} />
-      </div>
-      {children}
-    </section>
-  );
-}
-
-function TraceTree({ traceSummary }: { traceSummary?: TraceSummary }) {
-  const nodes = [
-    "planner_agent",
-    traceSummary?.node ?? "cfo_agent",
-    "treasury_agent",
-    "fpna_agent",
-    "risk_audit_agent",
-    "procurement_agent",
-    "synthesis_agent",
-    "persist_agent",
-  ];
-  return (
-    <div className="rounded-md border border-border bg-surface px-3 py-2">
-      <div className="flex items-center justify-between gap-2 text-[11px] text-muted-foreground">
-        <span className="truncate">council_run</span>
-        <span>{traceSummary?.status ?? "waiting"}</span>
-      </div>
-      <div className="mt-2 space-y-1 border-l border-border pl-3">
-        {nodes.map((node) => (
-          <div key={node} className="flex items-center justify-between gap-2 text-[11px]">
-            <span className="truncate">{node}</span>
-            <span className={node === traceSummary?.node ? "font-semibold text-positive" : "text-muted-foreground"}>
-              {node === traceSummary?.node ? "LIVE" : "—"}
-            </span>
-          </div>
-        ))}
-      </div>
+    <div className="min-w-0 border-l border-border px-2 first:border-l-0">
+      <div className="text-[10px] text-muted-foreground">{label}</div>
+      <div className="mt-1 break-words text-[16px] font-semibold tabular-nums">{value}</div>
+      {spark ? <MiniSparkline /> : delta ? <div className={`mt-1 text-[11px] ${warn ? "text-risk" : "text-positive"}`}>{delta}</div> : null}
     </div>
   );
 }
@@ -1456,92 +1721,49 @@ function RailEvent({ label, detail, tone }: { label: string; detail: string; ton
   );
 }
 
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
-function SponsorRailRow({ row }: { row: SponsorView }) {
-  const Icon = row.icon;
-
-  return (
-    <div className="rounded-xl border border-border bg-background p-3">
-      <div className="flex items-start justify-between gap-3">
-        <div className="flex min-w-0 items-start gap-3">
-          <div className="grid h-9 w-9 shrink-0 place-items-center rounded-lg bg-surface text-foreground">
-            <Icon className="h-4 w-4" strokeWidth={2.25} />
-          </div>
-          <div className="min-w-0">
-            <div className="flex min-w-0 items-center gap-2">
-              <div className="truncate text-[14px] font-semibold">{row.label}</div>
-              {row.url && (
-                <a
-                  href={row.url}
-                  target="_blank"
-                  rel="noreferrer"
-                  className="shrink-0 text-muted-foreground transition-colors hover:text-foreground"
-                  aria-label={`${row.label} trace link`}
-                >
-                  <ExternalLink className="h-3.5 w-3.5" strokeWidth={2.25} />
-                </a>
-              )}
-            </div>
-            <div className="mt-1 break-words text-[12px] leading-relaxed text-muted-foreground">
-              {row.error || row.detail}
-            </div>
-          </div>
-        </div>
-        <SponsorStatusPill status={row.status} />
-      </div>
-
-      {row.checks && row.checks.length > 0 && (
-        <div className="mt-3 grid gap-1.5 border-t border-border pt-3">
-          {row.checks.map((check) => (
-            <div key={check.label} className="flex items-center justify-between gap-2 text-[11px]">
-              <span className="truncate text-muted-foreground">{check.label}</span>
-              <span className={check.ready ? "font-semibold text-positive" : "font-semibold text-risk"}>
-                {check.ready ? "Ready" : "Blocked"}
-              </span>
-            </div>
-          ))}
-        </div>
-      )}
-    </div>
-  );
-}
-
-function SponsorStatusPill({ status }: { status: SponsorStatus }) {
-  const cls =
-    status === "ready"
-      ? "border-positive/20 bg-positive-bg text-positive"
-      : status === "blocked"
-        ? "border-risk/20 bg-risk-bg text-risk"
-        : "border-warning/20 bg-warning-bg text-warning";
-  const label = status === "ready" ? "Ready" : status === "blocked" ? "Blocked" : "Checking";
-
-  return (
-    <span className={`inline-flex shrink-0 items-center gap-1.5 rounded-full border px-2 py-0.5 text-[11px] font-semibold ${cls}`}>
-      {status === "ready" ? (
-        <CheckCircle2 className="h-3 w-3" strokeWidth={2.25} />
-      ) : status === "blocked" ? (
-        <XCircle className="h-3 w-3" strokeWidth={2.25} />
-      ) : (
-        <Loader2 className="h-3 w-3 animate-spin" strokeWidth={2.25} />
-      )}
-      {label}
-    </span>
-  );
-}
-
-function healthReadyFromRows(rows: SponsorView[]) {
-  return rows.length > 0 && rows.every((row) => row.status === "ready");
-}
-
 function formatTelemetry(value?: number, unit?: string) {
-  if (typeof value !== "number") return "Live";
+  if (typeof value !== "number") return "Waiting";
   const formatted = value >= 1000 ? value.toLocaleString() : String(value);
   return unit ? `${formatted}${unit}` : formatted;
 }
 
-function formatCost(value?: number) {
-  if (typeof value !== "number") return "Pending";
-  return `$${value.toFixed(4)}`;
+function reliabilityDimensionsFromScore(score: ReliabilityScore) {
+  return {
+    outcome_accuracy: score.outcome_accuracy,
+    evidence_grounding: score.evidence_grounding,
+    forecast_calibration: score.forecast_calibration,
+    policy_compliance: score.policy_compliance,
+    debate_value: score.debate_value,
+    confidence_calibration: score.confidence_calibration,
+    trace_quality: score.trace_quality,
+  };
+}
+
+function resolveReliabilityValue(agentStatus?: AgentStatus, score?: ReliabilityScore) {
+  const raw = score?.reliability ?? agentStatus?.reliability_score;
+  return typeof raw === "number" && Number.isFinite(raw) ? Math.max(0, Math.min(100, Math.round(raw))) : undefined;
+}
+
+function averageReliability(scores: ReliabilityScore[]) {
+  if (!scores.length) return undefined;
+  return Math.round(scores.reduce((sum, score) => sum + score.reliability, 0) / scores.length);
+}
+
+function formatReliability(value?: number) {
+  return typeof value === "number" ? `${value}%` : "Pending";
+}
+
+function reliabilityColor(value: number) {
+  if (value >= 85) return "var(--positive)";
+  if (value >= 70) return "var(--info)";
+  if (value >= 55) return "var(--warning)";
+  return "var(--risk)";
+}
+
+function formatDimensionLabel(key: string) {
+  return key
+    .replace(/_/g, " ")
+    .replace(/\b\w/g, (letter) => letter.toUpperCase());
 }
 
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
@@ -1607,31 +1829,6 @@ function TimelineDot({ status }: { status: TimelineStatus }) {
           : "bg-border-strong text-subtle-foreground";
 
   return <span className={`h-2.5 w-2.5 rounded-full ${cls}`} />;
-}
-
-function SponsorProofStrip({ sponsorRows }: { sponsorRows: SponsorView[] }) {
-  return (
-    <section className="rounded-2xl border border-border bg-surface px-4 py-3 shadow-sm">
-      <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
-        <div>
-          <SectionTitle>Sponsor proof strip</SectionTitle>
-          <div className="mt-1 text-[14px] font-semibold">Live readiness artifacts surfaced in one row</div>
-        </div>
-        <div className="grid flex-1 gap-2 sm:grid-cols-2 lg:grid-cols-5">
-          {sponsorRows.map((row) => (
-            <div key={row.id} className="flex min-w-0 items-center justify-between gap-2 rounded-lg border border-border bg-background px-3 py-2">
-              <span className="truncate text-[12px] font-semibold">{row.label}</span>
-              <span
-                className={`h-2 w-2 shrink-0 rounded-full ${
-                  row.status === "ready" ? "bg-positive" : row.status === "blocked" ? "bg-risk" : "animate-pulse bg-warning"
-                }`}
-              />
-            </div>
-          ))}
-        </div>
-      </div>
-    </section>
-  );
 }
 
 function Metric({ label, value, tone }: { label: string; value: string; tone?: "risk" | "positive" }) {
@@ -1715,7 +1912,15 @@ function getSponsorRows(health: HealthView): SponsorView[] {
       url: source?.url,
       status,
       checks: source?.checks,
-      sandbox: (source as HealthCheck & SponsorView | undefined)?.sandbox,
+      capabilities: source?.capabilities,
+      realtime: source?.realtime,
+      sandbox: source?.sandbox,
+      modules: source?.modules,
+      indices: source?.indices,
+      streams: source?.streams,
+      model: source?.model,
+      reasoning_effort: source?.reasoning_effort,
+      verbosity: source?.verbosity,
       icon: fallback.icon,
     };
   });
@@ -1846,6 +2051,7 @@ function buildTimeline({
   const preflightStatus: TimelineStatus = healthReady ? "complete" : health.status === "loading" ? "active" : "blocked";
   const hasFraming = transcript.some((turn) => turn.type === "framing");
   const hasDebate = transcript.some((turn) => turn.type === "rebuttal");
+  const hasReliability = transcript.some((turn) => turn.type === "reliability");
   const hasAgent = (agent: string) => transcript.some((turn) => turn.agent === agent && turn.type === "position");
 
   return [
@@ -1903,7 +2109,37 @@ function buildTimeline({
         running,
       }),
     },
+    {
+      id: "reliability",
+      kind: "node",
+      label: "Reliability eval",
+      status: timelineStatus({
+        complete: hasReliability || phase === "done",
+        healthReady,
+        id: "reliability",
+        nodeName,
+        running,
+      }),
+    },
   ] satisfies Array<{ id: string; kind: string; label: string; status: TimelineStatus }>;
+}
+
+function buildReferenceProgress(steps: Array<{ id: string; label: string; status: TimelineStatus }>) {
+  const byId = Object.fromEntries(steps.map((step) => [step.id, step.status]));
+  const analystStatuses = ["treasury", "fpna", "risk", "procurement"].map((id) => byId[id]);
+  const analysisStatus: TimelineStatus = analystStatuses.every((status) => status === "complete")
+    ? "complete"
+    : analystStatuses.some((status) => status === "active")
+      ? "active"
+      : "pending";
+
+  return [
+    { label: "Briefing", status: byId.intake ?? byId.preflight ?? "pending" },
+    { label: "Analysis", status: analysisStatus },
+    { label: "Debate", status: byId.debate ?? "pending" },
+    { label: "Ruling", status: byId.synthesis ?? "pending" },
+    { label: "Evals", status: byId.reliability ?? "pending" },
+  ] satisfies Array<{ label: string; status: TimelineStatus }>;
 }
 
 function timelineStatus({

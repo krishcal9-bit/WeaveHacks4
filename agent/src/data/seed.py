@@ -1,5 +1,5 @@
 """
-Seed the demo company — Northwind Robotics — into Redis.
+Seed the demo company — Acme Corp — into Redis.
 
 Loads:
   • company financials .......... RedisJSON  (atlas:company:northwind)
@@ -22,9 +22,9 @@ COMPANY_KEY = f"{R.NS}:company:northwind"
 # --------------------------------------------------------------------------- #
 COMPANY: dict = {
     "id": "northwind",
-    "name": "Northwind Robotics",
+    "name": "Acme Corp",
     "stage": "Series A",
-    "sector": "Warehouse robotics — vertical SaaS",
+    "sector": "Warehouse robotics and operations AI",
     "hq": "Austin, TX",
     "founded": 2022,
     "headcount": 38,
@@ -69,6 +69,71 @@ COMPANY: dict = {
         {"month": "2026-05", "cash": 4_610_000, "net_burn": 408_000},
         {"month": "2026-06", "cash": 4_200_000, "net_burn": 410_000},
     ],
+    "cash_forecast": [
+        {"month": "2026-07", "base_cash": 3_790_000, "downside_cash": 3_650_000, "net_burn": 410_000, "weighted_pipeline_arr": 380_000},
+        {"month": "2026-08", "base_cash": 3_410_000, "downside_cash": 3_160_000, "net_burn": 380_000, "weighted_pipeline_arr": 510_000},
+        {"month": "2026-09", "base_cash": 3_050_000, "downside_cash": 2_690_000, "net_burn": 360_000, "weighted_pipeline_arr": 720_000},
+        {"month": "2026-10", "base_cash": 2_720_000, "downside_cash": 2_250_000, "net_burn": 330_000, "weighted_pipeline_arr": 910_000},
+        {"month": "2026-11", "base_cash": 2_430_000, "downside_cash": 1_820_000, "net_burn": 290_000, "weighted_pipeline_arr": 1_050_000},
+        {"month": "2026-12", "base_cash": 2_190_000, "downside_cash": 1_390_000, "net_burn": 240_000, "weighted_pipeline_arr": 1_290_000},
+        {"month": "2027-01", "base_cash": 1_980_000, "downside_cash": 990_000, "net_burn": 210_000, "weighted_pipeline_arr": 1_410_000},
+        {"month": "2027-02", "base_cash": 1_800_000, "downside_cash": 610_000, "net_burn": 180_000, "weighted_pipeline_arr": 1_520_000},
+        {"month": "2027-03", "base_cash": 1_640_000, "downside_cash": 250_000, "net_burn": 160_000, "weighted_pipeline_arr": 1_630_000},
+        {"month": "2027-04", "base_cash": 1_500_000, "downside_cash": -90_000, "net_burn": 140_000, "weighted_pipeline_arr": 1_740_000},
+        {"month": "2027-05", "base_cash": 1_390_000, "downside_cash": -390_000, "net_burn": 110_000, "weighted_pipeline_arr": 1_870_000},
+        {"month": "2027-06", "base_cash": 1_320_000, "downside_cash": -660_000, "net_burn": 70_000, "weighted_pipeline_arr": 2_020_000},
+        {"month": "2027-07", "base_cash": 1_290_000, "downside_cash": -920_000, "net_burn": 30_000, "weighted_pipeline_arr": 2_140_000},
+        {"month": "2027-08", "base_cash": 1_310_000, "downside_cash": -1_170_000, "net_burn": -20_000, "weighted_pipeline_arr": 2_260_000},
+        {"month": "2027-09", "base_cash": 1_370_000, "downside_cash": -1_390_000, "net_burn": -60_000, "weighted_pipeline_arr": 2_390_000},
+        {"month": "2027-10", "base_cash": 1_470_000, "downside_cash": -1_590_000, "net_burn": -100_000, "weighted_pipeline_arr": 2_530_000},
+        {"month": "2027-11", "base_cash": 1_600_000, "downside_cash": -1_760_000, "net_burn": -130_000, "weighted_pipeline_arr": 2_680_000},
+        {"month": "2027-12", "base_cash": 1_760_000, "downside_cash": -1_900_000, "net_burn": -160_000, "weighted_pipeline_arr": 2_810_000},
+    ],
+    "pipeline_by_stage": [
+        {"stage": "Discovery", "opportunities": 21, "arr": 2_100_000, "weighted_arr": 315_000, "risk": "low conversion data quality"},
+        {"stage": "Technical validation", "opportunities": 9, "arr": 1_850_000, "weighted_arr": 740_000, "risk": "security review bottlenecks"},
+        {"stage": "Procurement", "opportunities": 5, "arr": 1_420_000, "weighted_arr": 994_000, "risk": "multi-year discount pressure"},
+        {"stage": "Contracting", "opportunities": 3, "arr": 910_000, "weighted_arr": 774_000, "risk": "implementation capacity"},
+    ],
+    "customer_cohorts": [
+        {"segment": "Enterprise 3PL", "customers": 14, "mrr": 176_000, "logo_churn_mom": 0.006, "ndr": 1.24, "risk": "implementation backlog"},
+        {"segment": "Mid-market fulfillment", "customers": 41, "mrr": 121_000, "logo_churn_mom": 0.026, "ndr": 1.05, "risk": "support response times"},
+        {"segment": "Pilot customers", "customers": 18, "mrr": 15_000, "logo_churn_mom": 0.041, "ndr": 0.88, "risk": "unclear paid conversion"},
+    ],
+    "hiring_plan": [
+        {"team": "Engineering", "roles": 5, "monthly_cost": 95_000, "start_month": "2026-08", "dependency": "SOC 2 roadmap and customer integrations"},
+        {"team": "Customer Success", "roles": 3, "monthly_cost": 42_000, "start_month": "2026-07", "dependency": "enterprise onboarding backlog"},
+        {"team": "Sales", "roles": 2, "monthly_cost": 38_000, "start_month": "2026-09", "dependency": "pipeline conversion above 32%"},
+    ],
+    "security_incidents": [
+        {"date": "2026-02-18", "severity": "medium", "summary": "Warehouse telemetry export shared with wrong customer admin", "cash_risk": 45_000, "status": "remediated"},
+        {"date": "2026-04-09", "severity": "high", "summary": "Delayed SOC 2 evidence collection blocked two enterprise procurements", "cash_risk": 310_000, "status": "open control gap"},
+        {"date": "2026-05-22", "severity": "medium", "summary": "Cloud cost alerting missed simulation workload spike", "cash_risk": 38_000, "status": "monitoring improved"},
+    ],
+    "audit_findings": [
+        {"id": "AUD-17", "area": "Vendor spend", "severity": "medium", "finding": "Three contracts lack owner attestation before renewal", "due": "2026-07-15"},
+        {"id": "AUD-21", "area": "Revenue forecast", "severity": "high", "finding": "Pipeline forecast overstates technical-validation conversion by 8-12 points", "due": "2026-07-31"},
+        {"id": "AUD-24", "area": "AI governance", "severity": "medium", "finding": "Prompt changes need replay evidence before promotion", "due": "2026-08-10"},
+    ],
+    "board_constraints": [
+        "Maintain at least 9 months runway unless a signed financing term sheet is in hand.",
+        "Any single vendor commitment above $150K annualized requires board notification.",
+        "New headcount must map to signed revenue, security compliance, or runway-positive automation.",
+        "Enterprise deals blocked by SOC 2 evidence get priority over broad growth experiments.",
+    ],
+    "decision_outcomes": [
+        {"decision_id": "dec-snowflake", "owner": "FP&A", "predicted": "7-month payback", "actual": "6.5-month payback", "outcome": "beat forecast", "calibration_score": 91},
+        {"decision_id": "dec-brand", "owner": "CFO", "predicted": "CAC payback above 18 months", "actual": "market test showed 23-month payback", "outcome": "correct rejection", "calibration_score": 88},
+        {"decision_id": "dec-aws", "owner": "Treasury", "predicted": "$96K annual savings", "actual": "$102K annual savings", "outcome": "beat forecast", "calibration_score": 94},
+        {"decision_id": "dec-hiring", "owner": "Risk & Audit", "predicted": "preserve >10 months runway", "actual": "preserved 10.2 months runway", "outcome": "correct constraint", "calibration_score": 86},
+        {"decision_id": "dec-support", "owner": "Procurement", "predicted": "outsourced tier-1 support saves $28K/mo", "actual": "quality misses increased churn risk; savings reversed", "outcome": "missed service-quality risk", "calibration_score": 58},
+    ],
+    "prompt_versions": [
+        {"agent": "treasury", "current": "treasury.v3", "candidate": "treasury.v4-liquidity-stress", "promotion_gate": "must beat v3 on runway-risk recall by 5%"},
+        {"agent": "fpna", "current": "fpna.v3", "candidate": "fpna.v4-cohort-calibration", "promotion_gate": "must reduce forecast overconfidence on replay set"},
+        {"agent": "risk", "current": "risk.v4", "candidate": "risk.v5-control-evidence", "promotion_gate": "must catch all high-severity audit blockers"},
+        {"agent": "procurement", "current": "procurement.v2", "candidate": "procurement.v3-renewal-redlines", "promotion_gate": "must improve renewal leverage scoring"},
+    ],
 }
 
 # --------------------------------------------------------------------------- #
@@ -80,13 +145,19 @@ VENDORS: list[dict] = [
      "status": "active", "notes": "Committed-use discount in place; ~22% of gross burn."},
     {"id": "datadog", "name": "Datadog", "category": "observability",
      "annual_cost": 180_000, "monthly_cost": 15_000, "renewal_date": "2026-08-01",
-     "status": "up_for_renewal", "notes": "Usage-based; trending ~40% over committed tier. Renewal in 8 weeks."},
+     "status": "up_for_renewal", "owner": "Engineering", "termination_notice_days": 45,
+     "switching_cost": 70_000, "data_sensitivity": "production telemetry",
+     "notes": "Usage-based; trending ~40% over committed tier. Renewal in 8 weeks."},
     {"id": "snowflake", "name": "Snowflake", "category": "data",
      "annual_cost": 108_000, "monthly_cost": 9_000, "renewal_date": "2027-01-15",
-     "status": "active", "notes": "Migrated Q4 2025; cut data costs ~22%."},
+     "status": "active", "owner": "FP&A", "termination_notice_days": 60,
+     "switching_cost": 125_000, "data_sensitivity": "customer revenue and telemetry",
+     "notes": "Migrated Q4 2025; cut data costs ~22%."},
     {"id": "salesforce", "name": "Salesforce", "category": "crm",
      "annual_cost": 74_400, "monthly_cost": 6_200, "renewal_date": "2026-09-30",
-     "status": "active", "notes": "32 seats; ~9 underused."},
+     "status": "active", "owner": "Revenue", "termination_notice_days": 30,
+     "switching_cost": 48_000, "data_sensitivity": "pipeline and customer contacts",
+     "notes": "32 seats; ~9 underused."},
     {"id": "rippling", "name": "Rippling", "category": "hr_payroll",
      "annual_cost": 45_600, "monthly_cost": 3_800, "renewal_date": "2026-11-01",
      "status": "active", "notes": "HRIS + payroll + IT."},
@@ -120,6 +191,13 @@ POLICIES: list[dict] = [
     {"id": "pol-cash", "kind": "policy", "title": "Cash management",
      "text": "Keep a minimum operating cash buffer of $1.5M. Cash above 12 months of runway may "
              "be placed in short-term Treasuries."},
+    {"id": "pol-ai-promotion", "kind": "policy", "title": "AI council promotion gate",
+     "text": "No agent prompt, model, or policy change may be promoted unless a W&B Weave replay "
+             "evaluation beats the incumbent on reliability, policy compliance, and calibration without "
+             "regressing evidence grounding."},
+    {"id": "pol-security-blockers", "kind": "policy", "title": "Security-blocked revenue priority",
+     "text": "Controls that unblock signed or late-stage enterprise revenue take priority over broad "
+             "growth spend when runway is under 12 months."},
     {"id": "dec-snowflake", "kind": "decision", "title": "Approved Snowflake migration (Q4 2025)",
      "text": "Approved migrating the data warehouse to Snowflake at $108K/yr, cutting data costs "
              "~22% with a projected 7-month payback."},
@@ -130,6 +208,9 @@ POLICIES: list[dict] = [
      "text": "Moved AWS to a committed-use plan, saving roughly $96K per year versus on-demand."},
     {"id": "dec-hiring", "kind": "decision", "title": "Paused senior hires (Q2 2026)",
      "text": "Paused two senior backend hires to keep runway above 10 months amid slower top-of-funnel."},
+    {"id": "dec-support", "kind": "decision", "title": "Reversed outsourced tier-1 support (Q2 2026)",
+     "text": "Reversed an outsourced support decision after response-quality misses increased churn risk "
+             "in mid-market fulfillment accounts despite short-term cost savings."},
 ]
 
 

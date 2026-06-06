@@ -7,7 +7,8 @@ other, and the CFO synthesizes a board-ready, quantified recommendation. State
 streams to the frontend (CopilotKit useCoAgent) to drive the boardroom view; every
 node is a @weave.op so the committee appears as named spans in Weave.
 
-Flow:  intake → treasury → fpna → risk → procurement → debate → synthesis → persist
+Flow:  intake → treasury → fpna → risk → procurement → debate → synthesis
+       → reliability → persist
 """
 
 import inspect
@@ -18,6 +19,7 @@ import time
 import weave
 from copilotkit import CopilotKitState
 from langchain.chat_models import init_chat_model
+from langchain_openai import ChatOpenAI
 from langchain_core.messages import AIMessage, HumanMessage, SystemMessage
 from langchain_core.runnables import RunnableConfig
 from langgraph.checkpoint.memory import MemorySaver
@@ -37,7 +39,11 @@ from src.tools import (
 load_env()
 
 LLM_PROVIDER = os.getenv("LLM_PROVIDER", "openai")
-LLM_MODEL = os.getenv("LLM_MODEL", "chat-latest")
+LLM_MODEL = os.getenv("LLM_MODEL", "gpt-5.5")
+LLM_REASONING_EFFORT = os.getenv("LLM_REASONING_EFFORT", "xhigh")
+LLM_TEXT_VERBOSITY = os.getenv("LLM_TEXT_VERBOSITY", "low")
+OPENAI_REALTIME_MODEL = os.getenv("OPENAI_REALTIME_MODEL", "gpt-realtime-2")
+OPENAI_REALTIME_REASONING_EFFORT = os.getenv("OPENAI_REALTIME_REASONING_EFFORT", "xhigh")
 
 try:
     from copilotkit.langgraph import copilotkit_emit_state as _copilotkit_emit_state
@@ -49,6 +55,14 @@ except Exception:
 
 
 def llm(temperature: float = 0.3):
+    if LLM_PROVIDER.lower() == "openai":
+        return ChatOpenAI(
+            model=LLM_MODEL,
+            temperature=temperature,
+            reasoning_effort=LLM_REASONING_EFFORT,
+            verbosity=LLM_TEXT_VERBOSITY,
+            output_version="responses/v1",
+        )
     return init_chat_model(LLM_MODEL, model_provider=LLM_PROVIDER, temperature=temperature)
 
 
@@ -86,6 +100,12 @@ ROSTER: dict[str, dict] = {
         "monogram": "PR",
         "mandate": "vendor terms, cost efficiency, and negotiation leverage",
     },
+    "reliability": {
+        "label": "Reliability Auditor",
+        "role": "Reliability & Learning",
+        "monogram": "RL",
+        "mandate": "scoring agent reliability, packaging W&B evals, and gating self-improvement",
+    },
 }
 ANALYSTS = ["treasury", "fpna", "risk", "procurement"]
 
@@ -121,6 +141,30 @@ class Recommendation(BaseModel):
     estimated_added_monthly_revenue: float = Field(default=0, description="incremental monthly revenue; 0 if none")
 
 
+class ReliabilityScore(BaseModel):
+    agent_id: str = Field(description="one of: cfo, treasury, fpna, risk, procurement")
+    evidence_grounding: int = Field(ge=0, le=100)
+    forecast_calibration: int = Field(ge=0, le=100)
+    policy_compliance: int = Field(ge=0, le=100)
+    debate_value: int = Field(ge=0, le=100)
+    outcome_accuracy: int = Field(ge=0, le=100)
+    confidence_calibration: int = Field(ge=0, le=100)
+    trace_quality: int = Field(ge=0, le=100)
+    reliability: int = Field(ge=0, le=100, description="weighted overall score")
+    rationale: str = Field(description="specific evidence-backed reason for the score")
+    known_weaknesses: list[str] = Field(default_factory=list)
+    prompt_adjustment: str = Field(description="specific prompt or policy improvement to replay")
+    promotion_gate: str = Field(description="how W&B Weave evals should decide whether this agent improves")
+
+
+class ReliabilityReport(BaseModel):
+    summary: str = Field(description="board-ready summary of council reliability")
+    scores: list[ReliabilityScore] = Field(default_factory=list)
+    eval_dataset: str = Field(description="W&B/Weave eval dataset or replay-set label")
+    replay_plan: list[str] = Field(default_factory=list)
+    promotion_gate: str = Field(description="global gate for accepting future prompt/model changes")
+
+
 # --------------------------------------------------------------------------- #
 # Shared state (extends CopilotKitState → streams to the frontend)
 # --------------------------------------------------------------------------- #
@@ -137,6 +181,8 @@ class DebateState(CopilotKitState):
     trace_summary: dict
     redis_activity: list
     sponsor_health: dict
+    reliability_scores: list
+    learning_report: dict
 
 
 def _extract_decision(messages: list) -> str:
@@ -158,6 +204,11 @@ def _turn(role_key: str, **extra) -> dict:
 
 def _now() -> str:
     return time.strftime("%H:%M:%S")
+
+
+def _company_name(context: dict | None = None) -> str:
+    financials = (context or {}).get("financials") or {}
+    return financials.get("name") or "Acme Corp"
 
 
 def _event(sponsor: str, label: str, detail: str, tone: str = "info") -> dict:
@@ -198,6 +249,8 @@ STREAM_STATE_KEYS = (
     "trace_summary",
     "redis_activity",
     "sponsor_health",
+    "reliability_scores",
+    "learning_report",
 )
 
 
@@ -238,17 +291,135 @@ def _trace_summary(node: str, status: str, model_calls: int = 0, tool_calls: int
         "node": node,
         "status": status,
         "model": f"{LLM_PROVIDER}:{LLM_MODEL}",
+        "reasoning_effort": LLM_REASONING_EFFORT,
+        "text_verbosity": LLM_TEXT_VERBOSITY,
+        "realtime_model": OPENAI_REALTIME_MODEL,
+        "realtime_reasoning_effort": OPENAI_REALTIME_REASONING_EFFORT,
         "model_calls": model_calls,
         "tool_calls": tool_calls,
         "weave_project": weave.get("project"),
         "weave_url": weave.get("url"),
         "state_streaming": "copilotkit_emit_state" if _copilotkit_emit_state else "langgraph_state_delta",
         "updated_at": _now(),
+        "spans": _span_statuses(node, status),
     }
+
+
+def _span_statuses(active_node: str, active_status: str) -> list[dict]:
+    spans = [
+        "intake",
+        "analyst_treasury",
+        "analyst_fpna",
+        "analyst_risk",
+        "analyst_procurement",
+        "debate_round",
+        "cfo_synthesis",
+        "reliability_auditor",
+        "persist_decision",
+    ]
+    active_index = spans.index(active_node) if active_node in spans else -1
+    out: list[dict] = []
+    for index, span in enumerate(spans):
+        if span == active_node:
+            span_status = active_status
+        elif active_index >= 0 and index < active_index:
+            span_status = "complete"
+        else:
+            span_status = "waiting"
+        out.append({"node": span, "status": span_status})
+    return out
 
 
 def _append(items: list | None, *new_items: dict, keep: int = 48) -> list:
     return [*(items or []), *new_items][-keep:]
+
+
+def _normalize_agent_id(value: str) -> str:
+    normalized = (value or "").lower().replace("&", "and").replace("-", "_").replace(" ", "_")
+    aliases = {
+        "office_of_the_cfo": "cfo",
+        "chief_financial_officer": "cfo",
+        "financial_planning_and_analysis": "fpna",
+        "fpa": "fpna",
+        "fp&a": "fpna",
+        "risk_audit": "risk",
+        "risk_and_audit": "risk",
+        "risk_&_audit": "risk",
+    }
+    return aliases.get(normalized, normalized)
+
+
+def _weighted_reliability(score: dict) -> int:
+    weights = {
+        "outcome_accuracy": 0.30,
+        "evidence_grounding": 0.20,
+        "forecast_calibration": 0.15,
+        "policy_compliance": 0.15,
+        "debate_value": 0.10,
+        "confidence_calibration": 0.05,
+        "trace_quality": 0.05,
+    }
+    value = sum(float(score.get(key, 0) or 0) * weight for key, weight in weights.items())
+    return max(0, min(100, round(value)))
+
+
+def _default_reliability_score(agent_id: str) -> dict:
+    return {
+        "agent_id": agent_id,
+        "evidence_grounding": 0,
+        "forecast_calibration": 0,
+        "policy_compliance": 0,
+        "debate_value": 0,
+        "outcome_accuracy": 0,
+        "confidence_calibration": 0,
+        "trace_quality": 0,
+        "reliability": 0,
+        "rationale": "Reliability auditor did not return a score for this agent; promotion is blocked until replay evidence exists.",
+        "known_weaknesses": ["Missing reliability score"],
+        "prompt_adjustment": "Require this role to cite evidence and replay outcomes in every recommendation.",
+        "promotion_gate": "Blocked until W&B Weave replay eval produces a complete scorecard.",
+    }
+
+
+def _normalize_reliability_scores(scores: list[ReliabilityScore]) -> list[dict]:
+    expected = ["cfo", *ANALYSTS]
+    by_agent: dict[str, dict] = {}
+    for score in scores:
+        item = score.model_dump()
+        agent_id = _normalize_agent_id(item.get("agent_id", ""))
+        if agent_id not in expected:
+            continue
+        item["agent_id"] = agent_id
+        item["reliability"] = _weighted_reliability(item)
+        by_agent[agent_id] = item
+    return [by_agent.get(agent_id) or _default_reliability_score(agent_id) for agent_id in expected]
+
+
+def _attach_reliability_to_statuses(statuses: list | None, scores: list[dict]) -> list[dict]:
+    current = [dict(item) for item in (statuses or _initial_agent_statuses())]
+    by_agent = {item["agent_id"]: item for item in scores}
+    updated: list[dict] = []
+    for item in current:
+        score = by_agent.get(item.get("id"))
+        if score:
+            item.update(
+                reliability_score=score["reliability"],
+                reliability_dimensions={
+                    "outcome_accuracy": score["outcome_accuracy"],
+                    "evidence_grounding": score["evidence_grounding"],
+                    "forecast_calibration": score["forecast_calibration"],
+                    "policy_compliance": score["policy_compliance"],
+                    "debate_value": score["debate_value"],
+                    "confidence_calibration": score["confidence_calibration"],
+                    "trace_quality": score["trace_quality"],
+                },
+                reliability_rationale=score["rationale"],
+                known_weaknesses=score["known_weaknesses"],
+                prompt_adjustment=score["prompt_adjustment"],
+                promotion_gate=score["promotion_gate"],
+            )
+        updated.append(item)
+    return updated
 
 
 def _tool_body(tool_obj, *args, **kwargs) -> str:
@@ -331,7 +502,8 @@ async def intake_node(state: DebateState, config: RunnableConfig) -> dict:
         detail="Convening the council and loading sponsor-backed context",
     )
     events = [
-        _event("OpenAI", "Structured model selected", f"{LLM_PROVIDER}:{LLM_MODEL}", "positive"),
+        _event("OpenAI", "GPT-5.5 reasoning selected", f"{LLM_PROVIDER}:{LLM_MODEL} · {LLM_REASONING_EFFORT}", "positive"),
+        _event("OpenAI", "Realtime 2 voice armed", OPENAI_REALTIME_MODEL, "positive"),
         _event("W&B Weave", "Trace span opened", "intake", "positive"),
         _event("CopilotKit", "AG-UI state stream", "finance_department", "positive"),
         _sponsor_event(health),
@@ -347,6 +519,8 @@ async def intake_node(state: DebateState, config: RunnableConfig) -> dict:
         trace_summary=_trace_summary("intake", "running", tool_calls=3),
         redis_activity=[_redis_ping_activity(health)],
         sponsor_health=health,
+        reliability_scores=[],
+        learning_report={},
     )
     context = {
         "financials": json.loads(_tool_body(get_company_financials)),
@@ -368,6 +542,8 @@ async def intake_node(state: DebateState, config: RunnableConfig) -> dict:
         "positions": [],
         "transcript": [framing],
         "recommendation": {},
+        "reliability_scores": [],
+        "learning_report": {},
         "agent_statuses": _set_agent_status(
             agent_statuses,
             "cfo",
@@ -383,7 +559,7 @@ async def intake_node(state: DebateState, config: RunnableConfig) -> dict:
         "trace_summary": _trace_summary("intake", "complete", tool_calls=3),
         "redis_activity": [
             _redis_ping_activity(health),
-            _redis_activity("RedisJSON", "Loaded Northwind financial system of record", "json"),
+            _redis_activity("RedisJSON", f"Loaded {_company_name(context)} financial system of record", "json"),
             _redis_activity("RediSearch", f"Loaded {len(context['vendors'])} vendor contracts", "search"),
             _redis_activity("Vector RAG", f"Loaded {len(context['policies'])} policy/precedent hits", "vector"),
         ],
@@ -396,7 +572,9 @@ def make_analyst_node(role_key: str):
 
     @weave.op(name=f"analyst_{role_key}")
     async def node(state: DebateState, config: RunnableConfig) -> dict:
+        require_live_ready()
         health = sponsor_health()
+        company_name = _company_name(state.get("context"))
         agent_statuses = _set_agent_status(
             state.get("agent_statuses"),
             role_key,
@@ -428,10 +606,11 @@ def make_analyst_node(role_key: str):
         model = llm(0.4).with_structured_output(Position)
         system = SystemMessage(
             content=(
-                f"You are {persona['label']} at Northwind Robotics (Series A), a member of its "
+                f"You are {persona['label']} at {company_name} (Series A), a member of its "
                 f"investment committee. Your mandate is {persona['mandate']}. Evaluate the decision "
                 f"strictly from your function's perspective. Cite specific figures from the company "
-                f"context. Take a clear stance (support / oppose / conditional) and defend it crisply. "
+                f"context, including forecast, cohort, pipeline, audit, vendor, and outcome history when relevant. "
+                f"Take a clear stance (support / oppose / conditional) and defend it crisply. "
                 f"Speak like a senior finance executive in a boardroom — precise, quantified, no fluff. "
                 f"Never mention being an AI or a model."
             )
@@ -439,7 +618,7 @@ def make_analyst_node(role_key: str):
         human = HumanMessage(
             content=(
                 f"DECISION UNDER REVIEW:\n{state['decision']}\n\n"
-                f"COMPANY CONTEXT (Northwind Robotics):\n{json.dumps(state['context'])}\n\n"
+                f"COMPANY CONTEXT ({company_name}):\n{json.dumps(state['context'])}\n\n"
                 f"Give your position."
             )
         )
@@ -484,7 +663,9 @@ def make_analyst_node(role_key: str):
 
 @weave.op(name="debate_round")
 async def debate_node(state: DebateState, config: RunnableConfig) -> dict:
+    require_live_ready()
     health = sponsor_health()
+    company_name = _company_name(state.get("context"))
     positions = state.get("positions", [])
     agent_statuses = state.get("agent_statuses") or _initial_agent_statuses()
     for role_key in ANALYSTS:
@@ -519,7 +700,7 @@ async def debate_node(state: DebateState, config: RunnableConfig) -> dict:
     model = llm(0.55).with_structured_output(Rebuttals)
     system = SystemMessage(
         content=(
-            "You are moderating an investment-committee debate at Northwind Robotics. Given each "
+            f"You are moderating an investment-committee debate at {company_name}. Given each "
             "function's position, produce 3-4 sharp cross-examination exchanges where members "
             "challenge each other's reasoning with specific numbers and trade-offs. Keep it "
             "professional, substantive, and concrete — like a real boardroom, not small talk."
@@ -560,7 +741,9 @@ async def debate_node(state: DebateState, config: RunnableConfig) -> dict:
 
 @weave.op(name="cfo_synthesis")
 async def synthesis_node(state: DebateState, config: RunnableConfig) -> dict:
+    require_live_ready()
     health = sponsor_health()
+    company_name = _company_name(state.get("context"))
     agent_statuses = _set_agent_status(
         state.get("agent_statuses"),
         "cfo",
@@ -594,11 +777,13 @@ async def synthesis_node(state: DebateState, config: RunnableConfig) -> dict:
     debate_turns = [t for t in state.get("transcript", []) if t.get("type") == "rebuttal"]
     system = SystemMessage(
         content=(
-            "You are the Chief Financial Officer of Northwind Robotics, chairing the investment "
+            f"You are the Chief Financial Officer of {company_name}, chairing the investment "
             "committee. You have heard each function's position and the cross-examination. Weigh "
             "them, resolve the disagreements, and issue a final, board-ready decision. Be decisive "
             "and quantified. Also estimate the decision's incremental monthly cost, one-time cost, "
-            "and added monthly revenue (numbers only, 0 if none) so runway impact can be computed."
+            "and added monthly revenue (numbers only, 0 if none) so runway impact can be computed. "
+            "Use the richer Acme operating data: forecast downside, churn cohorts, pipeline stage risk, "
+            "vendor obligations, security incidents, audit findings, board constraints, and prior outcomes."
         )
     )
     human = HumanMessage(
@@ -668,8 +853,155 @@ async def synthesis_node(state: DebateState, config: RunnableConfig) -> dict:
     }
 
 
+@weave.op(name="reliability_auditor")
+async def reliability_node(state: DebateState, config: RunnableConfig) -> dict:
+    require_live_ready()
+    health = sponsor_health()
+    company_name = _company_name(state.get("context"))
+    persona = ROSTER["reliability"]
+    agent_statuses = _set_agent_status(
+        state.get("agent_statuses"),
+        "reliability",
+        status="thinking",
+        detail="Scoring council reliability and packaging W&B replay evals",
+    )
+    events = _append(
+        state.get("observability_events"),
+        _event("W&B Weave", "Trace span opened", "reliability_auditor", "positive"),
+        _event("W&B Weave", "Eval packet assembling", "Council reliability + prompt promotion gate", "positive"),
+        _event("Redis", "Historical outcomes active", "Using prior decision outcomes and prompt-version gates", "positive"),
+        _sponsor_event(health),
+    )
+    await _emit_patch(
+        state,
+        config,
+        phase="reliability",
+        current_phase="Reliability audit and W&B eval packaging",
+        agent_statuses=agent_statuses,
+        observability_events=events,
+        trace_summary=_trace_summary("reliability_auditor", "running", model_calls=1, tool_calls=2),
+        redis_activity=_append(
+            state.get("redis_activity"),
+            _redis_ping_activity(health),
+            _redis_activity("W&B eval packet", "Preparing reliability scorecard for replay comparison", "eval"),
+        ),
+        sponsor_health=health,
+    )
+
+    model = llm(0.2).with_structured_output(ReliabilityReport)
+    positions = state.get("positions", [])
+    debate_turns = [t for t in state.get("transcript", []) if t.get("type") == "rebuttal"]
+    system = SystemMessage(
+        content=(
+            f"You are {persona['label']} for {company_name}. Your job is not to re-decide the case; "
+            "score the reliability of each decision-making agent: cfo, treasury, fpna, risk, procurement. "
+            "Use a live self-improvement rubric: outcome_accuracy 30%, evidence_grounding 20%, "
+            "forecast_calibration 15%, policy_compliance 15%, debate_value 10%, confidence_calibration 5%, "
+            "trace_quality 5%. Cite concrete evidence from the decision, positions, debate, company context, "
+            "prior outcomes, audit findings, board constraints, and W&B/Weave trace quality. "
+            "For every agent, include a specific prompt_adjustment and promotion_gate that can be evaluated "
+            "by W&B Weave replay runs. If current outcome accuracy cannot yet be observed, calibrate it from "
+            "historical analogous outcomes and say so. Never invent external facts."
+        )
+    )
+    human = HumanMessage(
+        content=(
+            f"DECISION:\n{state.get('decision')}\n\n"
+            f"COMPANY CONTEXT:\n{json.dumps(state.get('context'))}\n\n"
+            f"POSITIONS:\n{json.dumps([{'agent': p.get('agent'), 'role': p.get('role'), 'stance': p.get('stance'), 'headline': p.get('headline'), 'argument': p.get('argument'), 'key_points': p.get('key_points')} for p in positions])}\n\n"
+            f"CROSS-EXAMINATION:\n{json.dumps([{'from': t.get('from_role'), 'to': t.get('to_role'), 'point': t.get('point')} for t in debate_turns])}\n\n"
+            f"CFO RECOMMENDATION:\n{json.dumps(state.get('recommendation') or {})}\n\n"
+            f"TRACE SUMMARY:\n{json.dumps(state.get('trace_summary') or {})}"
+        )
+    )
+    report: ReliabilityReport = await model.ainvoke([system, human], config)
+    scorecard = _normalize_reliability_scores(report.scores)
+    average_score = round(sum(score["reliability"] for score in scorecard) / len(scorecard)) if scorecard else 0
+    learning_report = {
+        "summary": report.summary,
+        "eval_dataset": report.eval_dataset,
+        "replay_plan": report.replay_plan,
+        "promotion_gate": report.promotion_gate,
+        "score_formula": {
+            "outcome_accuracy": 0.30,
+            "evidence_grounding": 0.20,
+            "forecast_calibration": 0.15,
+            "policy_compliance": 0.15,
+            "debate_value": 0.10,
+            "confidence_calibration": 0.05,
+            "trace_quality": 0.05,
+        },
+        "weave_project": weave_status().get("project"),
+        "weave_url": weave_status().get("url"),
+    }
+    eval_packet = {
+        "decision": state.get("decision"),
+        "recommendation": state.get("recommendation"),
+        "scores": scorecard,
+        "learning_report": learning_report,
+        "source": "reliability_auditor",
+    }
+    eval_event_id = None
+    eval_warning = None
+    try:
+        eval_event_id = R.append_event("evals", eval_packet)
+        R.set_json(f"{R.NS}:reliability:latest", eval_packet)
+        R.publish("dashboard", {"event": "reliability", "average_score": average_score})
+    except Exception as exc:
+        eval_warning = str(exc)
+        print(f"[reliability] warning: {exc}")
+
+    agent_statuses = _attach_reliability_to_statuses(agent_statuses, scorecard)
+    agent_statuses = _set_agent_status(
+        agent_statuses,
+        "reliability",
+        status="done" if not eval_warning else "warning",
+        headline=f"Reliability scorecard · {average_score}%",
+        detail=report.summary,
+        reliability_score=average_score,
+    )
+    audit_turn = _turn(
+        "reliability",
+        type="reliability",
+        headline=f"Reliability scorecard · {average_score}%",
+        argument=report.summary,
+        key_points=report.replay_plan[:3],
+    )
+    return {
+        "reliability_scores": scorecard,
+        "learning_report": learning_report,
+        "transcript": state.get("transcript", []) + [audit_turn],
+        "phase": "reliability",
+        "current_phase": "Reliability scorecard attached",
+        "agent_statuses": agent_statuses,
+        "observability_events": _append(
+            events,
+            _event("W&B Weave", "Reliability eval ready", report.promotion_gate, "positive"),
+            _event(
+                "Redis",
+                "Reliability eval persisted" if eval_event_id else "Reliability eval persistence warning",
+                f"atlas:stream:evals · {eval_event_id}" if eval_event_id else (eval_warning or "Unknown warning"),
+                "positive" if eval_event_id else "warning",
+            ),
+            _event("W&B Weave", "Trace span closed", "reliability_auditor", "positive"),
+        ),
+        "trace_summary": _trace_summary("reliability_auditor", "complete" if not eval_warning else "warning", model_calls=1, tool_calls=2),
+        "redis_activity": _append(
+            state.get("redis_activity"),
+            _redis_ping_activity(health),
+            _redis_activity(
+                "W&B eval packet",
+                f"Persisted reliability scorecard {eval_event_id}" if eval_event_id else (eval_warning or "Persistence warning"),
+                "eval" if eval_event_id else "warning",
+            ),
+        ),
+        "sponsor_health": health,
+    }
+
+
 @weave.op(name="persist_decision")
 async def persist_node(state: DebateState, config: RunnableConfig) -> dict:
+    require_live_ready()
     health = sponsor_health()
     rec = state.get("recommendation", {})
     agent_statuses = _set_agent_status(
@@ -706,6 +1038,8 @@ async def persist_node(state: DebateState, config: RunnableConfig) -> dict:
             "summary": (rec.get("rationale") or "")[:400],
             "decision": rec.get("decision"),
             "confidence": rec.get("confidence"),
+            "reliability_scores": state.get("reliability_scores", []),
+            "learning_report": state.get("learning_report", {}),
             "source": "debate",
         })
         R.publish("dashboard", {"event": "decision", "decision": rec.get("decision")})
@@ -768,6 +1102,7 @@ for _a in ANALYSTS:
     workflow.add_node(_a, make_analyst_node(_a))
 workflow.add_node("debate", debate_node)
 workflow.add_node("synthesis", synthesis_node)
+workflow.add_node("reliability", reliability_node)
 workflow.add_node("persist", persist_node)
 
 workflow.add_edge(START, "intake")
@@ -777,7 +1112,8 @@ workflow.add_edge("fpna", "risk")
 workflow.add_edge("risk", "procurement")
 workflow.add_edge("procurement", "debate")
 workflow.add_edge("debate", "synthesis")
-workflow.add_edge("synthesis", "persist")
+workflow.add_edge("synthesis", "reliability")
+workflow.add_edge("reliability", "persist")
 workflow.add_edge("persist", END)
 
 checkpointer = MemorySaver()

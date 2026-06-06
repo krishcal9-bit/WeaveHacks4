@@ -195,8 +195,7 @@ def search_policies(query_text: str, k: int = 4) -> list[dict]:
             for d in res.docs
         ]
     except Exception as exc:
-        # RAG should never hard-fail the agent; degrade gracefully.
-        return [{"title": "", "kind": "error", "text": f"(policy search unavailable: {exc})", "score": 0.0}]
+        raise RuntimeError(f"Redis vector policy search unavailable: {exc}") from exc
 
 
 # --------------------------------------------------------------------------- #

@@ -1,6 +1,6 @@
 """
 LangChain tools backing the finance agents — every tool is grounded in the
-Redis system of record so agents argue with real Northwind numbers.
+Redis system of record so agents argue with real Acme Corp numbers.
 """
 
 import json
@@ -14,14 +14,18 @@ COMPANY_KEY = f"{R.NS}:company:northwind"
 
 @tool
 def get_company_financials() -> str:
-    """Northwind Robotics' current financial position: cash, burn, runway,
-    revenue, margins, growth, unit economics, and last raise."""
+    """Acme Corp's financial and operating position: cash, burn, runway,
+    revenue, margins, growth, unit economics, forecasts, cohorts, pipeline,
+    hiring plan, incidents, audit findings, board constraints, and prior
+    decision outcomes."""
     co = R.get_json(COMPANY_KEY) or {}
     fields = [
         "name", "stage", "headcount", "cash_on_hand", "monthly_revenue",
         "monthly_gross_burn", "monthly_net_burn", "runway_months", "mrr", "arr",
         "mrr_growth_mom", "gross_margin", "logo_churn_mom", "ndr", "cac", "ltv",
-        "opex_monthly", "last_raise",
+        "opex_monthly", "last_raise", "cash_history", "cash_forecast", "pipeline_by_stage",
+        "customer_cohorts", "hiring_plan", "security_incidents", "audit_findings",
+        "board_constraints", "decision_outcomes", "prompt_versions",
     ]
     return json.dumps({k: co.get(k) for k in fields if k in co})
 
@@ -69,16 +73,20 @@ def compute_runway(
 
 @tool
 def list_vendors() -> str:
-    """List Northwind's vendor & SaaS contracts: name, category, annual cost,
-    renewal date, status, and notes. Useful for procurement and cost decisions."""
+    """List Acme Corp's vendor & SaaS contracts: name, category, annual cost,
+    renewal date, status, renewal obligations, switching cost, and notes.
+    Useful for procurement and cost decisions."""
     vendors = R.search_vendors("*", 50)
-    keys = ["name", "category", "annual_cost", "monthly_cost", "renewal_date", "status", "notes"]
+    keys = [
+        "name", "category", "annual_cost", "monthly_cost", "renewal_date", "status",
+        "owner", "termination_notice_days", "switching_cost", "data_sensitivity", "notes",
+    ]
     return json.dumps([{k: v.get(k) for k in keys} for v in vendors])
 
 
 @tool
 def search_finance_policies(query: str) -> str:
-    """Semantic search over Northwind's finance policies and past board
+    """Semantic search over Acme Corp's finance policies and past board
     decisions. Use this to ground recommendations in company policy and precedent."""
     hits = R.search_policies(query, k=4)
     return json.dumps([

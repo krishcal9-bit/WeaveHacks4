@@ -18,6 +18,9 @@ from src.env import (
 
 load_env()
 
+_REASONING_EFFORTS = {"none", "low", "medium", "high", "xhigh"}
+_TEXT_VERBOSITIES = {"low", "medium", "high"}
+
 _weave_status: dict[str, Any] = {
     "configured": bool(os.getenv("WANDB_API_KEY") and os.getenv("WANDB_PROJECT")),
     "initialized": False,
@@ -106,6 +109,9 @@ def _redis_status() -> dict[str, Any]:
         "detail": "Redis URL configured" if redis_url else "REDIS_URL missing",
         "url": safe_url(redis_url),
         "checks": [],
+        "modules": {},
+        "indices": {},
+        "streams": {},
     }
     if not redis_url:
         status["checks"].append({"label": "PING", "ready": False, "detail": "REDIS_URL missing"})
@@ -132,12 +138,94 @@ def _redis_status() -> dict[str, Any]:
     except Exception as exc:
         status["checks"].append({"label": "RediSearch", "ready": False, "detail": redact_secrets(exc)})
 
+    try:
+        modules = _redis_modules(client)
+        status["modules"] = modules
+        has_json = any("json" in name or "rejson" in name for name in modules)
+        has_search = any("search" in name for name in modules)
+        status["checks"].append(
+            {
+                "label": "Redis Stack modules",
+                "ready": bool(has_json and has_search),
+                "detail": ", ".join(f"{name} {version}" for name, version in modules.items()) or "No modules reported",
+            }
+        )
+    except Exception as exc:
+        status["checks"].append({"label": "Redis Stack modules", "ready": False, "detail": redact_secrets(exc)})
+
+    for index_name, label in ((R.VENDOR_INDEX, "Vendor search index"), (R.POLICY_INDEX, "Policy vector index")):
+        try:
+            info = _redis_index_info(client, index_name)
+            num_docs = info.get("num_docs") or info.get("num_records") or "0"
+            ready = int(float(str(num_docs))) > 0
+            status["indices"][index_name] = info
+            status["checks"].append(
+                {
+                    "label": label,
+                    "ready": ready,
+                    "detail": f"{index_name} contains {num_docs} indexed docs",
+                }
+            )
+        except Exception as exc:
+            status["checks"].append({"label": label, "ready": False, "detail": redact_secrets(exc)})
+
+    try:
+        stream_key = f"{R.NS}:stream:decisions"
+        stream_len = int(client.xlen(stream_key))
+        stream_info = _redis_stream_info(client, stream_key)
+        status["streams"][stream_key] = stream_info
+        status["checks"].append(
+            {
+                "label": "Decision stream",
+                "ready": stream_len > 0,
+                "detail": f"{stream_key} length {stream_len}, last id {stream_info.get('last-generated-id') or 'none'}",
+            }
+        )
+    except Exception as exc:
+        status["checks"].append({"label": "Decision stream", "ready": False, "detail": redact_secrets(exc)})
+
     status["ready"] = all(check["ready"] for check in status["checks"])
     if status["ready"]:
-        status["detail"] = "Redis Stack is reachable with RedisJSON and RediSearch."
+        status["detail"] = "Redis Stack is live with JSON, Search, vector RAG, and Streams."
     if not status["ready"]:
-        status["detail"] = "Redis is reachable, but Redis Stack modules are missing."
+        status["detail"] = "Redis is reachable, but one or more Stack/index/stream checks failed."
     return status
+
+
+def _redis_modules(client: Any) -> dict[str, str]:
+    rows = client.execute_command("MODULE", "LIST")
+    modules: dict[str, str] = {}
+    for row in rows or []:
+        parsed = _pairs_to_dict(row)
+        name = str(parsed.get("name") or parsed.get(b"name") or "").lower()
+        version = str(parsed.get("ver") or parsed.get(b"ver") or "unknown")
+        if name:
+            modules[name] = version
+    return modules
+
+
+def _redis_index_info(client: Any, index: str) -> dict[str, Any]:
+    return _pairs_to_dict(client.execute_command("FT.INFO", index))
+
+
+def _redis_stream_info(client: Any, key: str) -> dict[str, Any]:
+    return _pairs_to_dict(client.execute_command("XINFO", "STREAM", key))
+
+
+def _pairs_to_dict(value: Any) -> dict[str, Any]:
+    if isinstance(value, dict):
+        return {str(k): v for k, v in value.items()}
+    if not isinstance(value, (list, tuple)):
+        return {}
+    parsed: dict[str, Any] = {}
+    iterator = iter(value)
+    for key in iterator:
+        try:
+            item = next(iterator)
+        except StopIteration:
+            break
+        parsed[str(key)] = item
+    return parsed
 
 
 def _cursor_status() -> dict[str, Any]:
@@ -169,9 +257,60 @@ def _llm_status() -> dict[str, Any]:
     provider = os.getenv("LLM_PROVIDER")
     provider_normalized = (provider or "").lower()
     model = os.getenv("LLM_MODEL")
+    reasoning_effort = os.getenv("LLM_REASONING_EFFORT")
+    verbosity = os.getenv("LLM_TEXT_VERBOSITY")
+    realtime_model = os.getenv("OPENAI_REALTIME_MODEL")
+    realtime_reasoning_effort = os.getenv("OPENAI_REALTIME_REASONING_EFFORT")
+    realtime_voice = os.getenv("OPENAI_REALTIME_VOICE")
     api_key = provider_api_key_name()
-    ready = bool(provider and model and os.getenv(api_key))
-    detail = f"{provider}:{model}" if provider and model else "LLM_PROVIDER or LLM_MODEL missing"
+    checks = [
+        {
+            "label": "Provider",
+            "ready": provider_normalized == "openai",
+            "detail": provider or "LLM_PROVIDER missing",
+        },
+        {
+            "label": "Reasoning model",
+            "ready": bool(model and model.startswith("gpt-5.5")),
+            "detail": model or "LLM_MODEL missing",
+        },
+        {
+            "label": "Reasoning effort",
+            "ready": reasoning_effort == "xhigh",
+            "detail": reasoning_effort or "LLM_REASONING_EFFORT missing",
+        },
+        {
+            "label": "Text verbosity",
+            "ready": bool(verbosity in _TEXT_VERBOSITIES),
+            "detail": verbosity or "LLM_TEXT_VERBOSITY missing",
+        },
+        {
+            "label": "Realtime model",
+            "ready": realtime_model == "gpt-realtime-2",
+            "detail": realtime_model or "OPENAI_REALTIME_MODEL missing",
+        },
+        {
+            "label": "Realtime reasoning",
+            "ready": realtime_reasoning_effort == "xhigh",
+            "detail": realtime_reasoning_effort or "OPENAI_REALTIME_REASONING_EFFORT missing",
+        },
+        {
+            "label": "Realtime voice",
+            "ready": bool(realtime_voice),
+            "detail": realtime_voice or "OPENAI_REALTIME_VOICE missing",
+        },
+        {
+            "label": api_key,
+            "ready": bool(os.getenv(api_key)),
+            "detail": "Configured" if os.getenv(api_key) else "Missing",
+        },
+    ]
+    ready = all(check["ready"] for check in checks)
+    detail = (
+        f"{provider}:{model} · {reasoning_effort} reasoning · {realtime_model} voice"
+        if provider and model
+        else "OpenAI model configuration missing"
+    )
     return {
         "id": "openai" if provider_normalized == "openai" else "llm",
         "label": "OpenAI" if provider_normalized == "openai" else "Live LLM",
@@ -179,7 +318,23 @@ def _llm_status() -> dict[str, Any]:
         "detail": detail,
         "provider": provider,
         "model": model,
+        "reasoning_effort": reasoning_effort,
+        "verbosity": verbosity,
+        "realtime": {
+            "model": realtime_model,
+            "reasoning_effort": realtime_reasoning_effort,
+            "voice": realtime_voice,
+            "endpoint": "v1/realtime",
+        },
+        "capabilities": [
+            "structured_outputs",
+            "function_calling",
+            "reasoning_xhigh",
+            "realtime_voice",
+            "webrtc_session_secret",
+        ],
         "api_key": api_key,
+        "checks": checks,
     }
 
 
