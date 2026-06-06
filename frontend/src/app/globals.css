@@ -1,0 +1,84 @@
+@import "tailwindcss";
+
+/*
+  Atlas design tokens — restrained enterprise-fintech palette.
+  Light-first, institutional. Color conveys information only:
+  green = positive impact, red = risk, amber = warning, blue = info.
+*/
+:root {
+  /* Surfaces */
+  --background: #f6f7f9; /* off-white canvas */
+  --surface: #ffffff;
+  --surface-muted: #f1f3f5;
+  --border: #e5e8ec; /* hairline */
+  --border-strong: #d3d8df;
+
+  /* Text */
+  --foreground: #11161d; /* charcoal */
+  --muted-foreground: #5a6573; /* slate */
+  --subtle-foreground: #8a93a1;
+
+  /* Semantic — muted, professional */
+  --positive: #18794e;
+  --positive-bg: #e7f3ec;
+  --risk: #b42318;
+  --risk-bg: #fbeae8;
+  --warning: #b54708;
+  --warning-bg: #fdf0e6;
+  --info: #2f5bb7;
+  --info-bg: #eaf0fb;
+
+  /* Primary action — near-charcoal, not a brand-loud accent */
+  --accent: #1b2330;
+  --accent-foreground: #ffffff;
+
+  /* CopilotKit chat theming (P0 verification surface) → slate, never neon */
+  --copilot-kit-primary-color: #1b2330;
+  --copilot-kit-contrast-color: #ffffff;
+  --copilot-kit-background-color: #ffffff;
+  --copilot-kit-secondary-color: #f1f3f5;
+  --copilot-kit-secondary-contrast-color: #11161d;
+  --copilot-kit-separator-color: #e5e8ec;
+  --copilot-kit-muted-color: #8a93a1;
+}
+
+@theme inline {
+  --color-background: var(--background);
+  --color-surface: var(--surface);
+  --color-surface-muted: var(--surface-muted);
+  --color-border: var(--border);
+  --color-border-strong: var(--border-strong);
+  --color-foreground: var(--foreground);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-subtle-foreground: var(--subtle-foreground);
+  --color-positive: var(--positive);
+  --color-positive-bg: var(--positive-bg);
+  --color-risk: var(--risk);
+  --color-risk-bg: var(--risk-bg);
+  --color-warning: var(--warning);
+  --color-warning-bg: var(--warning-bg);
+  --color-info: var(--info);
+  --color-info-bg: var(--info-bg);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --font-sans: var(--font-geist-sans);
+  --font-mono: var(--font-geist-mono);
+}
+
+html {
+  color-scheme: light;
+}
+
+body {
+  background: var(--background);
+  color: var(--foreground);
+  font-family: var(--font-sans), ui-sans-serif, system-ui, -apple-system, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+}
+
+/* Tabular figures for all financial numbers (Bloomberg-grade density) */
+.tabular-nums {
+  font-variant-numeric: tabular-nums;
+  font-feature-settings: "tnum";
+}

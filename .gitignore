@@ -1,0 +1,19 @@
+# Secrets / environment (never commit real keys)
+**/.env
+**/.env.local
+**/.env.*.local
+
+# Python
+agent/.venv/
+**/__pycache__/
+*.py[cod]
+
+# Node / Next.js
+frontend/node_modules/
+frontend/.next/
+frontend/out/
+frontend/next-env.d.ts
+
+# OS / editor
+.DS_Store
+*.log
