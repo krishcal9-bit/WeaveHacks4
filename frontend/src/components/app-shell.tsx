@@ -12,19 +12,10 @@ import { hoverLift, pressSubtle, springSnappy, transitionReveal } from "@/compon
 import { ThemeToggle } from "@/components/theme-toggle";
 import { APP_NAME } from "@/lib/branding";
 import { APP_NAV } from "@/lib/app-nav";
-import { useMounted } from "@/lib/use-mounted";
-
-const EDITION_FMT = new Intl.DateTimeFormat("en-US", {
-  weekday: "long",
-  month: "long",
-  day: "numeric",
-  year: "numeric",
-});
 
 export function AppShell({ children }: { children: ReactNode }) {
   const pathname = usePathname();
   const isLanding = pathname === "/";
-  const mounted = useMounted();
   const reduced = Boolean(useReducedMotion());
 
   useAppNavShortcuts();
@@ -38,13 +29,9 @@ export function AppShell({ children }: { children: ReactNode }) {
       <div className="app-grain pointer-events-none fixed inset-0 z-50" aria-hidden />
 
       <header className="editorial-masthead sticky top-0 z-20 bg-surface/95 backdrop-blur">
-        {/* Top dateline strip — the newspaper's edition line. */}
-        <div className="flex items-center justify-between gap-3 border-b border-border/70 px-3 py-1 md:px-5">
+        <div className="flex items-center border-b border-border/70 px-3 py-1 md:px-5">
           <span className="kicker kicker--bare text-[9.5px] tracking-[0.22em] text-subtle-foreground">
             {APP_NAME}
-          </span>
-          <span className="truncate font-mono text-[9.5px] uppercase tracking-[0.2em] text-subtle-foreground">
-            {mounted ? EDITION_FMT.format(new Date()) : "\u00a0"} · Live edition
           </span>
         </div>
 
@@ -54,9 +41,6 @@ export function AppShell({ children }: { children: ReactNode }) {
               <AtlasMark reduced={reduced} />
               <span className="font-display text-[26px] font-medium leading-none tracking-[-0.02em] text-foreground">
                 {APP_NAME}
-              </span>
-              <span className="hidden font-mono text-[9.5px] uppercase tracking-[0.24em] text-accent sm:inline">
-                The Council
               </span>
             </Link>
           </motion.div>

@@ -61,8 +61,8 @@ export default function DepartmentPage() {
         </div>
       </div>
       <p className="mt-0.5 text-[12px] text-muted-foreground">
-        A standing finance council: four analysts review from their mandates, the CFO rules, and Reliability audits the
-        evidence, calibration, traces, and prompt-promotion gate after the fact.
+        A standing finance team: analysts review each file from their lane, the CFO makes the call, and Reliability
+        checks the evidence, calibration, traces, and prompt updates after the run.
       </p>
 
       {/* Chair */}
@@ -101,6 +101,9 @@ function MemberCard({
   prompt?: PromptVersion;
   track?: TrackRecord;
 }) {
+  const promptSummary = prompt ? summarizePrompt(prompt) : null;
+  const mandate = member.mandate ? formatDisplayText(member.mandate) : "";
+
   return (
     <Card className={cx("flex flex-col p-4", highlight ? "w-full max-w-sm border-border-strong" : "")}>
       <div className="flex items-center gap-3">
@@ -110,12 +113,12 @@ function MemberCard({
           className={cx(!highlight && "atlas-icon-badge--quiet")}
         />
         <div className="min-w-0">
-          <div className="truncate text-[14px] font-semibold leading-tight text-foreground">{member.label}</div>
-          <div className="truncate text-[11px] text-subtle-foreground">{member.role}</div>
+          <div className="truncate text-[14px] font-semibold leading-tight text-foreground">{formatMemberLabel(member.label)}</div>
+          <div className="truncate text-[11px] text-subtle-foreground">{formatRole(member.role)}</div>
         </div>
       </div>
-      {member.mandate && (
-        <p title={member.mandate} className="mt-3 line-clamp-3 text-[12px] leading-relaxed text-muted-foreground">{member.mandate}</p>
+      {mandate && (
+        <p title={mandate} className="mt-3 line-clamp-3 text-[12px] leading-relaxed text-muted-foreground">{mandate}</p>
       )}
 
       {(track || prompt) && (
@@ -131,41 +134,31 @@ function MemberCard({
                 </span>
                 <span
                   className={cx(
-                    "rounded px-1.5 py-0.5 text-[11px] font-semibold tabular-nums",
+                    "rounded px-1.5 py-0.5 text-[11px] font-semibold",
                     CAL_HEAT(track.avg),
                   )}
                 >
-                  {track.avg.toFixed(0)} cal
+                  {track.avg.toFixed(0)}% reliability
                 </span>
               </div>
             </div>
           )}
-          {prompt && (
+          {promptSummary && (
             <div>
               <div className="text-[10px] font-medium uppercase tracking-[0.08em] text-subtle-foreground">
-                Prompt gate
+                Review plan
               </div>
-              <div className="mt-1 truncate text-[11.5px] font-medium tabular-nums text-foreground" title={`${prompt.current ?? prompt.version} → ${prompt.candidate ?? "no candidate"}`}>
-                {prompt.current ?? prompt.version} → {prompt.candidate ?? "candidate pending"}
+              <div className="mt-1 text-[11.5px] font-medium leading-relaxed text-foreground">
+                Current: {promptSummary.current}
               </div>
-              <div className="mt-1 flex flex-wrap gap-1">
-                <HashChip label="active" value={prompt.active_prompt_hash ?? prompt.prompt_hash} />
-                <HashChip label="candidate" value={prompt.candidate_prompt_hash} />
+              <div className="mt-0.5 text-[11px] leading-relaxed text-muted-foreground">
+                Next: {promptSummary.candidate}
               </div>
-              {prompt.gate_metric && (
-                <div className="mt-1 text-[10.5px] font-semibold text-info">{prompt.gate_metric}</div>
-              )}
-              {prompt.reliability_dimensions && prompt.reliability_dimensions.length > 0 && (
-                <div className="mt-1 flex flex-wrap gap-1">
-                  {prompt.reliability_dimensions.slice(0, 3).map((dimension) => (
-                    <span key={dimension} className="rounded border border-border bg-surface px-1.5 py-0.5 text-[9.5px] font-medium text-muted-foreground">
-                      {dimension.replaceAll("_", " ")}
-                    </span>
-                  ))}
-                </div>
-              )}
+              <div className="mt-1 text-[10.5px] font-semibold text-info">
+                Primary check: {promptSummary.primaryCheck}
+              </div>
               <div className="mt-0.5 line-clamp-2 text-[11px] leading-relaxed text-muted-foreground">
-                {prompt.promotion_gate}
+                Focus: {promptSummary.focusAreas}.
               </div>
             </div>
           )}
@@ -175,13 +168,144 @@ function MemberCard({
   );
 }
 
-function HashChip({ label, value }: { label: string; value?: string }) {
-  if (!value) return null;
-  return (
-    <span className="rounded border border-border bg-surface px-1.5 py-0.5 font-mono text-[9.5px] font-semibold text-subtle-foreground">
-      {label}:{value}
-    </span>
-  );
+function formatRole(role: string): string {
+  return formatDisplayText(role).replace(/\s*&\s*/g, " and ");
+}
+
+function formatMemberLabel(label: string): string {
+  if (label === "FP&A") return "Financial Planning";
+  return label.replace(/\s*&\s*/g, " and ");
+}
+
+function summarizePrompt(prompt: PromptVersion) {
+  const dimensions = (prompt.reliability_dimensions?.length ? prompt.reliability_dimensions : [prompt.gate_metric])
+    .filter(isNonEmptyString)
+    .map((dimension) => humanizeKey(dimension));
+
+  return {
+    current: formatPromptVersion(prompt.current ?? prompt.version, "Active playbook"),
+    candidate: formatPromptVersion(prompt.candidate, "No candidate queued"),
+    primaryCheck: humanizeKey(prompt.gate_metric ?? dimensions[0] ?? "Reliability"),
+    focusAreas: formatList(dimensions.slice(0, 3)),
+  };
+}
+
+function isNonEmptyString(value: string | undefined): value is string {
+  return Boolean(value);
+}
+
+function formatPromptVersion(value: string | undefined, fallback: string): string {
+  if (!value) return fallback;
+  const match = value.match(/(?:^|\.)v(\d+)[.-](.+)$/i);
+  if (match) return `${humanizeKey(match[2] ?? value)}, version ${match[1] ?? ""}`.trim();
+  return humanizeKey(value.split(".").at(-1) ?? value);
+}
+
+function humanizeKey(value: string): string {
+  const friendlyLabels: Record<string, string> = {
+    analyst_influence_weighting: "Analyst influence weighting",
+    approval_route_accuracy: "Approval route accuracy",
+    arr_bridge_accuracy: "ARR bridge accuracy",
+    benchmark_grounding: "Benchmark grounding",
+    board_chair_ruling: "Board chair ruling",
+    "board-chair-ruling": "Board chair ruling",
+    board_ruling_quality: "Board ruling quality",
+    cash_timing_recall: "Cash timing recall",
+    commercial_negotiator: "Commercial negotiation",
+    "commercial-negotiator": "Commercial negotiation",
+    condition_dissent_chair: "Condition and dissent review",
+    "condition-dissent-chair": "Condition and dissent review",
+    condition_specificity: "Condition specificity",
+    control_gap_detection: "Control gap detection",
+    controls_adversary: "Controls review",
+    "controls-adversary": "Controls review",
+    dissent_resolution: "Dissent resolution",
+    downside_evidence_pressure: "Downside evidence pressure",
+    evaluator_scorecard: "Evaluator scorecard",
+    "evaluator-scorecard": "Evaluator scorecard",
+    financing_delay_coverage: "Financing delay coverage",
+    forecast_unit_economics: "Forecast and unit economics",
+    "forecast-unit-economics": "Forecast and unit economics",
+    forecastability_challenge: "Forecastability challenge",
+    forecastability_sensitivity: "Forecastability sensitivity",
+    "forecastability-sensitivity": "Forecastability sensitivity",
+    hidden_obligation_recall: "Hidden obligation recall",
+    late_cash_covenants: "Late cash covenants",
+    "late-cash-covenants": "Late cash covenants",
+    liquidity_mechanics: "Liquidity mechanics",
+    "liquidity-mechanics": "Liquidity mechanics",
+    negotiation_strategy_quality: "Negotiation strategy quality",
+    payment_term_grounding: "Payment term grounding",
+    plan_vs_actual_calibration: "Plan versus actual calibration",
+    prompt_directive_usefulness: "Prompt directive usefulness",
+    provenance_policy_adversary: "Policy provenance review",
+    "provenance-policy-adversary": "Policy provenance review",
+    renewal_clause_recall: "Renewal clause recall",
+    renewal_leverage_redlines: "Renewal leverage review",
+    "renewal-leverage-redlines": "Renewal leverage review",
+    replay_case_generation: "Replay case generation",
+    runway_impact_basis: "Runway impact basis",
+    runway_sensitivity: "Runway sensitivity",
+    scenario_math_quality: "Scenario math quality",
+    scorecard_completeness: "Scorecard completeness",
+    scorecard_replay_directives: "Scorecard replay guidance",
+    "scorecard-replay-directives": "Scorecard replay guidance",
+    source_provenance_coverage: "Source provenance coverage",
+    stance_prohibition: "Stance prohibition",
+    supplier_leverage_specificity: "Supplier leverage specificity",
+    termination_sla_redlines: "Termination and SLA redlines",
+    trace_quality_audit: "Trace quality audit",
+    unit_economics_grounding: "Unit economics grounding",
+    working_capital_precision: "Working capital precision",
+  };
+  const key = value.toLowerCase();
+  if (friendlyLabels[key]) return friendlyLabels[key];
+
+  const acronymLabels: Record<string, string> = {
+    ap: "AP",
+    arr: "ARR",
+    cac: "CAC",
+    cfo: "CFO",
+    fpna: "FP&A",
+    rag: "RAG",
+    roi: "ROI",
+    sla: "SLA",
+  };
+  const words = value
+    .replace(/[_-]+/g, " ")
+    .replace(/\s+/g, " ")
+    .trim()
+    .split(" ")
+    .filter(Boolean);
+
+  return words
+    .map((word, index) => {
+      const normalized = word.toLowerCase();
+      if (acronymLabels[normalized]) return acronymLabels[normalized];
+      if (index > 0 && ["and", "or", "vs"].includes(normalized)) return normalized;
+      return normalized.charAt(0).toUpperCase() + normalized.slice(1);
+    })
+    .join(" ");
+}
+
+function formatDisplayText(value: string): string {
+  return value
+    .replace(/\s*·\s*/g, ", ")
+    .replace(/\bplan-vs-actual\b/gi, "plan versus actual")
+    .replace(/\bCAC\/payback\b/g, "CAC payback")
+    .replace(/\bfraud\/error\b/gi, "fraud and error")
+    .replace(/\btermination\/SLA\b/g, "termination and SLA")
+    .replace(/\s*\/\s*/g, " and ")
+    .replace(/([a-z])\s*-\s*([a-z])/gi, "$1 $2")
+    .replace(/\s+/g, " ")
+    .trim();
+}
+
+function formatList(values: string[]): string {
+  if (values.length === 0) return "General reliability";
+  if (values.length === 1) return values[0] ?? "General reliability";
+  if (values.length === 2) return `${values[0] ?? ""} and ${values[1] ?? ""}`.trim();
+  return `${values.slice(0, -1).join(", ")}, and ${values[values.length - 1] ?? ""}`.trim();
 }
 
 // Map a decision-outcome owner label to a roster id (self-contained; no hot-file coupling).

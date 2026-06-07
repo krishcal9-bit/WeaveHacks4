@@ -585,9 +585,9 @@ export default function DataRoomPage() {
         <div className="flex min-w-0 items-start gap-3">
           <AtlasIcon name="upload" size="lg" className="mt-1 hidden sm:inline-grid" />
           <div className="min-w-0">
-            <h1 className="font-display text-[28px] font-medium tracking-tight">Add the demo files</h1>
+            <h1 className="font-display text-[28px] font-medium tracking-tight">Add the company files</h1>
             <p className="mt-2 max-w-2xl text-[14px] leading-relaxed text-muted-foreground">
-              Choose the seven files from any demo folder, or one workbook with named sheets. Atlas Finance loads them, checks them, and then you can run the council.
+              Choose the seven files from your company data folder, or one workbook with named sheets. Atlas Finance loads them, checks them, and then you can run the council.
             </p>
           </div>
         </div>
@@ -855,7 +855,7 @@ function UploadProgress({
     : refreshing
       ? "Checking current files"
       : `${loaded}/${total} files loaded`;
-  const detail = batch?.current ?? (loaded === total && total > 0 ? "Ready to run the council" : "Upload the full folder for the cleanest demo.");
+  const detail = batch?.current ?? (loaded === total && total > 0 ? "Ready to run the council" : "Upload the full folder for the cleanest analysis.");
   const barClass = batch?.failed
     ? "bg-risk"
     : batch?.review
@@ -1217,7 +1217,7 @@ function ResultPanel({
     >
       <div className="flex items-center gap-2">
         <AtlasIcon name={stateIcon} size="sm" className="atlas-icon-badge--quiet" />
-        <h2 className="text-[15px] font-semibold">What happened</h2>
+        <h2 className="text-[15px] font-semibold">File readiness</h2>
       </div>
       <div className="mt-3 rounded-lg border border-border bg-background p-3">
         <AnimatePresence mode="wait">
@@ -1251,7 +1251,7 @@ function ResultPanel({
                 detail={`${fmtInt(total - loaded)} file${total - loaded === 1 ? "" : "s"} still missing.`}
               />
             ) : (
-              <StateMessage tone="neutral" title="Waiting for files" detail="Choose the demo files to begin." />
+              <StateMessage tone="neutral" title="Waiting for files" detail="Choose the company files to begin." />
             )}
           </motion.div>
         </AnimatePresence>
