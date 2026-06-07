@@ -343,6 +343,83 @@ main a {
   filter: saturate(1.08) contrast(1.06) drop-shadow(0 1px 1px rgba(0, 0, 0, 0.18));
 }
 
+.agent-node-icon {
+  --agent-node-color: var(--accent);
+  --agent-node-fill: color-mix(in srgb, var(--agent-node-color) 34%, var(--surface) 66%);
+  --agent-node-center: color-mix(in srgb, var(--agent-node-color) 16%, #fff7e8 84%);
+  position: relative;
+  display: inline-grid;
+  height: 52px;
+  width: 52px;
+  place-items: center;
+  overflow: hidden;
+  border: 2px solid color-mix(in srgb, var(--agent-node-color) 70%, #ffffff);
+  border-radius: 999px;
+  background: var(--agent-node-fill);
+  box-shadow:
+    0 0 0 5px color-mix(in srgb, var(--agent-node-color) 18%, transparent),
+    inset 0 1px 0 rgba(255, 255, 255, 0.38),
+    0 8px 18px rgba(18, 16, 14, 0.16);
+}
+
+.agent-node-icon::before {
+  content: "";
+  position: absolute;
+  inset: 7px;
+  border-radius: inherit;
+  background: var(--agent-node-center);
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--agent-node-color) 16%, transparent);
+}
+
+.agent-node-icon__image {
+  position: relative;
+  z-index: 1;
+  height: 40px;
+  width: 40px;
+  object-fit: contain;
+  pointer-events: none;
+  user-select: none;
+  filter: saturate(1.18) contrast(1.06) drop-shadow(0 1px 1px rgba(18, 16, 14, 0.14));
+}
+
+.agent-node-icon--cfo {
+  --agent-node-color: #e05f43;
+}
+
+.agent-node-icon--treasury {
+  --agent-node-color: #2f7acf;
+}
+
+.agent-node-icon--fpna {
+  --agent-node-color: #d79928;
+}
+
+.agent-node-icon--risk {
+  --agent-node-color: #d84d43;
+}
+
+.agent-node-icon--procurement {
+  --agent-node-color: #2a9962;
+}
+
+.agent-node-icon--reliability {
+  --agent-node-color: #27909e;
+}
+
+.dark .agent-node-icon {
+  --agent-node-fill: color-mix(in srgb, var(--agent-node-color) 58%, #15110e 42%);
+  --agent-node-center: color-mix(in srgb, var(--agent-node-color) 18%, #f7ecda 82%);
+  border-color: color-mix(in srgb, var(--agent-node-color) 62%, #fff2db);
+  box-shadow:
+    0 0 0 5px color-mix(in srgb, var(--agent-node-color) 24%, transparent),
+    inset 0 1px 0 rgba(255, 255, 255, 0.22),
+    0 10px 24px rgba(0, 0, 0, 0.36);
+}
+
+.dark .agent-node-icon__image {
+  filter: saturate(1.25) contrast(1.1) drop-shadow(0 1px 1px rgba(0, 0, 0, 0.22));
+}
+
 .command-header {
   display: flex;
   min-width: 0;
