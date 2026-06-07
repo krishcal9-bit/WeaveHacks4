@@ -17,7 +17,6 @@ export function Panel({
   title,
   icon: Icon,
   visualIcon,
-  eyebrow,
   action,
   count,
   collapsible = false,
@@ -31,7 +30,6 @@ export function Panel({
   title: ReactNode;
   icon?: IconType;
   visualIcon?: AtlasIconName;
-  eyebrow?: ReactNode;
   action?: ReactNode;
   count?: number;
   collapsible?: boolean;
@@ -58,9 +56,6 @@ export function Panel({
           </span>
         ) : null}
         <div className="min-w-0 flex-1">
-          {eyebrow && (
-            <div className="font-mono text-[9px] font-semibold uppercase tracking-[0.18em] text-subtle-foreground">{eyebrow}</div>
-          )}
           <h2 className="truncate font-display text-[15px] font-medium leading-tight tracking-[-0.01em]">{title}</h2>
         </div>
         {typeof count === "number" && (

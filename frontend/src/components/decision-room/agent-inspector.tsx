@@ -94,7 +94,6 @@ export function AgentInspector({
       id="agent-inspector"
       icon={agentIcon(member.id)}
       visualIcon="council"
-      eyebrow="Inspector"
       title={member.label}
       action={
         <StatusBadge tone={active ? "info" : scoreValue ? reliabilityTone(scoreValue) : "neutral"} pulse={active}>

@@ -259,9 +259,6 @@ export default function SettingsPage() {
           <AtlasIcon name="memory" size="lg" className="mt-1 hidden sm:inline-grid" />
           <div className="min-w-0">
             <h1 className="font-display text-[28px] font-medium tracking-tight">Demo reset</h1>
-            <p className="mt-2 max-w-2xl text-[14px] leading-relaxed text-muted-foreground">
-              Restore the full live demo: council run, Redis data, decision activity, and uploaded files.
-            </p>
           </div>
         </div>
       </StaggerItem>
@@ -289,9 +286,6 @@ export default function SettingsPage() {
         <div className="flex items-center justify-between gap-3 border-b border-border px-4 py-3">
           <div className="min-w-0">
             <h2 className="text-[15px] font-semibold">Loaded files</h2>
-            <p className="mt-0.5 text-[12px] text-muted-foreground">
-              Each connector tracks source age, validation notes, confidence, and required facts.
-            </p>
           </div>
           <div className="flex shrink-0 flex-wrap justify-end gap-1.5">
             <MiniCounter label="low confidence" value={lowConfidenceCount} tone={lowConfidenceCount ? "warning" : "positive"} />
@@ -350,9 +344,6 @@ export default function SettingsPage() {
               )}
               <h2 className="text-[15px] font-semibold">Full demo reset</h2>
             </div>
-            <p className="mt-1 max-w-2xl text-[12px] leading-relaxed text-muted-foreground">
-              Clears the council run, Redis activity streams, uploaded files, and reseeds Northwind baseline data.
-            </p>
             <AnimatePresence mode="wait">
               {resetting ? (
                 <motion.div

@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useRef, useState, type RefObject } from "react";
 import Link from "next/link";
 import { motion, AnimatePresence, animate, useMotionValue, useTransform, useReducedMotion } from "motion/react";
-import { ArrowRight, ChevronRight } from "lucide-react";
+import { ArrowRight } from "lucide-react";
 import { APP_NAME } from "@/lib/branding";
 import { AtlasIcon, type AtlasIconName } from "@/components/atlas-icon";
 import { MotionLink } from "@/components/motion/motion-link";
@@ -188,8 +188,6 @@ export function LandingPage() {
     return () => window.clearInterval(timer);
   }, [cyclePreview]);
 
-  const selected = AGENTS.find((a) => a.id === selectedAgent) ?? AGENTS[0];
-
   return (
     <div className="landing-root min-h-dvh overflow-x-clip bg-background text-foreground">
       <div className="landing-grain pointer-events-none fixed inset-0 z-50" aria-hidden />
@@ -235,22 +233,11 @@ export function LandingPage() {
 
           <div className="grid items-center gap-12 lg:grid-cols-[minmax(0,1.05fr)_minmax(0,0.95fr)] lg:gap-10">
             <Stagger className="relative z-10">
-              <StaggerItem className="mb-6">
-                <span className="kicker text-[11px]">Runway decisions</span>
-              </StaggerItem>
-
               <StaggerItem>
                 <h1 className="headline font-display text-[clamp(2.35rem,5.5vw,3.85rem)] font-medium text-foreground">
                   The room where your
                   <span className="block text-positive">books get debated.</span>
                 </h1>
-              </StaggerItem>
-
-              <StaggerItem>
-                <p className="lede mt-6 max-w-xl text-[17px]">
-                  Drop in ledger and vendor files. Four finance specialists argue the numbers in the
-                  open. You walk out with a signed recommendation and a memo the board can read.
-                </p>
               </StaggerItem>
 
               <StaggerItem className="mt-9 flex flex-wrap items-center gap-3">
@@ -303,13 +290,9 @@ export function LandingPage() {
         <section id="how" className="border-t border-border bg-surface-quiet py-20 sm:py-24">
           <div className="mx-auto max-w-6xl px-5 sm:px-8">
             <div className="max-w-2xl">
-              <p className="kicker text-[11px]">Workflow</p>
-              <h2 className="mt-3 font-display text-[clamp(1.65rem,3.5vw,2.5rem)] font-medium tracking-[-0.02em] text-foreground">
+              <h2 className="font-display text-[clamp(1.65rem,3.5vw,2.5rem)] font-medium tracking-[-0.02em] text-foreground">
                 From file drop to board memo
               </h2>
-              <p className="lede mt-4 max-w-lg text-[16px]">
-                Three steps. No prompt engineering — just the files your team already maintains.
-              </p>
             </div>
 
             <div className="mt-14 grid gap-5 md:grid-cols-3">
@@ -350,16 +333,7 @@ export function LandingPage() {
                         >
                           {step.detail}
                         </motion.p>
-                      ) : (
-                        <motion.p
-                          key="teaser"
-                          initial={{ opacity: 0 }}
-                          animate={{ opacity: 1 }}
-                          className="mt-3 font-sans text-[13px] text-subtle-foreground"
-                        >
-                          Click to read more
-                        </motion.p>
-                      )}
+                      ) : null}
                     </AnimatePresence>
                     <div
                       className={cx(
@@ -380,14 +354,9 @@ export function LandingPage() {
           <div className="relative mx-auto max-w-6xl px-5 sm:px-8">
             <div className="flex flex-col gap-6 lg:flex-row lg:items-end lg:justify-between">
               <div className="max-w-xl">
-                <p className="kicker text-[11px] text-positive">The committee</p>
-                <h2 className="mt-3 font-display text-[clamp(1.65rem,3.5vw,2.5rem)] font-medium tracking-[-0.02em] text-foreground">
+                <h2 className="font-display text-[clamp(1.65rem,3.5vw,2.5rem)] font-medium tracking-[-0.02em] text-foreground">
                   Four specialists, one recommendation
                 </h2>
-                <p className="lede mt-4 text-[16px]">
-                  Each seat owns a lane — liquidity, planning, controls, spend. They push back on
-                  each other before the CFO writes the final call.
-                </p>
               </div>
               <Link
                 href="/department"
@@ -421,40 +390,10 @@ export function LandingPage() {
                     <div className="font-display text-[17px] font-medium text-foreground">
                       {agent.label}
                     </div>
-                    <div className="mt-1 font-mono text-[10px] uppercase tracking-[0.12em] text-subtle-foreground">
-                      {agent.role}
-                    </div>
-                    <AnimatePresence>
-                      {isSelected && (
-                        <motion.p
-                          initial={{ opacity: 0 }}
-                          animate={{ opacity: 1 }}
-                          exit={{ opacity: 0 }}
-                          transition={transitionFade}
-                          className="mt-3 font-serif text-[13px] leading-relaxed text-muted-foreground"
-                        >
-                          {agent.blurb}
-                        </motion.p>
-                      )}
-                    </AnimatePresence>
                   </motion.button>
                 );
               })}
             </div>
-
-            <motion.div
-              key={selected.id}
-              initial={{ opacity: 0, y: 8 }}
-              animate={{ opacity: 1, y: 0 }}
-              className="mt-6 flex items-start gap-3 rounded-xl border border-positive/20 bg-positive-bg/60 px-4 py-3"
-            >
-              <ChevronRight className="mt-0.5 h-4 w-4 shrink-0 text-positive" strokeWidth={2.5} />
-              <p className="font-serif text-[14px] leading-relaxed text-muted-foreground">
-                <span className="font-sans font-semibold text-positive">{selected.label}</span>
-                {" — "}
-                {selected.blurb}
-              </p>
-            </motion.div>
           </div>
         </section>
 
@@ -464,10 +403,6 @@ export function LandingPage() {
               When the board asks why you said yes,
               <span className="block text-muted-foreground">you&apos;ll have the memo.</span>
             </h2>
-            <p className="lede mx-auto mt-5 max-w-lg text-[16px]">
-              Load a demo company, run a committee debate, and export the recommendation with the
-              numbers attached.
-            </p>
             <MotionLink
               href="/dashboard"
               variant="landing-cta"

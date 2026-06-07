@@ -156,7 +156,6 @@ export function EvidenceDrawer({
       id="evidence-drawer"
       icon={FolderOpen}
       visualIcon="evidence"
-      eyebrow="Redis-grounded"
       title="Evidence drawer"
       collapsible
       defaultOpen

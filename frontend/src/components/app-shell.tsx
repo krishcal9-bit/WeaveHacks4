@@ -29,13 +29,7 @@ export function AppShell({ children }: { children: ReactNode }) {
       <div className="app-grain pointer-events-none fixed inset-0 z-50" aria-hidden />
 
       <header className="editorial-masthead sticky top-0 z-20 bg-surface/95 backdrop-blur">
-        <div className="flex items-center border-b border-border/70 px-3 py-1 md:px-5">
-          <span className="kicker kicker--bare text-[9.5px] tracking-[0.22em] text-subtle-foreground">
-            {APP_NAME}
-          </span>
-        </div>
-
-        <div className="flex min-h-[3.25rem] flex-wrap items-center gap-3 px-3 py-2 md:px-5">
+        <div className="flex min-h-[3.25rem] flex-wrap items-center gap-3 border-b border-border/70 px-3 py-2 md:px-5">
           <motion.div whileHover={reduced ? undefined : { opacity: 0.84 }} whileTap={reduced ? undefined : pressSubtle} transition={transitionReveal}>
             <Link href="/" className="flex items-baseline gap-2.5 transition-opacity hover:opacity-80">
               <AtlasMark reduced={reduced} />

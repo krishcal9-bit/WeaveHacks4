@@ -4,14 +4,12 @@ import { useMemo } from "react";
 import Image from "next/image";
 import { Network } from "lucide-react";
 import { AnimatePresence, motion, useReducedMotion } from "motion/react";
-import { PopIn } from "@/components/motion/presence";
 import { springSoft, springSnappy, transitionFade } from "@/components/motion/variants";
 import { cx } from "@/components/ui";
 import {
   findLatestTurnForMember,
   influenceByAgent,
   isAgentActive,
-  isParallelCouncilNode,
   resolveInfluenceValue,
 } from "@/lib/council";
 import {
@@ -86,9 +84,7 @@ export function CouncilWeb({
           <StatusBadge tone="info" pulse>
             {liveEdges} active
           </StatusBadge>
-        ) : (
-          <span className="text-[10px] font-medium tracking-wide text-subtle-foreground uppercase">Live graph</span>
-        )
+        ) : null
       }
       bodyClassName="p-0"
       className="max-sm:w-[calc(100vw-2rem)] max-sm:max-w-[calc(100vw-2rem)]"
@@ -138,15 +134,6 @@ export function CouncilWeb({
           )}
         </div>
 
-        <PopIn show={Boolean(councilInfluence?.summary)} className="border-t border-border/60">
-          <p className="px-4 py-2.5 text-center text-[11px] leading-relaxed text-muted-foreground">{councilInfluence?.summary}</p>
-        </PopIn>
-
-        {running && isParallelCouncilNode(nodeName) && (
-          <p className="border-t border-border/60 px-4 py-2.5 text-center text-[11px] font-medium tracking-wide text-muted-foreground">
-            All analysts in session
-          </p>
-        )}
       </div>
     </Panel>
   );

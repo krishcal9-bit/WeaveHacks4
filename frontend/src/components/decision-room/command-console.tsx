@@ -355,9 +355,7 @@ export function CommandConsole({
             className="room-scroll mt-1.5 max-h-[220px] min-h-[88px] overflow-y-auto rounded-md border border-border bg-background px-2.5 py-2"
           >
             {voiceTranscript.length === 0 ? (
-              <p className="text-[11px] leading-relaxed text-muted-foreground">
-                Spoken turns appear here and stay for the session.
-              </p>
+              <div className="h-[72px]" aria-hidden />
             ) : (
               <ol className="space-y-2">
                 <AnimatePresence initial={false}>
@@ -465,9 +463,6 @@ function VoiceStatusPanel({ realtime, phase, reduced }: { realtime: RealtimeView
             <div className="truncate text-[12px] font-semibold">{voiceLabel(phase)}</div>
             <Waveform active={!reduced && activeWave} />
           </div>
-          <p className="mt-0.5 break-words text-[11px] leading-relaxed text-muted-foreground">
-            {realtime.detail || (connected ? "Voice channel ready." : "Voice starts after preflight passes.")}
-          </p>
         </div>
       </div>
       {(realtime.model || realtime.voice) && (
