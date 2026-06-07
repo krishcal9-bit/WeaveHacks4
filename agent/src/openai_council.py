@@ -87,12 +87,12 @@ load_env()
 # --------------------------------------------------------------------------- #
 LLM_PROVIDER = os.getenv("LLM_PROVIDER", "openai")
 LLM_MODEL = os.getenv("LLM_MODEL", "gpt-5.5")
-LLM_REASONING_EFFORT = os.getenv("LLM_REASONING_EFFORT", "xhigh")
-# Hot-path stages default fast so a full live debate finishes in well under ~60s
+LLM_REASONING_EFFORT = os.getenv("LLM_REASONING_EFFORT", "low")
+# Hot-path stages default fast so a full live debate finishes quickly
 # (planner/debate are cheap classification/moderation passes — "minimal" is plenty);
 # analyst/synthesis stay "low" for differentiation + ruling quality. Base
-# LLM_REASONING_EFFORT stays xhigh (the strict-live health gate requires it); these
-# per-stage knobs are not gated and can be overridden in .env.
+# LLM_REASONING_EFFORT is "low" too (board memo / reliability audit / any base-effort
+# call); the health gate accepts any valid effort. All knobs can be overridden in .env.
 LLM_ANALYST_REASONING_EFFORT = os.getenv("LLM_ANALYST_REASONING_EFFORT", "low")
 LLM_DEBATE_REASONING_EFFORT = os.getenv("LLM_DEBATE_REASONING_EFFORT", "minimal")
 LLM_PLANNER_REASONING_EFFORT = os.getenv("LLM_PLANNER_REASONING_EFFORT", "minimal")

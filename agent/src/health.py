@@ -278,7 +278,7 @@ def _llm_status() -> dict[str, Any]:
         },
         {
             "label": "Reasoning effort",
-            "ready": reasoning_effort == "xhigh",
+            "ready": reasoning_effort in _REASONING_EFFORTS,
             "detail": reasoning_effort or "LLM_REASONING_EFFORT missing",
         },
         {
