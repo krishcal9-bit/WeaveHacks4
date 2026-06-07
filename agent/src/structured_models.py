@@ -251,6 +251,35 @@ class AgentImprovement(StrictStructuredModel):
     expected_gain: str = Field(description="what should measurably improve next round and why")
 
 
+class AgentReplacement(StrictStructuredModel):
+    """A brand-new sub-agent incarnation spawned after the weakest seat is retired.
+
+    Produced after the CFO rules and the Reliability Auditor scores the council
+    against the W&B Weave rubric. The retired incarnation's trace is the only
+    grounding for the replacement — mandate emphasis and standing directive must
+    address its documented weaknesses.
+    """
+
+    agent_id: str = Field(description="role slot being replaced: one of treasury, fpna, risk, procurement")
+    focus: str = Field(description="the single biggest weakness the retired agent failed on, <= 12 words")
+    replacement_rationale: str = Field(
+        description="one sentence on why the retired incarnation is being replaced (Weave evidence only)"
+    )
+    mandate_emphasis: str = Field(
+        description="how the new incarnation should sharpen its professional mandate (<= 2 sentences)"
+    )
+    directive: str = Field(
+        description=(
+            "standing instruction (<= 3 sentences) for the NEW incarnation's system prompt, derived "
+            "strictly from the retired agent's W&B Weave reliability trace; concrete and operational"
+        )
+    )
+    targeted_dimension: str = Field(
+        description="the lowest-scoring reliability dimension the replacement must lift (e.g. evidence_grounding)"
+    )
+    expected_gain: str = Field(description="what the new incarnation should measurably improve next round and why")
+
+
 # --------------------------------------------------------------------------- #
 # Prompt-version metadata — compatible with the W&B promotion gates
 # --------------------------------------------------------------------------- #

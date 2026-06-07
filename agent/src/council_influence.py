@@ -55,6 +55,49 @@ def historical_reliability(company_id: str, context: dict | None = None) -> dict
     return dict(DEFAULT_BASELINE)
 
 
+def weave_reliability_priors(
+    company_id: str,
+    context: dict | None = None,
+    improvement_state: dict | None = None,
+) -> dict[str, int]:
+    """Blend rolling Redis priors with the latest W&B Weave reliability per sub-agent.
+
+    The Weave score from the most recent completed round is weighted more heavily
+    so CFO influence fluctuates with trace-backed performance, not only slow EMA
+    history.
+    """
+    historical = historical_reliability(company_id, context)
+    agents = (improvement_state or {}).get("agents") or {}
+    blended: dict[str, int] = {}
+    for agent in ANALYSTS:
+        hist = int(historical.get(agent, DEFAULT_BASELINE.get(agent, 60)))
+        history = (agents.get(agent) or {}).get("reliability_history") or []
+        if history:
+            latest = int(history[-1].get("reliability", hist))
+            blended[agent] = max(0, min(100, round(0.58 * latest + 0.42 * hist)))
+        else:
+            blended[agent] = hist
+    return blended
+
+
+def reset_agent_reliability(company_id: str, agent_id: str, baseline: int) -> dict[str, int]:
+    """Give a freshly replaced sub-agent a clean reliability prior for the next debate."""
+    if agent_id not in ANALYSTS:
+        return historical_reliability(company_id)
+    prior = historical_reliability(company_id)
+    next_scores = dict(prior)
+    next_scores[agent_id] = max(0, min(100, int(baseline)))
+    payload = {
+        "company_id": company_id,
+        "scores": next_scores,
+        "updated_at": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()),
+        "runs_recorded": int((R.get_json(_history_key(company_id)) or {}).get("runs_recorded", 0)),
+        "last_replacement": agent_id,
+    }
+    R.set_json(_history_key(company_id), payload)
+    return next_scores
+
+
 def update_historical_reliability(
     company_id: str,
     scorecard: list[dict],

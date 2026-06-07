@@ -13,11 +13,10 @@ export const fade: Variants = {
 };
 
 export const fadeUp: Variants = {
-  hidden: { opacity: 0, y: 18, filter: "blur(6px)" },
+  hidden: { opacity: 0, y: 14 },
   show: {
     opacity: 1,
     y: 0,
-    filter: "blur(0px)",
     transition: { duration: 0.45, ease: EASE_OUT_EXPO },
   },
 };
@@ -91,17 +90,15 @@ export const influenceReveal: Variants = {
 export function tabSlideVariants(direction: number): Variants {
   const x = direction === 0 ? 0 : direction > 0 ? 28 : -28;
   return {
-    initial: { opacity: 0, x, filter: "blur(5px)" },
+    initial: { opacity: 0, x },
     animate: {
       opacity: 1,
       x: 0,
-      filter: "blur(0px)",
       transition: { duration: 0.38, ease: EASE_OUT_EXPO },
     },
     exit: {
       opacity: 0,
       x: -x * 0.6,
-      filter: "blur(4px)",
       transition: { duration: 0.28, ease: EASE_IN_OUT },
     },
   };
@@ -112,42 +109,35 @@ export const landingPage: Variants = {
   animate: { opacity: 1, transition: { duration: 0.35, ease: EASE_OUT_EXPO } },
   exit: {
     opacity: 0,
-    scale: 1.03,
-    y: -24,
-    filter: "blur(10px)",
-    transition: { duration: 0.45, ease: EASE_IN_OUT },
+    y: -16,
+    transition: { duration: 0.35, ease: EASE_IN_OUT },
   },
 };
 
 export const appFromLanding: Variants = {
-  initial: { opacity: 0, y: 32, scale: 0.97, filter: "blur(12px)" },
+  initial: { opacity: 0, y: 24 },
   animate: {
     opacity: 1,
     y: 0,
-    scale: 1,
-    filter: "blur(0px)",
-    transition: { duration: 0.55, ease: EASE_OUT_EXPO },
+    transition: { duration: 0.45, ease: EASE_OUT_EXPO },
   },
   exit: {
     opacity: 0,
-    y: -12,
-    filter: "blur(6px)",
-    transition: { duration: 0.3, ease: EASE_IN_OUT },
+    y: -8,
+    transition: { duration: 0.28, ease: EASE_IN_OUT },
   },
 };
 
 export const pageDefault: Variants = {
-  initial: { opacity: 0, y: 14, filter: "blur(4px)" },
+  initial: { opacity: 0, y: 12 },
   animate: {
     opacity: 1,
     y: 0,
-    filter: "blur(0px)",
     transition: { duration: 0.4, ease: EASE_OUT_EXPO },
   },
   exit: {
     opacity: 0,
-    y: -10,
-    filter: "blur(3px)",
+    y: -8,
     transition: { duration: 0.28, ease: EASE_IN_OUT },
   },
 };

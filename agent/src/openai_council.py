@@ -41,6 +41,7 @@ from langchain_openai import ChatOpenAI
 from src.env import load_env, redact_secrets
 from src.structured_models import (
     AgentImprovement,
+    AgentReplacement,
     BoardMemo,
     ChallengePanelReport,
     CouncilInfluenceReport,
@@ -1009,36 +1010,65 @@ async def improve_agent(
     round_no: int,
     config: RunnableConfig | None = None,
 ) -> StructuredResult:
-    """Rewrite the least-reliable sub-agent's standing directive from its Weave trace.
+    """Backward-compatible alias for :func:`spawn_replacement_agent`."""
+    return await spawn_replacement_agent(
+        company=company,
+        agent_id=agent_id,
+        persona_label=persona_label,
+        reliability_score=reliability_score,
+        retired_directive=prior_directive,
+        retired_generation=round_no - 1,
+        decision=decision,
+        round_no=round_no,
+        config=config,
+    )
 
-    Live OpenAI call grounded ONLY in the agent's W&B Weave reliability score
-    (its lowest dimensions, known weaknesses, and the auditor's prompt
-    adjustment). The result is grafted onto the agent's system prompt next round.
+
+async def spawn_replacement_agent(
+    *,
+    company: str,
+    agent_id: str,
+    persona_label: str,
+    reliability_score: dict,
+    retired_directive: str,
+    retired_generation: int,
+    decision: str,
+    round_no: int,
+    config: RunnableConfig | None = None,
+) -> StructuredResult:
+    """Spawn a brand-new sub-agent incarnation from the retired seat's Weave trace.
+
+    Live OpenAI call grounded ONLY in the retired agent's W&B Weave reliability
+    score (lowest dimensions, known weaknesses, prompt adjustment). The result
+    defines the replacement's mandate emphasis and standing directive for the next
+    round — the old incarnation is retired, not patched in place.
     """
     system = (
-        f"You are the self-improvement engine for {company}'s AI finance council. After the CFO rules, "
-        "the Reliability Auditor scores every agent against a W&B Weave rubric (evidence_grounding, "
+        f"You are the council evolution engine for {company}'s AI finance department. After the CFO "
+        "rules, the Reliability Auditor scores every agent against a W&B Weave rubric (evidence_grounding, "
         "forecast_calibration, policy_compliance, debate_value, outcome_accuracy, confidence_calibration, "
-        "trace_quality). Your job is to make the single weakest sub-agent measurably more reliable on the "
-        "NEXT decision by rewriting a short standing directive grafted onto its system prompt. Target its "
-        "lowest-scoring dimensions and its known weaknesses. Be concrete and operational; preserve the "
-        "still-useful parts of its current directive; never invent facts or external data."
+        "trace_quality). The single weakest sub-agent is RETIRED and replaced with a brand-new incarnation "
+        "in the same role slot. Your job is to define that replacement: sharpen its mandate emphasis and "
+        "write a standing directive grafted onto its system prompt next round. Learn ONLY from the "
+        "retired incarnation's Weave trace — target its lowest-scoring dimensions and documented weaknesses. "
+        "Be concrete and operational; never invent facts or external data."
     )
     human = (
-        f"WEAKEST SUB-AGENT: {agent_id} ({persona_label})\n"
-        f"ROUND: {round_no}\n\n"
+        f"ROLE SLOT TO REPLACE: {agent_id} ({persona_label})\n"
+        f"ROUND: {round_no}\n"
+        f"RETIRED GENERATION: {max(0, retired_generation)}\n\n"
         f"MOST RECENT DECISION:\n{decision}\n\n"
-        f"ITS W&B WEAVE RELIABILITY TRACE (this round's score — improve from here):\n"
+        f"RETIRED INCARNATION W&B WEAVE RELIABILITY TRACE (ground the replacement in this evidence only):\n"
         f"{json.dumps(reliability_score, default=str)}\n\n"
-        f"ITS CURRENT STANDING SELF-IMPROVEMENT DIRECTIVE (empty if this is its first improvement):\n"
-        f"{prior_directive or '(none yet)'}\n\n"
-        "Produce an improved standing directive that supersedes the prior one but keeps any still-relevant "
-        "guidance, and name the single reliability dimension it most targets."
+        f"RETIRED INCARNATION STANDING DIRECTIVE (do not copy blindly — learn from its failures):\n"
+        f"{retired_directive or '(first incarnation — no prior directive)'}\n\n"
+        "Produce a replacement_rationale, mandate_emphasis, and a new standing directive for the fresh "
+        "incarnation, and name the single reliability dimension it must lift first."
     )
     return await structured_call(
         node="self_improvement",
         role=agent_id,
-        schema=AgentImprovement,
+        schema=AgentReplacement,
         system=system,
         human=human,
         config=config,

@@ -2,14 +2,13 @@
 
 import { useCallback, useEffect, useRef, useState, type RefObject } from "react";
 import Link from "next/link";
-import { motion, AnimatePresence } from "motion/react";
+import { motion, AnimatePresence, animate, useMotionValue, useTransform } from "motion/react";
 import { ArrowRight, ChevronRight } from "lucide-react";
 import { APP_NAME } from "@/lib/branding";
 import { AtlasIcon, type AtlasIconName } from "@/components/atlas-icon";
 import { MotionLink } from "@/components/motion/motion-link";
 import { Stagger, StaggerItem } from "@/components/motion/stagger";
 import { springSnappy } from "@/components/motion/variants";
-import { ThemeToggle } from "@/components/theme-toggle";
 import { cx } from "@/components/ui";
 import { useMounted } from "@/lib/use-mounted";
 
@@ -130,31 +129,25 @@ function AnimatedStat({
   label: string;
   active: boolean;
 }) {
-  const [display, setDisplay] = useState(0);
   const mounted = useMounted();
+  const count = useMotionValue(0);
+  const display = useTransform(count, (v) =>
+    decimals > 0 ? v.toFixed(decimals) : String(Math.round(v)),
+  );
 
   useEffect(() => {
     if (!active) return;
-    const duration = 900;
-    const start = performance.now();
-    let frame = 0;
-    const tick = (now: number) => {
-      const t = Math.min(1, (now - start) / duration);
-      const eased = 1 - (1 - t) ** 3;
-      setDisplay(value * eased);
-      if (t < 1) frame = requestAnimationFrame(tick);
-    };
-    frame = requestAnimationFrame(tick);
-    return () => cancelAnimationFrame(frame);
-  }, [active, value]);
+    const controls = animate(count, value, { duration: 0.9, ease: [0, 0, 0.2, 1] });
+    return () => controls.stop();
+  }, [active, value, count]);
 
-  const formatted =
-    decimals > 0 ? display.toFixed(decimals) : String(Math.round(display));
+  const fallback =
+    decimals > 0 ? value.toFixed(decimals) : String(Math.round(value));
 
   const inner = (
     <>
       <dt className="font-mono text-[22px] font-semibold tabular-nums text-foreground sm:text-[26px]">
-        {formatted}
+        {mounted ? <motion.span>{display}</motion.span> : fallback}
         {suffix}
       </dt>
       <dd className="mt-1 text-[11px] font-medium uppercase tracking-[0.1em] text-subtle-foreground">
@@ -195,7 +188,7 @@ export function LandingPage() {
     <div className="landing-root min-h-dvh overflow-x-clip bg-background text-foreground">
       <div className="landing-grain pointer-events-none fixed inset-0 z-50" aria-hidden />
 
-      <header className="landing-nav sticky top-0 z-40 border-b border-border/80 bg-surface/90 backdrop-blur-xl">
+      <header className="landing-nav sticky top-0 z-40 border-b border-border/80 bg-surface/95 backdrop-blur-md">
         <div className="mx-auto flex h-16 max-w-6xl items-center gap-4 px-5 sm:px-8">
           <Link href="/" className="group flex items-center gap-2.5 transition-opacity hover:opacity-80">
             <AtlasLogo />
@@ -217,7 +210,6 @@ export function LandingPage() {
           </nav>
 
           <div className="ml-auto flex items-center gap-2 md:ml-0">
-            <ThemeToggle variant="landing" />
             <MotionLink
               href="/dashboard"
               variant="landing-cta"
@@ -344,9 +336,10 @@ export function LandingPage() {
                       {isActive ? (
                         <motion.p
                           key="detail"
-                          initial={{ opacity: 0, height: 0 }}
-                          animate={{ opacity: 1, height: "auto" }}
-                          exit={{ opacity: 0, height: 0 }}
+                          initial={{ opacity: 0 }}
+                          animate={{ opacity: 1 }}
+                          exit={{ opacity: 0 }}
+                          transition={{ duration: 0.2 }}
                           className="mt-3 font-serif text-[14px] leading-relaxed text-muted-foreground"
                         >
                           {step.detail}
@@ -364,7 +357,7 @@ export function LandingPage() {
                     </AnimatePresence>
                     <div
                       className={cx(
-                        "pointer-events-none absolute -bottom-10 -right-10 h-28 w-28 rounded-full blur-2xl transition-opacity",
+                        "pointer-events-none absolute -bottom-10 -right-10 h-28 w-28 rounded-full transition-opacity",
                         step.accent,
                         isActive ? "opacity-100" : "opacity-0 group-hover:opacity-60",
                       )}
@@ -428,9 +421,10 @@ export function LandingPage() {
                     <AnimatePresence>
                       {isSelected && (
                         <motion.p
-                          initial={{ opacity: 0, height: 0 }}
-                          animate={{ opacity: 1, height: "auto" }}
-                          exit={{ opacity: 0, height: 0 }}
+                          initial={{ opacity: 0 }}
+                          animate={{ opacity: 1 }}
+                          exit={{ opacity: 0 }}
+                          transition={{ duration: 0.2 }}
                           className="mt-3 font-serif text-[13px] leading-relaxed text-muted-foreground"
                         >
                           {agent.blurb}
@@ -527,7 +521,7 @@ function ProductPreview({
 
   return (
     <div className="landing-float relative mx-auto w-full max-w-[520px]">
-      <div className="absolute -left-6 top-8 z-0 h-[88%] w-[88%] rounded-2xl border border-positive/20 bg-positive-bg/40 blur-sm" />
+      <div className="absolute -left-6 top-8 z-0 h-[88%] w-[88%] rounded-2xl border border-positive/20 bg-positive-bg/40" />
       <div className="command-surface relative overflow-hidden rounded-xl shadow-[var(--shadow-soft)]">
         <div className="flex items-center justify-between border-b border-border px-4 py-3">
           <div className="flex items-center gap-2">
@@ -565,8 +559,8 @@ function ProductPreview({
               initial={{ opacity: 0, x: 12 }}
               animate={{ opacity: 1, x: 0 }}
               exit={{ opacity: 0, x: -8 }}
-              transition={{ duration: 0.28 }}
-              className="landing-msg rounded-lg border border-border bg-surface-quiet p-3"
+              transition={{ duration: 0.28, ease: [0.22, 1, 0.36, 1] }}
+              className="rounded-lg border border-border bg-surface-quiet p-3"
             >
               <span
                 className={cx(
@@ -588,13 +582,9 @@ function ProductPreview({
                 CFO recommendation
               </span>
               {mounted ? (
-                <motion.span
-                  animate={{ scale: [1, 1.04, 1] }}
-                  transition={{ duration: 2.2, repeat: Infinity }}
-                  className="rounded-full bg-positive-bg px-2 py-0.5 font-mono text-[10px] font-medium text-positive"
-                >
+                <span className="landing-pulse rounded-full bg-positive-bg px-2 py-0.5 font-mono text-[10px] font-medium text-positive">
                   +2.1 mo runway
-                </motion.span>
+                </span>
               ) : (
                 <span className="rounded-full bg-positive-bg px-2 py-0.5 font-mono text-[10px] text-positive">
                   +2.1 mo runway

@@ -58,6 +58,8 @@ export function AtlasIcon({
         alt={alt}
         width={256}
         height={256}
+        unoptimized
+        loading="eager"
         draggable={false}
         className={cx("atlas-icon-image h-full w-full object-contain", imageClassName)}
       />

@@ -411,6 +411,119 @@ def _trace_quality_issues(scores: list[RubricScore], recommendation: dict) -> li
     return issues
 
 
+ANALYST_AGENTS = ("treasury", "fpna", "risk", "procurement")
+_TRACE_WEIGHTS = {
+    "evidence_grounding": 0.25,
+    "forecast_calibration": 0.15,
+    "policy_compliance": 0.15,
+    "debate_value": 0.20,
+    "outcome_accuracy": 0.10,
+    "confidence_calibration": 0.05,
+    "trace_quality": 0.10,
+}
+
+
+def _position_for_agent(agent_id: str, positions: list) -> dict | None:
+    for pos in positions or []:
+        if str(pos.get("agent") or "").lower() == agent_id:
+            return pos
+    return None
+
+
+def _agent_rebuttals(agent_id: str, transcript: list) -> list[dict]:
+    return [
+        turn
+        for turn in (transcript or [])
+        if turn.get("type") == "rebuttal"
+        and str(turn.get("from_role") or "").lower() == agent_id
+    ]
+
+
+@weave.op(name="eval.agent_trace_performance")
+def agent_trace_performance(
+    agent_id: str,
+    positions: list,
+    transcript: list,
+    recommendation: dict | None = None,
+) -> dict[str, Any]:
+    """Deterministic per-agent trace rubric derived from the completed council run."""
+    pos = _position_for_agent(agent_id, positions) or {}
+    text = _text_of(pos)
+    cited = len(pos.get("cited_metrics") or [])
+    figures = _count_figures(text)
+    policy_hits = _policy_hits(text)
+    rebuttals = _agent_rebuttals(agent_id, transcript)
+    quantified_rebuttals = sum(1 for turn in rebuttals if _count_figures(turn.get("point", "")) >= 1)
+
+    evidence_grounding = min(100, 30 + cited * 12 + figures * 4 + policy_hits * 3)
+    forecast_calibration = min(100, 40 + figures * 5 + (10 if "forecast" in text.lower() or "runway" in text.lower() else 0))
+    policy_compliance = min(100, 35 + policy_hits * 8 + (8 if pos.get("evidence_used") else 0))
+    debate_value = min(100, 35 + len(rebuttals) * 10 + quantified_rebuttals * 8)
+    rec_conf = int((recommendation or {}).get("confidence") or 0)
+    outcome_accuracy = min(100, 55 + (8 if pos.get("stance") else 0) + (rec_conf // 10 if rec_conf else 0))
+    confidence_calibration = min(100, 50 + (6 if pos.get("stance") in {"support", "oppose", "conditional"} else 0))
+    trace_quality = min(100, 45 + (15 if pos.get("prompt_version") else 0) + (10 if cited else 0))
+
+    dimensions = {
+        "evidence_grounding": evidence_grounding,
+        "forecast_calibration": forecast_calibration,
+        "policy_compliance": policy_compliance,
+        "debate_value": debate_value,
+        "outcome_accuracy": outcome_accuracy,
+        "confidence_calibration": confidence_calibration,
+        "trace_quality": trace_quality,
+    }
+    reliability = _clamp(sum(dimensions[k] * _TRACE_WEIGHTS[k] for k in dimensions))
+    return {
+        "agent_id": agent_id,
+        **dimensions,
+        "reliability": reliability,
+        "metrics": {
+            "cited_metrics": cited,
+            "figures": figures,
+            "policy_hits": policy_hits,
+            "rebuttals": len(rebuttals),
+            "quantified_rebuttals": quantified_rebuttals,
+        },
+    }
+
+
+def blend_weave_trace_scores(
+    scorecard: list[dict],
+    *,
+    positions: list,
+    transcript: list,
+    recommendation: dict | None = None,
+    weave_weight: float = 0.35,
+) -> list[dict]:
+    """Blend auditor scores with nested Weave trace-performance child spans."""
+    blended: list[dict] = []
+    for item in scorecard or []:
+        agent_id = str(item.get("agent_id") or "")
+        if agent_id not in ANALYST_AGENTS and agent_id != "cfo":
+            blended.append(dict(item))
+            continue
+        trace = agent_trace_performance(agent_id, positions, transcript, recommendation)
+        merged = dict(item)
+        for key in (
+            "evidence_grounding",
+            "forecast_calibration",
+            "policy_compliance",
+            "debate_value",
+            "outcome_accuracy",
+            "confidence_calibration",
+            "trace_quality",
+            "reliability",
+        ):
+            auditor = float(item.get(key, 0) or 0)
+            traced = float(trace.get(key, 0) or 0)
+            merged[key] = _clamp((1 - weave_weight) * auditor + weave_weight * traced)
+        merged["weave_trace_reliability"] = trace.get("reliability")
+        merged["weave_trace_metrics"] = trace.get("metrics")
+        blended.append(merged)
+    return blended
+
+
 def _issue_fix(dimension: str) -> str:
     return {
         "context_retrieval": "Ensure intake loads financials, vendor search, and policy RAG before any analyst speaks.",
