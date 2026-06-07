@@ -159,3 +159,34 @@ def observability():
         return STORE.orch_analytics()
     except Exception as exc:
         raise _fail(exc)
+
+
+@orchestration_router.get("/orchestration/hierarchical")
+def list_hierarchical(limit: int = 25):
+    """Recent hierarchical (sub-debate) runs."""
+    try:
+        return STORE.list_hierarchical(limit)
+    except Exception as exc:
+        raise _fail(exc)
+
+
+@orchestration_router.post("/orchestration/hierarchical")
+async def run_hierarchical(body: dict = Body(...)):
+    """Decompose a complex decision into concurrent sub-committees and aggregate (live)."""
+    decision = (body or {}).get("decision", "")
+    if not decision:
+        raise HTTPException(status_code=400, detail="decision required")
+    context = (body or {}).get("context") or {}
+    company = (body or {}).get("company", "Northwind Robotics")
+    stage = (body or {}).get("stage", "Series B")
+    try:
+        if not context:
+            from src.orchestration.graph import _load_context
+
+            context = _load_context(decision)
+        from src.orchestration import subdebate as SUB
+
+        htrace = await SUB.run_hierarchical(decision, context, company=company, stage=stage)
+        return htrace.model_dump(mode="json")
+    except Exception as exc:
+        raise _fail(exc)

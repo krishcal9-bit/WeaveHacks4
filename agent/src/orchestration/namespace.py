@@ -32,6 +32,7 @@ TOPOLOGY_PREFIX = f"{ORCH}:topology:"  # atlas:orch:topology:<topo_id>  Topology
 THREAD_PREFIX = f"{ORCH}:thread:"      # atlas:orch:thread:<thread_id>  checkpoint index
 EVAL_PREFIX = f"{ORCH}:eval:"          # atlas:orch:eval:<eval_id>      eval result
 PROMOTION_PREFIX = f"{ORCH}:promotion:"  # atlas:orch:promotion:<topo_id> promotion record
+HRUN_PREFIX = f"{ORCH}:hrun:"          # atlas:orch:hrun:<run_id>       HierarchicalTrace (sub-debate parent)
 
 # --------------------------------------------------------------------------- #
 # Checkpoints — durable / branchable / time-travelable debate state
@@ -86,6 +87,10 @@ def promotion_key(topology_id: str) -> str:
     return f"{PROMOTION_PREFIX}{topology_id}"
 
 
+def hrun_key(run_id: str) -> str:
+    return f"{HRUN_PREFIX}{run_id}"
+
+
 def checkpoint_key(thread_id: str, checkpoint_id: str) -> str:
     return f"{CKPT_PREFIX}{thread_id}:{checkpoint_id}"
 
@@ -115,6 +120,7 @@ def key_map() -> dict[str, dict[str, str]]:
             "evals": f"{EVAL_PREFIX}<eval_id>",
             "promotions": f"{PROMOTION_PREFIX}<topology_id>",
             "checkpoints": f"{CKPT_PREFIX}<thread_id>:<checkpoint_id>",
+            "hierarchical": f"{HRUN_PREFIX}<run_id>",
         },
         "vector": {"memory": f"{MEMORY_PREFIX}<record_id> (indexed by {MEMORY_INDEX})"},
         "search": {"topologies": TOPOLOGY_INDEX, "runs": RUN_INDEX},

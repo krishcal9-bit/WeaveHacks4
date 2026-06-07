@@ -96,6 +96,13 @@ def run() -> list[tuple[str, bool]]:
     _check("gate blocks small gain", not EVAL.gate_decision(ts(0.7, 0.8), ts(0.71, 0.8))[0], r)
     _check("gate blocks grounding regression", not EVAL.gate_decision(ts(0.6, 0.9), ts(0.85, 0.5))[0], r)
 
+    # hierarchical models (offline round-trip)
+    _check("Decomposition strict schema",
+           M.Decomposition.model_json_schema().get("additionalProperties") is False, r)
+    ht = M.HierarchicalTrace(parent_decision="d", sub_questions=["a", "b"], sub_run_ids=["r1", "r2"])
+    _check("HierarchicalTrace round-trip", M.HierarchicalTrace(**ht.model_dump(mode="json")).run_id == ht.run_id, r)
+    _check("ns hrun key under atlas:orch:", ns.is_orch_key(ns.hrun_key("x")), r)
+
     # control: seat directives (pure parts, no Redis)
     seats = [{"id": "treasury"}, {"id": "fpna"}, {"id": "procurement"}]
     kept = [p["id"] for p in CONTROL.apply_seats(seats, {"retire_seats": ["procurement"], "inject_seats": []})]

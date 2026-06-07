@@ -350,6 +350,22 @@ def get_promotion(topology_id: str) -> dict | None:
     return R.get_json(ns.promotion_key(topology_id))
 
 
+def save_hierarchical(trace: M.HierarchicalTrace) -> str:
+    R.set_json(_guard(ns.hrun_key(trace.run_id)), trace.model_dump(mode="json"))
+    return trace.run_id
+
+
+def get_hierarchical(run_id: str) -> dict | None:
+    return R.get_json(ns.hrun_key(run_id))
+
+
+def list_hierarchical(limit: int = 25) -> list[dict]:
+    docs = [R.get_json(k) for k in R.keys(f"{ns.HRUN_PREFIX}*")]
+    docs = [d for d in docs if d]
+    docs.sort(key=lambda d: d.get("created_at", ""), reverse=True)
+    return docs[:limit]
+
+
 # --------------------------------------------------------------------------- #
 # Event stream + sub-agent message bus (consumer groups) + pub/sub fan-out
 # --------------------------------------------------------------------------- #

@@ -338,3 +338,28 @@ class OrchestrationEvalResult(OrchModel):
     gate_rationale: str = ""
     weave_url: str = ""
     created_at: str = Field(default_factory=now_iso)
+
+
+# --------------------------------------------------------------------------- #
+# Hierarchical orchestration — decompose a decision into sub-debates
+# --------------------------------------------------------------------------- #
+class Decomposition(StrictModel):
+    """OpenAI structured output: how to split a complex decision into sub-decisions."""
+
+    sub_questions: list[str] = Field(
+        description="2-4 focused, independently-analyzable sub-decisions whose answers together determine the parent decision"
+    )
+    rationale: str = Field(description="why this decomposition fully covers the parent decision")
+
+
+class HierarchicalTrace(OrchModel):
+    run_id: str = Field(default_factory=lambda: new_id("hrun"))
+    parent_decision: str = ""
+    decision_type: str = "hierarchical"
+    sub_questions: list[str] = []
+    sub_run_ids: list[str] = []
+    sub_rulings: list[dict] = []
+    parent_recommendation: dict = {}
+    cost_usd: float = 0.0
+    latency_ms: int = 0
+    created_at: str = Field(default_factory=now_iso)

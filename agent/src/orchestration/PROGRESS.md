@@ -49,6 +49,8 @@ the strict live-only contract and without clobbering the sibling editing
 - [x] M9 — seed (`seed.py`, live-verified) + `.cursor/rules/atlas-orchestration.mdc` + CLAUDE.md docs
 - [x] Infra+verify — Redis Stack up + seeded; flag-on graph E2E live OK; preflight green (flag off); committed (324a386)
 - [x] M10 — operator HITL control: inject/retire seats, force rounds, override threshold (live-verified)
+- [x] M11 — analytics endpoint (/api/orchestration/observability) + eval CLI (eval_run) + selftest (26/26)
+- [~] M12 — hierarchical/parallel sub-debates (bus-coordinated): decompose → concurrent committees → aggregate   (verifying)
 
 ## Log
 - **M0 done**: `__init__.py`, `namespace.py` (atlas:orch:* key map, pure/offline-safe), PROGRESS.md.
