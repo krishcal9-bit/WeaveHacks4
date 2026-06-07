@@ -11,6 +11,7 @@
         - navigation "Primary navigation" [ref=e16]:
           - link "Dashboard" [ref=e17] [cursor=pointer]:
             - /url: /
+            - img [ref=e18]
             - generic [ref=e21]: Dashboard
           - link "World model" [ref=e22] [cursor=pointer]:
             - /url: /world-model
