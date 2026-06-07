@@ -1429,6 +1429,25 @@ main a {
   }
 }
 
+/* Performance guard (always on): continuous/ambient infinite animations pinned
+   the main thread during live council runs and made the page unresponsive/crash.
+   Disable the heavy ones globally — they only provide ambient polish, not
+   information. The question banner and the progress bar (phase timeline,
+   .council-phase-*) intentionally keep their motion. */
+.council-edge-flow,
+.council-edge-runner,
+.council-activation-glow,
+.council-orb-pulse,
+.council-orb-influence,
+.council-wave-bar,
+.council-influence-shimmer::after,
+.council-live-glow,
+.transcript-streaming-shimmer::after,
+[class*="redis-signal-glyph--active"]::before,
+[class*="redis-signal-glyph--active"]::after {
+  animation: none !important;
+}
+
 /* Respect reduced-motion: the council room leans on pulse/spin to signal "live". */
 @media (prefers-reduced-motion: reduce) {
   .council-edge-flow,
