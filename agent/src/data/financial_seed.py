@@ -187,20 +187,52 @@ SECURITY_CONTROLS: list[dict] = [
 VENDOR_CLAUSES: dict[str, dict] = {
     "aws": {"auto_renew": True, "price_increase_cap_pct": 0.05, "termination_notice_days": 90,
             "liability_cap": 500_000, "data_processing_addendum": True, "sla_uptime_pct": 99.9,
-            "renewal_uplift_pct": 0.0},
+            "renewal_uplift_pct": 0.0, "billing_frequency": "monthly",
+            "billing_terms": "monthly in arrears against reserved-capacity commitment plus overage accruals",
+            "contract_aliases": ["AWS", "Amazon AWS", "Amazon Web Svcs", "Amazon Web Services"],
+            "tiered_pricing": [{"tier": "reserved compute", "annual_commit": 336_000, "discount_pct": 22}],
+            "termination_penalty": 84_000, "sla_credits": "Service credits require support-case claim.",
+            "security_clause": "Enterprise agreement includes DPA, encryption, and subprocessor notification.",
+            "owner_history": [{"owner": "Infrastructure", "to": "2026-02-28"}, {"owner": "Engineering / Platform", "from": "2026-03-01"}]},
     "datadog": {"auto_renew": True, "price_increase_cap_pct": 0.12, "termination_notice_days": 45,
                 "liability_cap": 180_000, "data_processing_addendum": True, "sla_uptime_pct": 99.8,
-                "renewal_uplift_pct": 0.40},
+                "renewal_uplift_pct": 0.40, "billing_frequency": "annual",
+                "billing_terms": "annual committed tier with monthly overage true-up invoices",
+                "contract_aliases": ["Datadog", "DataDog Inc", "Data Dog", "DDOG Observability"],
+                "tiered_pricing": [{"tier": "committed hosts", "annual_price": 180_000}, {"tier": "burst hosts", "price": 74, "unit": "host_month"}],
+                "termination_penalty": 30_000, "sla_credits": "Credits require 30-day claim and are capped at 10% of monthly fees.",
+                "security_clause": "SOC 2 Type II current; production telemetry allowed, customer PII prohibited.",
+                "owner_history": [{"owner": "Engineering", "to": "2026-05-10"}, {"owner": "Platform Ops", "from": "2026-05-11"}]},
     "snowflake": {"auto_renew": False, "price_increase_cap_pct": 0.08, "termination_notice_days": 60,
                   "liability_cap": 250_000, "data_processing_addendum": True, "sla_uptime_pct": 99.9,
-                  "renewal_uplift_pct": 0.0},
+                  "renewal_uplift_pct": 0.0, "billing_frequency": "monthly",
+                  "billing_terms": "monthly usage invoice against committed warehouse budget",
+                  "contract_aliases": ["Snowflake", "Snowflake Computing", "SNOW data warehouse"],
+                  "tiered_pricing": [{"tier": "committed credits", "annual_commit": 108_000, "credit_discount_pct": 18}],
+                  "termination_penalty": 0, "sla_credits": "Standard service-credit remedy; no unused-credit refund.",
+                  "security_clause": "DPA signed; customer revenue and telemetry data allowed.",
+                  "owner_history": [{"owner": "Data", "to": "2025-12-31"}, {"owner": "FP&A", "from": "2026-01-01"}]},
     "salesforce": {"auto_renew": True, "price_increase_cap_pct": 0.07, "termination_notice_days": 30,
                    "liability_cap": 100_000, "data_processing_addendum": True, "sla_uptime_pct": 99.9,
-                   "renewal_uplift_pct": 0.07},
-    "rippling": {"auto_renew": True, "termination_notice_days": 30, "data_processing_addendum": True},
-    "gong": {"auto_renew": True, "termination_notice_days": 30, "data_processing_addendum": True},
-    "github": {"auto_renew": True, "termination_notice_days": 30, "data_processing_addendum": True},
-    "figma": {"auto_renew": True, "termination_notice_days": 30, "data_processing_addendum": False},
+                   "renewal_uplift_pct": 0.07, "billing_frequency": "annual",
+                   "billing_terms": "annual prepaid seat bundle; AP export may show monthly allocation rows",
+                   "contract_aliases": ["Salesforce", "Sales Force", "SFCI Sales Cloud"],
+                   "tiered_pricing": [{"tier": "sales cloud seats", "seats": 32, "annual_price": 74_400}],
+                   "termination_penalty": 18_600, "sla_credits": "Standard service credits; credits do not offset unused seats.",
+                   "security_clause": "DPA signed; customer contact data permitted, opportunity notes excluded from sandbox refresh.",
+                   "owner_history": [{"owner": "Revenue", "to": "2026-05-01"}, {"owner": "RevOps", "from": "2026-05-02"}]},
+    "rippling": {"auto_renew": True, "termination_notice_days": 30, "billing_frequency": "monthly",
+                 "contract_aliases": ["Rippling", "Rippling HRIS"], "termination_penalty": 0,
+                 "data_processing_addendum": True, "security_clause": "DPA signed for employee PII."},
+    "gong": {"auto_renew": True, "termination_notice_days": 30, "billing_frequency": "annual",
+             "contract_aliases": ["Gong", "Gong.io"], "termination_penalty": 7_200,
+             "data_processing_addendum": True, "security_clause": "Call recordings require retention-policy review."},
+    "github": {"auto_renew": True, "termination_notice_days": 30, "billing_frequency": "monthly",
+               "contract_aliases": ["GitHub", "GitHub Enterprise", "GH Enterprise"], "termination_penalty": 0,
+               "data_processing_addendum": True, "security_clause": "SOC reports available; code repository data covered by DPA."},
+    "figma": {"auto_renew": True, "termination_notice_days": 30, "billing_frequency": "annual",
+              "contract_aliases": ["Figma", "FigJam"], "termination_penalty": 3_600,
+              "data_processing_addendum": False, "security_clause": "DPA not attached; design files may include customer screenshots."},
 }
 
 # --------------------------------------------------------------------------- #
@@ -249,6 +281,8 @@ _POLICY_META: dict[str, tuple[str, str]] = {
     "pol-cash": ("liquidity", "medium"),
     "pol-ai-promotion": ("governance", "medium"),
     "pol-security-blockers": ("security", "high"),
+    "pol-data-security": ("data_governance", "high"),
+    "pol-forecast-calibration": ("forecast_governance", "medium"),
 }
 
 
@@ -288,10 +322,26 @@ def build_knowledge_docs(policies: list[dict], company: dict) -> list[dict]:
             bits.append(f"renewal uplift {clause['renewal_uplift_pct']:.0%}")
         if clause.get("price_increase_cap_pct"):
             bits.append(f"price-increase cap {clause['price_increase_cap_pct']:.0%}")
+        if clause.get("billing_frequency"):
+            bits.append(f"{clause['billing_frequency']} billing")
+        if clause.get("billing_terms"):
+            bits.append(f"billing terms: {clause['billing_terms']}")
+        if clause.get("contract_aliases"):
+            bits.append("aliases " + ", ".join(clause["contract_aliases"]))
         if clause.get("liability_cap"):
             bits.append(f"liability cap ${clause['liability_cap']:,.0f}")
+        if clause.get("termination_penalty"):
+            bits.append(f"termination penalty ${clause['termination_penalty']:,.0f}")
         if clause.get("sla_uptime_pct"):
             bits.append(f"SLA {clause['sla_uptime_pct']}% uptime")
+        if clause.get("sla_credits"):
+            bits.append(f"SLA credits: {clause['sla_credits']}")
+        if clause.get("security_clause"):
+            bits.append(f"security clause: {clause['security_clause']}")
+        if clause.get("tiered_pricing"):
+            bits.append(f"{len(clause['tiered_pricing'])} pricing tier(s)")
+        if clause.get("owner_history"):
+            bits.append(f"{len(clause['owner_history'])} owner-history entry(s)")
         docs.append({
             "id": f"clause-{vendor_id}",
             "kind": "vendor_clause",
@@ -325,8 +375,9 @@ def build_knowledge_docs(policies: list[dict], company: dict) -> list[dict]:
 # --------------------------------------------------------------------------- #
 def seed_scenarios() -> list[str]:
     from src import scenario_engine as E
+    from src.data import demo_scenarios as DS
 
-    specs = [
+    legacy_specs = [
         ("demo-bridge-round", "Bridge financing round",
          [{"type": "financing", "financing_type": "equity", "amount": 5_000_000, "label": "$5M equity bridge"}],
          "Raise a $5M equity bridge to extend runway through the SOC 2 unlock.", ["financing", "runway"]),
@@ -344,6 +395,7 @@ def seed_scenarios() -> list[str]:
          [{"type": "churn_shock", "segment": "Enterprise 3PL", "pct": 0.20, "label": "Lose 20% of enterprise MRR"}],
          "Stress test losing 20% of enterprise MRR if implementation backlog isn't cleared.", ["churn", "downside"]),
     ]
+    specs = [*DS.scenario_branch_specs(), *legacy_specs]
     ids: list[str] = []
     for scenario_id, name, changes, description, tags in specs:
         try:
@@ -378,6 +430,23 @@ def seed_financial_os(company: dict, vendors: list[dict], policies: list[dict], 
             continue
         doc["clauses"] = clause
         doc["auto_renew"] = "yes" if clause.get("auto_renew") else "no"
+        for key in (
+            "billing_frequency",
+            "billing_terms",
+            "contract_aliases",
+            "tiered_pricing",
+            "termination_penalty",
+            "sla_uptime_pct",
+            "sla_credits",
+            "security_clause",
+            "data_processing_addendum",
+            "owner_history",
+            "termination_notice_days",
+        ):
+            if key in clause:
+                doc[key] = clause[key]
+        if clause.get("termination_notice_days") and not doc.get("notice_window_days"):
+            doc["notice_window_days"] = clause["termination_notice_days"]
         R.set_json(M.vendor_key(vendor_id), doc)
 
     # 3) Store the JSON collections (idempotent upserts → auto-indexed).

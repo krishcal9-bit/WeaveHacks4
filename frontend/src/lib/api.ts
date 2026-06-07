@@ -5,6 +5,7 @@ import type {
   ConnectorImportResponse,
   ConnectorInventory,
   DemoResetResponse,
+  DemoScenarioResponse,
   DecisionEvent,
   Discrepancy,
   ObservabilitySnapshot,
@@ -16,6 +17,7 @@ import type {
   SourceProvenance,
   SponsorHealth,
   Vendor,
+  WorkbookImportResponse,
   BoardNarrative,
   DecisionPortfolio,
   PlanCard,
@@ -32,14 +34,29 @@ import type {
 } from "./types";
 
 import { agentBase } from "./agent-base";
+import { formatExecutiveError, parseExecutiveError, type ExecutiveErrorPayload } from "./errors";
 
 const BASE = agentBase();
 
-async function responseError(path: string, res: Response): Promise<Error> {
-  let detail = "";
+export class ApiRequestError extends Error {
+  status: number;
+  path: string;
+  executive?: ExecutiveErrorPayload;
+
+  constructor(path: string, status: number, message: string, executive?: ExecutiveErrorPayload) {
+    super(message);
+    this.name = "ApiRequestError";
+    this.path = path;
+    this.status = status;
+    this.executive = executive;
+  }
+}
+
+async function responseError(path: string, res: Response): Promise<ApiRequestError> {
+  let detail: unknown = "";
   try {
     const body = (await res.json()) as { detail?: unknown; message?: unknown };
-    detail = String(body.detail ?? body.message ?? "");
+    detail = body.detail ?? body.message ?? "";
   } catch {
     try {
       detail = await res.text();
@@ -47,8 +64,11 @@ async function responseError(path: string, res: Response): Promise<Error> {
       detail = "";
     }
   }
-  const suffix = detail ? `: ${detail}` : "";
-  return new Error(`${path} failed (${res.status})${suffix}`);
+  const executive = parseExecutiveError(detail);
+  const message = executive
+    ? formatExecutiveError(executive)
+    : formatExecutiveError(detail, `${path} failed (${res.status})`);
+  return new ApiRequestError(path, res.status, message, executive ?? undefined);
 }
 
 function networkError(path: string, err: unknown): Error {
@@ -137,6 +157,11 @@ export const api = {
     formData.append("file", file);
     return postForm<ConnectorImportResponse>(`/api/connectors/import/${encodeURIComponent(id)}`, formData);
   },
+  uploadWorkbookFile: (file: File) => {
+    const formData = new FormData();
+    formData.append("file", file);
+    return postForm<WorkbookImportResponse>("/api/connectors/import-workbook", formData);
+  },
   sources: () => getJSON<{ count: number; sources: SourceProvenance[] }>("/api/sources"),
   sourceDetail: (id: string, sample = 10) =>
     getJSON<SourceDetail>(`/api/sources/${encodeURIComponent(id)}?sample=${sample}`),
@@ -154,6 +179,7 @@ export const api = {
   discrepancy: (id: string) =>
     getJSON<Discrepancy>(`/api/reconciliation/discrepancies/${encodeURIComponent(id)}`),
   resetDemo: () => postJSON<DemoResetResponse>("/api/demo/reset"),
+  demoScenarios: () => getJSON<DemoScenarioResponse>("/api/demo/scenarios"),
   // Strategic planning digital twin: plans, playbooks, stress tests, sensitivity,
   // portfolios, and (model-generated) board narratives. The compute calls are
   // deterministic; planNarrative is the one OpenAI-backed call.
@@ -210,4 +236,25 @@ export const api = {
     if (requestId) qs.set("request_id", requestId);
     return getJSON<AuditEvent[]>(`/api/audit?${qs.toString()}`);
   },
+  documents: (params?: { q?: string; offset?: number; limit?: number; source_category?: string }) => {
+    const qs = new URLSearchParams();
+    if (params?.q) qs.set("q", params.q);
+    if (params?.offset != null) qs.set("offset", String(params.offset));
+    if (params?.limit != null) qs.set("limit", String(params.limit));
+    if (params?.source_category) qs.set("source_category", params.source_category);
+    const suffix = qs.toString() ? `?${qs.toString()}` : "";
+    return getJSON<{ count: number; total: number; offset: number; limit: number; documents: unknown[] }>(
+      `/api/documents${suffix}`,
+    );
+  },
+  uploadDocument: (file: File, connectorId?: string) => {
+    const formData = new FormData();
+    formData.append("file", file);
+    const qs = connectorId ? `?connector_id=${encodeURIComponent(connectorId)}` : "";
+    return postForm<{ parse_job: { job_id: string; status: string } }>(`/api/documents/upload${qs}`, formData);
+  },
+  parseJob: (jobId: string) =>
+    getJSON<{ job_id: string; status: string; error?: string; error_code?: string; doc_id?: string }>(
+      `/api/documents/parse-jobs/${encodeURIComponent(jobId)}`,
+    ),
 };

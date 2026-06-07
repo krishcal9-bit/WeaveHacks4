@@ -6,9 +6,9 @@
       "title": "Logical access controls",
       "status": "satisfied",
       "owner": "Security",
-      "evidence_date": "2026-05-01",
+      "evidence_date": "2026-01-15",
       "blocks_revenue": false,
-      "summary": "Access reviews completed for Q2."
+      "summary": "Access review packet is complete, but the evidence is stale for Q2."
     },
     {
       "control_id": "CC7.2",
@@ -18,7 +18,7 @@
       "owner": "Security",
       "evidence_date": null,
       "blocks_revenue": true,
-      "blocked_arr": 310000,
+      "blocked_arr": "$310,000",
       "summary": "SOC 2 evidence gap blocking two enterprise procurements."
     },
     {
@@ -27,9 +27,20 @@
       "title": "Change management",
       "status": "in_progress",
       "owner": "Engineering",
-      "evidence_date": "2026-05-20",
+      "evidence_date": "05/20/2026",
       "blocks_revenue": false,
       "summary": "Change tickets being backfilled with approvals."
+    },
+    {
+      "control_id": "AIC-4",
+      "framework": "AI governance",
+      "title": "Prompt-promotion replay evidence",
+      "status": "not_started",
+      "owner": "Data",
+      "evidence_date": "2026/02/28",
+      "blocks_revenue": true,
+      "blocked_arr": 90000,
+      "summary": "Replay evidence stale before a regulated customer procurement."
     }
   ]
 }

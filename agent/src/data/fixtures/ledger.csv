@@ -1,7 +1,18 @@
-txn_id,date,account,description,amount,currency,category,vendor_id,vendor_name
-GL-5001,2026-05-01,6000 Payroll,May payroll run,-612000,USD,payroll,,
-GL-5002,2026-05-03,6500 SaaS,Datadog May usage,-21500,USD,software,datadog,Datadog
-GL-5003,2026-05-03,6500 Infrastructure,AWS May usage,-28500,USD,infrastructure,aws,Amazon Web Services
-GL-5004,2026-05-15,6500 SaaS,Pinecone vector DB,-4800,USD,software,pinecone,Pinecone Systems
-GL-5005,2026-05-31,4000 Revenue,May recurring revenue,312000,USD,revenue,,
-GL-5006,2026-05-31,6500 SaaS,Snowflake May,-9000,USD,data,snowflake,Snowflake
+txn_id,date,posted_date,account,source_system,external_account_id,description,bank_description,memo,amount,debit,credit,currency,category,source_category,vendor_id,vendor_name,payment_method,card_last4,transaction_type,split_group_id,split_parent_id,department
+BANK-7001,2026-05-01,2026-05-02,Operating Cash,CloudLedger Bank Feed,CHK-8172,"ACH payroll batch","ACH DEBIT RIPPLING PAYROLL 240501 CO: NORTHWIND ROBOTICS",May payroll summary,,612000,,USD,,,,Rippling Payroll,ach,,payroll,,,People Ops
+CARD-7711,05/03/2026,05/03/2026,Corporate Card,CloudLedger Card Feed,CC-4242,"Datadog card charge","CARD 4242 DATADOG INC 866-329-4466 NY",May observability usage,,21500,,USD,,,,Data Dog Inc,card,4242,card_charge,,,Eng
+CARD-7712,2026/05/03,2026/05/04,Corporate Card,CloudLedger Card Feed,CC-4242,"AWS card charge","CARD 4242 AMAZON WEB SVCS AWS.AMAZON.CO WA",May cloud usage,,28500,,USD,,,,Amazon Web Svcs,card,4242,card_charge,,,Engineering / Platform
+CARD-7713,15-May-2026,16-May-2026,Corporate Card,CloudLedger Card Feed,CC-4242,"Vector database card charge","SQ *PINECONE SYSTEMS HTTPSPINECONE IO CA",Pinecone vector DB,,4800,,USD,,,,Pinecone Systems,card,4242,card_charge,,,Engineering
+BANK-7005,2026-05-31,2026-05-31,Operating Cash,CloudLedger Bank Feed,CHK-8172,"Customer receipts","REMOTE ONLINE DEPOSIT CUSTOMER PAYMENTS 20260531",May recurring revenue,,,312000,USD,revenue,cash receipt,,,ach,,cash_in,,,Finance
+CARD-7714,2026.05.31,2026-06-01,Corporate Card,CloudLedger Card Feed,CC-4242,"Snowflake card charge","CARD 4242 SNOWFLAKE COMPUTING 844-SNOWFLAKE MT",Snowflake May,,9000,,USD,,,,Snowflake Computing,card,4242,card_charge,,,FP&A
+BANK-7007,Jun 02 2026,2026-06-02,Operating Cash,CloudLedger Bank Feed,CHK-8172,"Datadog credit memo","ACH CREDIT DATADOG INC REFUND CM-2201",Credit memo CM-2201,,,1250,USD,,,,Datadog,ach,,refund,,,Eng
+BANK-7008,2026-06-03,2026-06-03,Accrued Expenses,CloudLedger GL Export,GL-ACCRUAL,"AWS overage accrual","JOURNAL ACCRUAL AWS OVERAGE NOT YET INVOICED",Accrual for AWS overage not yet invoiced,-7400,,,USD,accrual,accrual,aws,AWS,journal,,accrual,,,Engineering
+CARD-7715,2026-06-04,2026-06-04,Corporate Card,CloudLedger Card Feed,CC-4242,"Prototype repair parts","CARD 4242 BETA ROBOTICS PARTS AUSTIN TX",Prototype repair parts,,12600,,USD,,,,Beta Robotics Parts,card,4242,card_charge,,,R&D Ops
+BANK-7010,2026-06-04,2026-06-04,Operating Cash,CloudLedger Bank Feed,CHK-8172,"Wire fee","WIRE OUT FEE JPMORGAN CHASE 008133",Vendor wire fee,,35,,USD,,,,JPMorgan Chase,wire,,fee,,,Finance
+BANK-7011,2026-06-05,2026-06-05,Operating Cash,CloudLedger Bank Feed,CHK-8172,"Intercompany transfer out","INTERCOMPANY TRANSFER TO NORTHWIND CANADA 8172",Intercompany cash sweep,,50000,,USD,,,,Northwind Canada,wire,,transfer,IC-8172,,Finance
+BANK-7012,2026-06-05,2026-06-05,Operating Cash,CloudLedger Bank Feed,CHK-8172,"Intercompany transfer in","INTERCOMPANY TRANSFER FROM NORTHWIND CANADA 8172",Intercompany cash sweep reversal,,,50000,USD,,,,Northwind Canada,wire,,transfer,IC-8172,,Finance
+CARD-7716,2026-05-31,2026-06-01,Corporate Card,CloudLedger Card Feed,CC-4242,"Gong renewal split","CARD 4242 GONG.IO 415-555-0199 CA",Sales call software split 1 of 2,,1200,,USD,,,,Gong.io,card,4242,card_charge,GONG-MAY,PO-1060,Sales
+CARD-7717,2026-05-31,2026-06-01,Corporate Card,CloudLedger Card Feed,CC-4242,"Gong renewal split","CARD 4242 GONG.IO 415-555-0199 CA",Sales call software split 2 of 2,,1200,,USD,,,,Gong.io,card,4242,card_charge,GONG-MAY,PO-1060,Customer Success
+BANK-7013,2026-06-06,2026-06-06,Operating Cash,CloudLedger Bank Feed,CHK-8172,"Bank analysis fee","MONTHLY ACCOUNT ANALYSIS FEE",Monthly bank fee,,85,,USD,,,,,ach,,fee,,,Finance
+CARD-7718,2026-06-06,2026-06-07,Corporate Card,CloudLedger Card Feed,CC-4242,"Uncategorized SaaS charge","CARD 4242 UNKNOWN_VENDOR*SAAS TOOL 800-555-0199",Uncategorized SaaS tool,,2200,,USD,,,,Unknown Vendor SaaS Tool,card,4242,card_charge,,,Engineering
+CARD-7719,2026-06-07,2026-06-07,Corporate Card,CloudLedger Card Feed,CC-4242,"Figma partial refund","REVERSAL CARD 4242 FIGMA INC REFUND",Figma refund,,,600,USD,,,,Figma Inc,card,4242,refund,,,Design

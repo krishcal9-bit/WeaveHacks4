@@ -88,12 +88,7 @@ export interface CompanyFinancials {
     outcome: string;
     calibration_score?: number;
   }[];
-  prompt_versions?: {
-    agent: string;
-    current: string;
-    candidate: string;
-    promotion_gate: string;
-  }[];
+  prompt_versions?: PromptVersion[];
   // Forward-compatible: booked revenue/ARR history if a parallel worker adds it.
   // The dashboard prefers these for the revenue trend and otherwise falls back to
   // the weighted-pipeline-ARR build from cash_forecast.
@@ -152,12 +147,16 @@ export interface TranscriptTurn {
   monogram?: string;
   type: TurnType;
   stance?: Stance | string;
+  confidence?: number;
   headline?: string;
   argument?: string;
   key_points?: string[];
   // rebuttal-only
   from_role?: string;
   to_role?: string;
+  challenge_type?: string;
+  challenge_label?: string;
+  challenge_lens?: string;
   point?: string;
   // optional, defensively consumed if a worker attaches grounding to a turn
   evidence?: EvidenceItem[];
@@ -165,7 +164,28 @@ export interface TranscriptTurn {
   // OpenAI-native council extras (analyst/challenge turns; feature-detected)
   cited_metrics?: string[];
   evidence_used?: string[];
+  role_specific_lens?: string;
+  forecast_assumptions?: string[];
+  scenario_sensitivities?: string[];
+  plan_vs_actual_deltas?: string[];
+  control_findings?: string[];
+  missing_evidence_requests?: string[];
+  approval_or_policy_blockers?: string[];
+  negotiation_levers?: string[];
+  // CFO chair extras (decision turns; feature-detected for older snapshots)
+  ruling?: string;
+  rationale?: string;
+  tradeoffs?: string[];
+  analyst_influence?: CfoAnalystInfluence[];
+  dissent?: string;
+  conditions?: string[];
+  policy_citations?: string[];
+  assumptions_converted_to_conditions?: string[];
+  runway_impact_basis?: string;
+  runway_impact_summary?: string;
+  impact?: RunwayImpact;
   prompt_version?: string;
+  challenge_findings?: ChallengeFinding[];
   error?: string;
 }
 
@@ -219,21 +239,40 @@ export interface CouncilCommand {
 
 export interface RunwayImpact {
   current_runway_months?: number;
+  current_cash?: number;
+  current_net_burn?: number;
   scenario_runway_months?: number | null;
   delta_months?: number | null;
+  scenario?: ScenarioParams;
   note?: string;
   [k: string]: unknown;
 }
 
+export interface CfoAnalystInfluence {
+  role: string;
+  influence_weight: number;
+  effect_on_ruling?: string;
+}
+
 export interface Recommendation {
   decision?: string;
+  ruling?: string;
   confidence?: number;
   rationale?: string;
+  tradeoffs?: string[];
+  analyst_influence?: CfoAnalystInfluence[];
+  dissent?: string;
   key_risks?: string[];
   conditions?: string[];
+  policy_citations?: string[];
+  assumptions_converted_to_conditions?: string[];
+  runway_impact_basis?: string;
+  runway_impact_summary?: string;
   impact?: RunwayImpact;
+  decision_type?: string;
   council_influence?: CouncilInfluenceReport;
   confidence_factors?: Record<string, number | string>;
+  source?: string;
 }
 
 export interface DebateState {
@@ -340,6 +379,8 @@ export type CommandType =
   | "clarify"
   | "route_question"
   | "challenge_claim"
+  | "defend_position"
+  | "rerun_role"
   | "scenario_fork"
   | "compare_options"
   | "pin_evidence"
@@ -392,6 +433,10 @@ export interface ActiveCommand {
   message?: string;
   payload?: Record<string, unknown>;
   result?: Record<string, unknown>;
+  role_lens?: string;
+  role_instruction?: string;
+  evidence_priorities?: string;
+  avoid?: string;
   at?: string;
   stream_id?: string | null;
 }
@@ -424,12 +469,16 @@ export interface RequestedScenario {
 export interface AgentFocus {
   agent?: string;
   label?: string;
-  mode?: "clarify" | "route" | "challenge" | string;
+  mode?: "clarify" | "route" | "challenge" | "defend" | "rerun" | string;
   question?: string;
   headline?: string;
   response?: string;
   key_points?: string[];
   revised_stance?: string;
+  role_lens?: string;
+  role_instruction?: string;
+  evidence_priorities?: string;
+  avoid?: string;
   at?: string;
 }
 
@@ -579,6 +628,8 @@ export interface AgentStatus {
   historical_reliability?: number;
   known_weaknesses?: string[];
   prompt_adjustment?: string;
+  prompt_improvement_directive?: string;
+  replay_cases?: string[];
   promotion_gate?: string;
   [k: string]: unknown;
 }
@@ -599,6 +650,8 @@ export interface ReliabilityScore extends ReliabilityDimensions {
   rationale: string;
   known_weaknesses?: string[];
   prompt_adjustment?: string;
+  prompt_improvement_directive?: string;
+  replay_cases?: string[];
   promotion_gate?: string;
 }
 
@@ -631,9 +684,13 @@ export interface CouncilInfluenceReport {
 }
 
 export interface LearningReport {
+  audit_scope?: string;
+  normal_decision_prohibited?: boolean;
   summary?: string;
   eval_dataset?: string;
   replay_plan?: string[];
+  prompt_improvement_directives?: string[];
+  prompt_versions?: PromptVersion[];
   promotion_gate?: string;
   score_formula?: Record<string, number>;
   weave_project?: string | null;
@@ -666,6 +723,8 @@ export interface AgentImprovementEntry {
   directive?: string;
   targeted_dimension?: string;
   expected_gain?: string;
+  replay_cases?: string[];
+  prompt_improvement_directive?: string;
   prior_reliability?: number;
   source?: string;
   at?: string;
@@ -682,6 +741,8 @@ export interface AgentImprovementSeat {
   mandate_emphasis?: string;
   focus?: string;
   targeted_dimension?: string;
+  replay_cases?: string[];
+  prompt_improvement_directive?: string;
   applied_round?: number;
   reliability_history?: ReliabilityHistoryPoint[];
   improvement_history?: AgentImprovementEntry[];
@@ -700,6 +761,8 @@ export interface ImprovementRoundEntry {
   replacement_rationale?: string;
   mandate_emphasis?: string;
   targeted_dimension?: string;
+  replay_cases?: string[];
+  prompt_improvement_directive?: string;
   prior_reliability?: number;
   council_average?: number;
   scores?: Record<string, number>;
@@ -923,6 +986,9 @@ export interface FollowUp {
 
 export interface ChallengeFinding {
   role: string;
+  challenge_type?: string;
+  challenge_label?: string;
+  challenge_lens?: string;
   cited_enough_numbers?: boolean;
   grounding_score?: number;
   strongest_number?: string;
@@ -1017,10 +1083,17 @@ export interface RealtimeStatus {
 
 export interface PromptVersion {
   role: string;
+  agent?: string;
+  current?: string;
   version: string;
   prompt_hash: string;
+  active_prompt_hash?: string;
   candidate?: string;
+  candidate_prompt_hash?: string;
   promotion_gate?: string;
+  reliability_dimensions?: string[];
+  gate_metric?: string;
+  replay_set?: string;
 }
 
 // --- Finance-operations connectors: ingestion, provenance, reconciliation ---
@@ -1036,13 +1109,37 @@ export type ImportStatus =
 
 export type DiscrepancySeverity = "info" | "low" | "medium" | "high" | "critical";
 
+export interface SourceConfidence {
+  connector_id: string;
+  source_type: string;
+  score: number;
+  status: ImportStatus | string;
+  freshness_days?: number | null;
+  accepted_count: number;
+  rejected_count: number;
+  duplicate_count: number;
+  reconciliation_status: string;
+  required_facts_missing: string[];
+  reasons: string[];
+}
+
 export interface ImportConfidence {
   score: number;
   coverage: number;
   validation_pass_rate: number;
   freshness_days?: number | null;
+  average_source_age_days?: number | null;
+  oldest_source_age_days?: number | null;
   sources_imported: number;
   sources_total: number;
+  validation_failure_count?: number;
+  duplicate_count?: number;
+  stale_source_count?: number;
+  reconciliation_discrepancy_count?: number;
+  required_missing_count?: number;
+  required_facts_missing?: string[];
+  confidence_reasons?: string[];
+  source_confidence?: SourceConfidence[];
   detail: string;
   components: Record<string, number>;
 }
@@ -1059,12 +1156,31 @@ export interface ConnectorStatus {
   status: ImportStatus | string;
   origin?: string | null;
   record_count: number;
+  accepted_count?: number;
+  rejected_count?: number;
+  duplicate_count?: number;
+  confidence_score?: number;
+  confidence_reasons?: string[];
+  freshness_days?: number | null;
+  required_facts_missing?: string[];
+  normalization_summary?: Record<string, unknown>;
+  messiness_summary?: Record<string, unknown>;
+  pipeline_quality_summary?: Record<string, unknown>;
+  headcount_quality_summary?: Record<string, unknown>;
   source_name?: string | null;
+  source_format?: string | null;
+  workbook_name?: string | null;
+  workbook_sheet?: string | null;
+  workbook_sheets?: string[];
+  header_row_number?: number | null;
+  hidden_column_count?: number;
+  extra_column_count?: number;
   source_timestamp?: string | null;
   imported_at?: string | null;
   checksum_sha256?: string | null;
   reconciliation_status: string;
   blockers: string[];
+  validation_errors?: ValidationIssue[];
 }
 
 export interface ConnectorInventory {
@@ -1089,6 +1205,12 @@ export interface SourceProvenance {
   source_name?: string | null;
   source_path?: string | null;
   source_format?: string | null;
+  workbook_name?: string | null;
+  workbook_sheet?: string | null;
+  workbook_sheets?: string[];
+  header_row_number?: number | null;
+  hidden_column_count?: number;
+  extra_column_count?: number;
   source_timestamp?: string | null;
   imported_at?: string | null;
   checksum_sha256?: string | null;
@@ -1096,9 +1218,17 @@ export interface SourceProvenance {
   accepted_count: number;
   rejected_count: number;
   duplicate_count: number;
+  confidence_score?: number;
+  confidence_reasons?: string[];
+  freshness_days?: number | null;
+  required_facts_missing?: string[];
   reconciliation_status: string;
   blockers: string[];
   validation_errors: ValidationIssue[];
+  normalization_summary?: Record<string, unknown>;
+  messiness_summary?: Record<string, unknown>;
+  pipeline_quality_summary?: Record<string, unknown>;
+  headcount_quality_summary?: Record<string, unknown>;
   [k: string]: unknown;
 }
 
@@ -1115,6 +1245,18 @@ export interface ConnectorImportResult {
 
 export interface ConnectorImportResponse {
   import_result: ConnectorImportResult;
+  connectors: ConnectorStatus[];
+  confidence: ImportConfidence;
+  reconciliation: ReconciliationReport;
+}
+
+export interface WorkbookImportResponse {
+  workbook: {
+    source_name?: string | null;
+    imported_connectors: string[];
+    failed_connectors: string[];
+  };
+  import_results: ConnectorImportResult[];
   connectors: ConnectorStatus[];
   confidence: ImportConfidence;
   reconciliation: ReconciliationReport;
@@ -1161,10 +1303,40 @@ export interface ReconciliationReport {
 
 export interface DemoResetResponse {
   status: string;
+  scope?: string;
   deleted: Record<string, number>;
   connectors: ConnectorStatus[];
   confidence: ImportConfidence;
   command_state?: CommandState;
+  reseed?: Record<string, unknown>;
+}
+
+export interface DemoScenarioSource {
+  source_type: string;
+  source_system: string;
+  messy_fields: string[];
+  records: Record<string, unknown>[];
+  record_count: number;
+}
+
+export interface DemoScenarioPack {
+  id: string;
+  branch_id: string;
+  title: string;
+  decision_type: DecisionType | string;
+  decision_prompt: string;
+  description: string;
+  tags: string[];
+  sources: DemoScenarioSource[];
+  source_count: number;
+  source_types: string[];
+  messy_input_count: number;
+  expected_council_focus: string[];
+}
+
+export interface DemoScenarioResponse {
+  count: number;
+  scenarios: DemoScenarioPack[];
 }
 
 // --------------------------------------------------------------------------- //

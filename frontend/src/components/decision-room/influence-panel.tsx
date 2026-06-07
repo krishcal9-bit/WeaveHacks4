@@ -3,7 +3,7 @@
 import { Scale } from "lucide-react";
 import { motion, useReducedMotion } from "motion/react";
 import { Stagger, StaggerItem } from "@/components/motion/stagger";
-import { springBar, springSnappy } from "@/components/motion/variants";
+import { motionDuration, springBar, springSnappy } from "@/components/motion/variants";
 import { cx } from "@/components/ui";
 import { reliabilityColor, toneClasses } from "@/lib/council";
 import { ROSTER_BY_ID } from "@/lib/agents";
@@ -134,7 +134,7 @@ function InfluenceBar({
           className={cx("block h-full rounded-full", isLeader && "council-influence-shimmer")}
           initial={reduced ? false : { width: 0 }}
           animate={{ width: `${value}%` }}
-          transition={reduced ? { duration: 0.2 } : springBar}
+          transition={reduced ? { duration: motionDuration.quick } : springBar}
           style={{ background: color }}
         />
       </div>

@@ -68,6 +68,8 @@ export function AgentInspector({
     : (agentStatus?.reliability_dimensions as Record<string, number | undefined> | undefined);
   const weaknesses = reliabilityScore?.known_weaknesses ?? agentStatus?.known_weaknesses ?? [];
   const promptAdjustment = reliabilityScore?.prompt_adjustment ?? agentStatus?.prompt_adjustment;
+  const promptDirective = reliabilityScore?.prompt_improvement_directive ?? agentStatus?.prompt_improvement_directive;
+  const replayCases = reliabilityScore?.replay_cases ?? agentStatus?.replay_cases ?? [];
   const promotionGate = reliabilityScore?.promotion_gate ?? agentStatus?.promotion_gate ?? learningReport?.promotion_gate;
   const rationale = reliabilityScore?.rationale ?? agentStatus?.reliability_rationale;
 
@@ -75,6 +77,17 @@ export function AgentInspector({
   const tools = uds?.tools ?? [];
   const redisKeys = uds?.redis_keys ?? [];
   const latestRedis = redisActivity.at(-1);
+  const forecastNotes = [
+    ...(turn?.forecast_assumptions ?? []),
+    ...(turn?.scenario_sensitivities ?? []),
+    ...(turn?.plan_vs_actual_deltas ?? []),
+  ];
+  const controlNotes = [
+    ...(turn?.control_findings ?? []),
+    ...(turn?.missing_evidence_requests ?? []),
+    ...(turn?.approval_or_policy_blockers ?? []),
+  ];
+  const negotiationLevers = turn?.negotiation_levers ?? [];
 
   return (
     <Panel
@@ -94,7 +107,7 @@ export function AgentInspector({
         <div className="min-w-0 flex-1">
           <div className="text-[12px] font-medium text-subtle-foreground">{member.role}</div>
           <div className="mt-1 flex flex-wrap items-center gap-1.5">
-            <SectionLabel>Stance</SectionLabel>
+            <SectionLabel>{member.id === "reliability" ? "Mode" : "Stance"}</SectionLabel>
             <span className={cx("text-[12px] font-semibold", toneClasses(stanceTone).text)}>{stanceLabel}</span>
           </div>
           {member.mandate && <p className="mt-1.5 break-words text-[12px] leading-relaxed text-muted-foreground">{member.mandate}</p>}
@@ -103,6 +116,9 @@ export function AgentInspector({
 
       <div className="mt-3 rounded-md border border-border bg-background p-2.5">
         <SectionLabel>Latest position</SectionLabel>
+        {turn?.role_specific_lens && (
+          <p className="mt-1 break-words text-[11px] font-semibold text-subtle-foreground">{turn.role_specific_lens}</p>
+        )}
         <p className="mt-1 break-words text-[13px] leading-relaxed text-foreground">{snippet}</p>
         {turn?.key_points && turn.key_points.length > 0 && (
           <ul className="mt-2 grid gap-1">
@@ -113,6 +129,42 @@ export function AgentInspector({
               </li>
             ))}
           </ul>
+        )}
+        {forecastNotes.length > 0 && (
+          <div className="mt-2 rounded border border-warning/20 bg-warning-bg/20 px-2 py-1.5">
+            <SectionLabel>Forecast check</SectionLabel>
+            <ul className="mt-1 grid gap-1">
+              {forecastNotes.slice(0, 4).map((note) => (
+                <li key={note} className="break-words text-[11px] leading-relaxed text-muted-foreground">
+                  {note}
+                </li>
+              ))}
+            </ul>
+          </div>
+        )}
+        {controlNotes.length > 0 && (
+          <div className="mt-2 rounded border border-risk/20 bg-risk-bg/20 px-2 py-1.5">
+            <SectionLabel>Controls check</SectionLabel>
+            <ul className="mt-1 grid gap-1">
+              {controlNotes.slice(0, 4).map((note) => (
+                <li key={note} className="break-words text-[11px] leading-relaxed text-muted-foreground">
+                  {note}
+                </li>
+              ))}
+            </ul>
+          </div>
+        )}
+        {negotiationLevers.length > 0 && (
+          <div className="mt-2 rounded border border-positive/20 bg-positive-bg/20 px-2 py-1.5">
+            <SectionLabel>Negotiation levers</SectionLabel>
+            <ul className="mt-1 grid gap-1">
+              {negotiationLevers.slice(0, 4).map((lever) => (
+                <li key={lever} className="break-words text-[11px] leading-relaxed text-muted-foreground">
+                  {lever}
+                </li>
+              ))}
+            </ul>
+          </div>
         )}
       </div>
 
@@ -142,11 +194,13 @@ export function AgentInspector({
           </div>
         )}
 
-        {(weaknesses.length > 0 || promptAdjustment || promotionGate) && (
+        {(weaknesses.length > 0 || promptAdjustment || promptDirective || replayCases.length > 0 || promotionGate) && (
           <div className="mt-2.5 grid gap-1.5">
             {weaknesses.length > 0 && (
               <InspectorNote label="Known weaknesses" value={weaknesses.slice(0, 3).join(" · ")} />
             )}
+            {replayCases.length > 0 && <InspectorNote label="Replay cases" value={replayCases.slice(0, 3).join(" · ")} />}
+            {promptDirective && <InspectorNote label="Self-improvement directive" value={promptDirective} />}
             {promptAdjustment && <InspectorNote label="Prompt adjustment" value={promptAdjustment} />}
             {promotionGate && (
               <InspectorNote

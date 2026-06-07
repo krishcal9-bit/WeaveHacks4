@@ -81,12 +81,12 @@ def list_sources() -> list[dict[str, Any]]:
     return out
 
 
-def mark_reconciled(connector_id: str) -> None:
-    """Flip a source's reconciliation_status to 'reconciled' without rewriting payload."""
+def mark_reconciled(connector_id: str, status: str = "reconciled") -> None:
+    """Set a source's reconciliation status without rewriting its payload."""
     doc = load_provenance(connector_id)
     if not doc:
         return
-    doc["reconciliation_status"] = "reconciled"
+    doc["reconciliation_status"] = status
     R.set_json(_source_key(connector_id), doc)
 
 

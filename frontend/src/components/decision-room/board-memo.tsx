@@ -1,10 +1,27 @@
 "use client";
 
-import { Download, Loader2, TrendingDown, TrendingUp } from "lucide-react";
+import type { ReactNode } from "react";
+import {
+  BriefcaseBusiness,
+  CheckSquare,
+  Download,
+  FileText,
+  Loader2,
+  TrendingDown,
+  TrendingUp,
+} from "lucide-react";
+import { motion, useReducedMotion } from "motion/react";
+import { EASE_OUT_EXPO, motionDuration, staggerDelay } from "@/components/motion/variants";
 import { cx } from "@/components/ui";
 import { averageReliability, toneClasses, topInfluenceAgent } from "@/lib/council";
 import { fmtMonths, fmtSignedMonths } from "@/lib/format";
-import type { DebateState, ReliabilityScore, RunwayImpact } from "@/lib/types";
+import type {
+  BoardMemo as StructuredBoardMemo,
+  DebateState,
+  OperatorAction,
+  ReliabilityScore,
+  RunwayImpact,
+} from "@/lib/types";
 import { CfoRulingCard } from "./cfo-ruling";
 import { CopyButton, EmptyState, Panel, SectionLabel, SkeletonText } from "./primitives";
 
@@ -12,14 +29,24 @@ function buildBoardMemo(
   decision: string | undefined,
   rec: NonNullable<DebateState["recommendation"]>,
   companyName: string,
+  boardMemo?: StructuredBoardMemo,
+  operatorActions?: OperatorAction[],
   avgReliability?: number,
 ): string {
   const lines: string[] = [];
   lines.push(`# Board Memo — ${companyName}`);
   lines.push("");
+  if (boardMemo?.headline) {
+    lines.push(`**Headline:** ${boardMemo.headline}`);
+    lines.push("");
+  }
   lines.push(`**Decision under review:** ${decision || "—"}`);
   lines.push("");
   lines.push(`**Recommendation:** ${rec.decision ?? "—"}${typeof rec.confidence === "number" ? ` (${rec.confidence}% confidence)` : ""}`);
+  if (rec.ruling) {
+    lines.push("");
+    lines.push(`**CFO ruling:** ${rec.ruling}`);
+  }
   if (rec.rationale) {
     lines.push("");
     lines.push(rec.rationale);
@@ -33,6 +60,20 @@ function buildBoardMemo(
     lines.push(`- Net impact: ${fmtSignedMonths(impact.delta_months)}`);
     if (impact.note) lines.push(`- Note: ${impact.note}`);
   }
+  if (rec.runway_impact_summary) {
+    lines.push("");
+    lines.push(`**Runway summary:** ${rec.runway_impact_summary}`);
+  }
+  if (boardMemo?.key_figures?.length) {
+    lines.push("");
+    lines.push("## Key figures");
+    for (const figure of boardMemo.key_figures) lines.push(`- ${figure}`);
+  }
+  if (rec.tradeoffs?.length) {
+    lines.push("");
+    lines.push("## Tradeoffs weighed");
+    for (const tradeoff of rec.tradeoffs) lines.push(`- ${tradeoff}`);
+  }
   if (rec.key_risks?.length) {
     lines.push("");
     lines.push("## Key risks");
@@ -42,6 +83,25 @@ function buildBoardMemo(
     lines.push("");
     lines.push("## Conditions");
     for (const condition of rec.conditions) lines.push(`- ${condition}`);
+  }
+  if (rec.assumptions_converted_to_conditions?.length) {
+    lines.push("");
+    lines.push("## Assumptions converted to conditions");
+    for (const condition of rec.assumptions_converted_to_conditions) lines.push(`- ${condition}`);
+  }
+  if (rec.dissent) {
+    lines.push("");
+    lines.push("## Dissent resolved");
+    lines.push(rec.dissent);
+  }
+  const actions = operatorActions?.length ? operatorActions : boardMemo?.operator_actions;
+  if (actions?.length) {
+    lines.push("");
+    lines.push("## Operator actions");
+    for (const action of actions) {
+      const meta = [action.owner, action.due, action.priority].filter(Boolean).join("; ");
+      lines.push(`- ${action.action}${meta ? ` (${meta})` : ""}`);
+    }
   }
   const influence = rec.council_influence;
   if (influence?.weights?.length) {
@@ -72,27 +132,38 @@ function downloadMemo(memo: string, companyName: string) {
 }
 
 export function BoardMemo({
+  boardMemo,
   recommendation,
   decision,
   companyName,
   reliabilityScores,
+  operatorActions,
   running,
   healthReady,
   started,
 }: {
+  boardMemo?: StructuredBoardMemo;
   recommendation?: DebateState["recommendation"];
   decision?: string;
   companyName: string;
   reliabilityScores: ReliabilityScore[];
+  operatorActions?: OperatorAction[];
   running: boolean;
   healthReady: boolean;
   started: boolean;
 }) {
+  const reduced = useReducedMotion();
+  const shouldReduce = reduced ?? false;
   const rec = recommendation;
   const hasDecision = Boolean(rec?.decision);
   const avg = averageReliability(reliabilityScores);
   const leadInfluence = topInfluenceAgent(rec?.council_influence);
-  const memo = hasDecision && rec ? buildBoardMemo(decision, rec, companyName, avg) : "";
+  const memo = hasDecision && rec ? buildBoardMemo(decision, rec, companyName, boardMemo, operatorActions, avg) : "";
+  const actions = operatorActions?.length ? operatorActions : boardMemo?.operator_actions ?? [];
+  const keyFigures = getKeyFigures(boardMemo, rec);
+  const memoConditions = rec?.conditions?.length ? rec.conditions : boardMemo?.conditions ?? [];
+  const memoDissent = rec?.dissent ?? boardMemo?.dissent;
+  const reveal = (index: number) => (shouldReduce ? 0 : index * 0.055);
 
   return (
     <Panel
@@ -116,15 +187,54 @@ export function BoardMemo({
       }
     >
       {hasDecision && rec ? (
-        <>
-          <CfoRulingCard
-            decision={rec.decision!}
-            confidence={rec.confidence}
-            rationale={rec.rationale}
-            variant="memo"
-          />
+        <motion.div
+          className="relative"
+          data-board-memo-artifact="true"
+          initial={shouldReduce ? false : "hidden"}
+          animate="show"
+          variants={{ hidden: {}, show: { transition: { staggerChildren: 0.055 } } }}
+        >
+          <MemoStage delay={reveal(0)} reduced={shouldReduce}>
+            <div className="mb-3 rounded-lg border border-border bg-background p-3">
+              <div className="flex flex-wrap items-start justify-between gap-3">
+                <div className="min-w-0">
+                  <div className="font-mono text-[9px] font-semibold uppercase tracking-[0.18em] text-subtle-foreground">
+                    Executive packet
+                  </div>
+                  <h3 className="mt-1 font-display text-[18px] font-medium leading-tight text-foreground">
+                    {boardMemo?.headline ?? "Board-ready CFO ruling issued"}
+                  </h3>
+                  {boardMemo?.context && (
+                    <p className="mt-1 max-w-2xl break-words text-[12px] leading-relaxed text-muted-foreground">
+                      {boardMemo.context}
+                    </p>
+                  )}
+                </div>
+                <div className="flex shrink-0 items-center gap-2 rounded-md border border-border bg-surface px-2.5 py-1.5 text-[11px] font-semibold text-muted-foreground">
+                  <FileText className="h-3.5 w-3.5 text-accent" strokeWidth={2.25} />
+                  Board artifact
+                </div>
+              </div>
+            </div>
+          </MemoStage>
 
-          <div className="mt-3 flex flex-wrap gap-2">
+          <MemoStage delay={reveal(1)} reduced={shouldReduce}>
+            <CfoRulingCard
+              decision={rec.decision!}
+              confidence={rec.confidence}
+              ruling={rec.ruling}
+              rationale={rec.rationale}
+              tradeoffs={rec.tradeoffs}
+              analystInfluence={rec.analyst_influence}
+              conditions={memoConditions}
+              dissent={memoDissent}
+              runwayImpactSummary={rec.runway_impact_summary}
+              operatorActions={actions}
+              variant="memo"
+            />
+          </MemoStage>
+
+          <MemoStage delay={reveal(2)} reduced={shouldReduce} className="mt-3 flex flex-wrap gap-2">
             {leadInfluence && (
               <span className="rounded-md border border-border bg-background px-2.5 py-1 text-[11px] font-semibold tabular-nums text-muted-foreground">
                 {leadInfluence.agent_id} led at {leadInfluence.influence_weight}% influence
@@ -141,19 +251,34 @@ export function BoardMemo({
                 Council reliability {avg}%
               </span>
             )}
-          </div>
+          </MemoStage>
 
-          {(rec.key_risks?.length || rec.conditions?.length) && (
-            <div className="mt-3 grid gap-3 sm:grid-cols-2">
+          {keyFigures.length > 0 && (
+            <MemoStage delay={reveal(3)} reduced={shouldReduce}>
+              <KeyFigureStrip figures={keyFigures} />
+            </MemoStage>
+          )}
+
+          {(rec.key_risks?.length || memoConditions.length || memoDissent) && (
+            <MemoStage delay={reveal(4)} reduced={shouldReduce} className="mt-3 grid gap-3 sm:grid-cols-2">
               {rec.key_risks && rec.key_risks.length > 0 && (
                 <MemoList title="Key risks" items={rec.key_risks} dotTone="risk" />
               )}
-              {rec.conditions && rec.conditions.length > 0 && (
-                <MemoList title="Conditions" items={rec.conditions} dotTone="info" />
+              {memoConditions.length > 0 && (
+                <MemoList title="Conditions" items={memoConditions} dotTone="info" />
               )}
-            </div>
+              {memoDissent && (
+                <MemoList title="Dissent resolved" items={[memoDissent]} dotTone="risk" />
+              )}
+            </MemoStage>
           )}
-        </>
+
+          {actions.length > 0 && (
+            <MemoStage delay={reveal(5)} reduced={shouldReduce}>
+              <OperatorActionsList actions={actions} />
+            </MemoStage>
+          )}
+        </motion.div>
       ) : running ? (
         <div>
           <div className="mb-2 flex items-center gap-2 text-[12px] font-semibold text-info">
@@ -172,6 +297,116 @@ export function BoardMemo({
         </EmptyState>
       )}
     </Panel>
+  );
+}
+
+function getKeyFigures(boardMemo?: StructuredBoardMemo, rec?: DebateState["recommendation"]): string[] {
+  if (boardMemo?.key_figures?.length) return boardMemo.key_figures;
+  const figures: string[] = [];
+  const impact = rec?.impact;
+  if (typeof impact?.current_runway_months === "number") figures.push(`Current runway: ${fmtMonths(impact.current_runway_months)}`);
+  if (typeof impact?.scenario_runway_months === "number") figures.push(`Post-decision runway: ${fmtMonths(impact.scenario_runway_months)}`);
+  if (typeof impact?.delta_months === "number") figures.push(`Runway delta: ${fmtSignedMonths(impact.delta_months)}`);
+  if (typeof rec?.confidence === "number") figures.push(`CFO confidence: ${rec.confidence}%`);
+  return figures;
+}
+
+function MemoStage({
+  children,
+  delay,
+  reduced,
+  className,
+}: {
+  children: ReactNode;
+  delay: number;
+  reduced: boolean;
+  className?: string;
+}) {
+  return (
+    <motion.div
+      className={className}
+      initial={reduced ? false : { opacity: 0, y: 12 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: motionDuration.reveal, delay, ease: EASE_OUT_EXPO }}
+    >
+      {children}
+    </motion.div>
+  );
+}
+
+function KeyFigureStrip({ figures }: { figures: string[] }) {
+  const reduced = Boolean(useReducedMotion());
+  return (
+    <div className="mt-3 rounded-lg border border-border bg-background p-2.5">
+      <div className="mb-2 flex items-center gap-1.5">
+        <BriefcaseBusiness className="h-3.5 w-3.5 text-accent" strokeWidth={2.25} />
+        <SectionLabel>Key figures</SectionLabel>
+      </div>
+      <div className="grid gap-2 sm:grid-cols-2 xl:grid-cols-4">
+        {figures.slice(0, 4).map((figure, index) => {
+          const [label, ...valueParts] = figure.split(":");
+          const value = valueParts.join(":").trim();
+          return (
+            <motion.div
+              key={`${figure}-${index}`}
+              className="min-w-0 rounded-md border border-border bg-surface px-2.5 py-2"
+              initial={reduced ? false : { opacity: 0, y: 8 }}
+              animate={reduced ? { opacity: 1 } : { opacity: 1, y: 0 }}
+              transition={{ duration: motionDuration.normal, delay: staggerDelay(index, 0.035, 0.16), ease: EASE_OUT_EXPO }}
+            >
+              <div className="truncate text-[10px] font-semibold uppercase text-subtle-foreground">{label.trim()}</div>
+              <div className="mt-1 break-words text-[13px] font-semibold tabular-nums text-foreground">
+                {value || figure}
+              </div>
+            </motion.div>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
+function OperatorActionsList({ actions }: { actions: OperatorAction[] }) {
+  const reduced = Boolean(useReducedMotion());
+  return (
+    <div className="mt-3 rounded-lg border border-border bg-background p-2.5">
+      <div className="mb-2 flex items-center justify-between gap-2">
+        <div className="flex items-center gap-1.5">
+          <CheckSquare className="h-3.5 w-3.5 text-accent" strokeWidth={2.25} />
+          <SectionLabel>Operator actions</SectionLabel>
+        </div>
+        <span className="rounded-full border border-border bg-surface px-2 py-0.5 text-[10px] font-semibold tabular-nums text-muted-foreground">
+          {actions.length}
+        </span>
+      </div>
+      <ol className="grid gap-2 sm:grid-cols-2">
+        {actions.slice(0, 6).map((action, index) => (
+          <motion.li
+            key={`${action.action}-${index}`}
+            className="rounded-md border border-border bg-surface px-2.5 py-2"
+            initial={reduced ? false : { opacity: 0, y: 8 }}
+            animate={reduced ? { opacity: 1 } : { opacity: 1, y: 0 }}
+            transition={{ duration: motionDuration.normal, delay: staggerDelay(index, 0.035, 0.16), ease: EASE_OUT_EXPO }}
+          >
+            <div className="flex items-start gap-2">
+              <span className="mt-0.5 grid h-5 w-5 shrink-0 place-items-center rounded-full border border-border bg-background text-[10px] font-semibold tabular-nums text-muted-foreground">
+                {index + 1}
+              </span>
+              <div className="min-w-0">
+                <p className="break-words text-[12px] font-semibold leading-relaxed text-foreground">{action.action}</p>
+                {(action.owner || action.due || action.priority || action.depends_on) && (
+                  <p className="mt-0.5 break-words text-[10.5px] font-medium text-muted-foreground">
+                    {[action.owner, action.due, action.priority, action.depends_on && `depends on ${action.depends_on}`]
+                      .filter(Boolean)
+                      .join(" · ")}
+                  </p>
+                )}
+              </div>
+            </div>
+          </motion.li>
+        ))}
+      </ol>
+    </div>
   );
 }
 

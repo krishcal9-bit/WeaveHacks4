@@ -3,11 +3,11 @@ import type { AgentStatus, AgentStatusKind, RosterMember } from "./types";
 // Mirrors the agent ROSTER (agent/src/agent.py). Professional roles, not characters.
 export const ROSTER: RosterMember[] = [
   { id: "cfo", label: "Office of the CFO", role: "Chief Financial Officer · Chair", monogram: "CF", mandate: "Balances growth, risk, and runway to make the final call." },
-  { id: "treasury", label: "Treasury", role: "Treasury", monogram: "TR", mandate: "Liquidity, cash position, runway, and financing risk." },
-  { id: "fpna", label: "FP&A", role: "Financial Planning & Analysis", monogram: "FP", mandate: "Growth, ROI, forecast, payback, and unit economics." },
-  { id: "risk", label: "Risk & Audit", role: "Risk & Audit", monogram: "RA", mandate: "Downside scenarios, compliance, controls, and policy." },
-  { id: "procurement", label: "Procurement", role: "Procurement", monogram: "PR", mandate: "Vendor terms, cost efficiency, and negotiation leverage." },
-  { id: "reliability", label: "Reliability Auditor", role: "Reliability & Learning", monogram: "RL", mandate: "Scores agent reliability, packages W&B evals, and gates prompt promotion." },
+  { id: "treasury", label: "Treasury", role: "Liquidity Mechanics", monogram: "TR", mandate: "Cash runway, liquidity timing, payment terms, working capital, renewal cash schedules, and late-cash financing risk." },
+  { id: "fpna", label: "FP&A", role: "Forecast & Unit Economics", monogram: "FP", mandate: "Forecast quality, ARR movement, pipeline probability, ROI, CAC/payback, margin, sensitivity ranges, scenario math, and plan-vs-actual deltas." },
+  { id: "risk", label: "Risk & Audit", role: "Controls Adversary", monogram: "RA", mandate: "Policy violations, audit trail gaps, approvals, data quality, fraud/error risk, compliance blockers, hidden obligations, security evidence, and source provenance." },
+  { id: "procurement", label: "Procurement", role: "Vendor & Commercial Negotiation", monogram: "PR", mandate: "Supplier leverage, contract terms, auto-renewal, renewal dates, price benchmarks, consolidation, switching cost, SLAs, termination clauses, volume discounts, and negotiation strategy." },
+  { id: "reliability", label: "Reliability Auditor", role: "Evaluator & Replay Auditor", monogram: "RL", mandate: "Audits grounding, calibration, policy compliance, debate value, trace quality, and weaknesses; generates replay cases and prompt directives." },
 ];
 
 export const ROSTER_BY_ID: Record<string, RosterMember> = Object.fromEntries(

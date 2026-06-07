@@ -1,9 +1,9 @@
 "use client";
 
-import { motion } from "motion/react";
+import { motion, useReducedMotion } from "motion/react";
 import { Moon, Sun } from "lucide-react";
 import { cx } from "@/components/ui";
-import { springSnappy } from "@/components/motion/variants";
+import { pressTap, springSnappy, transitionReduced, transitionReveal } from "@/components/motion/variants";
 import { useMounted } from "@/lib/use-mounted";
 import { useTheme } from "@/components/theme-provider";
 
@@ -24,6 +24,7 @@ const toggleClass = (variant: "app" | "landing", className?: string) =>
 export function ThemeToggle({ className, variant = "app" }: ThemeToggleProps) {
   const { theme, toggleTheme } = useTheme();
   const mounted = useMounted();
+  const reduced = Boolean(useReducedMotion());
   const isDark = theme === "dark";
 
   const handleClick = () => toggleTheme();
@@ -46,11 +47,11 @@ export function ThemeToggle({ className, variant = "app" }: ThemeToggleProps) {
       aria-label={ariaLabel}
       title={isDark ? "Light mode" : "Dark mode"}
       className={toggleClass(variant, className)}
-      whileHover={{ scale: 1.08, rotate: 12 }}
-      whileTap={{ scale: 0.92 }}
+      whileHover={reduced ? undefined : { rotate: 10 }}
+      whileTap={reduced ? undefined : pressTap}
       transition={springSnappy}
     >
-      <motion.span key={isDark ? "sun" : "moon"} initial={false} animate={{ rotate: 0, opacity: 1 }} transition={{ duration: 0.28 }}>
+      <motion.span key={isDark ? "sun" : "moon"} initial={false} animate={{ rotate: 0, opacity: 1 }} transition={reduced ? transitionReduced : transitionReveal}>
         {icon}
       </motion.span>
     </motion.button>

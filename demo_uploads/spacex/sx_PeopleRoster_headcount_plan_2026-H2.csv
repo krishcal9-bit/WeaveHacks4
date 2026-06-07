@@ -1,0 +1,63 @@
+team,role,headcount,monthly_cost,start_month,status,funding_basis,requisition_id,manager,location,source_system
+Engineering,Avionics Engineer 1,2,20250,2026-02,planned,approved plan,SX-REQ-0001,Elon Musk,Boca Chica TX,PeopleRoster
+Launch Operations,Mission Manager 1,2,21450,2026-02,planned,approved plan,SX-REQ-0002,Gwynne Shotwell,Cape Canaveral FL,PeopleRoster
+Starlink,Launch Director 1,2,22650,2026-02,planned,approved plan,SX-REQ-0003,Mark Juncosa,Vandenberg CA,PeopleRoster
+Starship Program,Starlink Network Engineer 1,2,23850,2026-02,planned,approved plan,SX-REQ-0004,Lee Rosen,Redmond WA,PeopleRoster
+Mission Assurance,Starship Welding Specialist 1,2,25050,2026-02,planned,approved plan,SX-REQ-0005,Tim Hughes,Austin TX,PeopleRoster
+Finance,Flight Software Engineer 1,2,26250,2026-02,planned,approved plan,SX-REQ-0006,Elon Musk,Seattle WA,PeopleRoster
+People Operations,Ground Systems Engineer 1,2,27450,2026-02,planned,approved plan,SX-REQ-0007,Gwynne Shotwell,Washington DC,PeopleRoster
+Government Relations,Finance Manager 1,2,28650,2026-02,planned,approved plan,SX-REQ-0008,Mark Juncosa,Hawthorne CA,PeopleRoster
+Engineering,Mission Manager 2,3,22000,2026-03,filled,signed revenue,SX-REQ-0009,Elon Musk,Cape Canaveral FL,PeopleRoster
+Launch Operations,Launch Director 2,3,23200,2026-03,filled,signed revenue,SX-REQ-0010,Gwynne Shotwell,Vandenberg CA,PeopleRoster
+Starlink,Starlink Network Engineer 2,3,24400,2026-03,filled,signed revenue,SX-REQ-0011,Mark Juncosa,Redmond WA,PeopleRoster
+Starship Program,Starship Welding Specialist 2,3,25600,2026-03,filled,signed revenue,SX-REQ-0012,Lee Rosen,Austin TX,PeopleRoster
+Mission Assurance,Flight Software Engineer 2,3,26800,2026-03,filled,signed revenue,SX-REQ-0013,Tim Hughes,Seattle WA,PeopleRoster
+Finance,Ground Systems Engineer 2,3,28000,2026-03,filled,signed revenue,SX-REQ-0014,Elon Musk,Washington DC,PeopleRoster
+People Operations,Finance Manager 2,3,29200,2026-03,filled,signed revenue,SX-REQ-0015,Gwynne Shotwell,Hawthorne CA,PeopleRoster
+Government Relations,Security Engineer 2,3,30400,2026-03,filled,signed revenue,SX-REQ-0016,Mark Juncosa,Boca Chica TX,PeopleRoster
+Engineering,Launch Director 3,1,23750,2026-04,open,Starship milestone,SX-REQ-0017,Elon Musk,Vandenberg CA,PeopleRoster
+Launch Operations,Starlink Network Engineer 3,1,24950,2026-04,open,Starship milestone,SX-REQ-0018,Gwynne Shotwell,Redmond WA,PeopleRoster
+Starlink,Starship Welding Specialist 3,1,26150,2026-04,open,Starship milestone,SX-REQ-0019,Mark Juncosa,Austin TX,PeopleRoster
+Starship Program,Flight Software Engineer 3,1,27350,2026-04,open,Starship milestone,SX-REQ-0020,Lee Rosen,Seattle WA,PeopleRoster
+Mission Assurance,Ground Systems Engineer 3,1,28550,2026-04,open,Starship milestone,SX-REQ-0021,Tim Hughes,Washington DC,PeopleRoster
+Finance,Finance Manager 3,1,29750,2026-04,open,Starship milestone,SX-REQ-0022,Elon Musk,Hawthorne CA,PeopleRoster
+People Operations,Security Engineer 3,1,30950,2026-04,open,Starship milestone,SX-REQ-0023,Gwynne Shotwell,Boca Chica TX,PeopleRoster
+Government Relations,Propulsion Engineer 3,1,32150,2026-04,open,Starship milestone,SX-REQ-0024,Mark Juncosa,Cape Canaveral FL,PeopleRoster
+Engineering,Starlink Network Engineer 4,2,25500,2026-05,planned,security blocker,SX-REQ-0025,Elon Musk,Redmond WA,PeopleRoster
+Launch Operations,Starship Welding Specialist 4,2,26700,2026-05,planned,security blocker,SX-REQ-0026,Gwynne Shotwell,Austin TX,PeopleRoster
+Starlink,Flight Software Engineer 4,2,27900,2026-05,planned,security blocker,SX-REQ-0027,Mark Juncosa,Seattle WA,PeopleRoster
+Starship Program,Ground Systems Engineer 4,2,29100,2026-05,planned,security blocker,SX-REQ-0028,Lee Rosen,Washington DC,PeopleRoster
+Mission Assurance,Finance Manager 4,2,30300,2026-05,planned,security blocker,SX-REQ-0029,Tim Hughes,Hawthorne CA,PeopleRoster
+Finance,Security Engineer 4,2,31500,2026-05,planned,security blocker,SX-REQ-0030,Elon Musk,Boca Chica TX,PeopleRoster
+People Operations,Propulsion Engineer 4,2,32700,2026-05,planned,security blocker,SX-REQ-0031,Gwynne Shotwell,Cape Canaveral FL,PeopleRoster
+Government Relations,Avionics Engineer 4,2,33900,2026-05,planned,security blocker,SX-REQ-0032,Mark Juncosa,Vandenberg CA,PeopleRoster
+Engineering,Starship Welding Specialist 5,3,27250,2026-06,filled,approved plan,SX-REQ-0033,Elon Musk,Austin TX,PeopleRoster
+Launch Operations,Flight Software Engineer 5,3,28450,2026-06,filled,approved plan,SX-REQ-0034,Gwynne Shotwell,Seattle WA,PeopleRoster
+Starlink,Ground Systems Engineer 5,3,29650,2026-06,filled,approved plan,SX-REQ-0035,Mark Juncosa,Washington DC,PeopleRoster
+Starship Program,Finance Manager 5,3,30850,2026-06,filled,approved plan,SX-REQ-0036,Lee Rosen,Hawthorne CA,PeopleRoster
+Mission Assurance,Security Engineer 5,3,32050,2026-06,filled,approved plan,SX-REQ-0037,Tim Hughes,Boca Chica TX,PeopleRoster
+Finance,Propulsion Engineer 5,3,33250,2026-06,filled,approved plan,SX-REQ-0038,Elon Musk,Cape Canaveral FL,PeopleRoster
+People Operations,Avionics Engineer 5,3,34450,2026-06,filled,approved plan,SX-REQ-0039,Gwynne Shotwell,Vandenberg CA,PeopleRoster
+Government Relations,Mission Manager 5,3,35650,2026-06,filled,approved plan,SX-REQ-0040,Mark Juncosa,Redmond WA,PeopleRoster
+Engineering,Flight Software Engineer 6,1,29000,2026-01,open,signed revenue,SX-REQ-0041,Elon Musk,Seattle WA,PeopleRoster
+Launch Operations,Ground Systems Engineer 6,1,30200,2026-01,open,signed revenue,SX-REQ-0042,Gwynne Shotwell,Washington DC,PeopleRoster
+Starlink,Finance Manager 6,1,31400,2026-01,open,signed revenue,SX-REQ-0043,Mark Juncosa,Hawthorne CA,PeopleRoster
+Starship Program,Security Engineer 6,1,32600,2026-01,open,signed revenue,SX-REQ-0044,Lee Rosen,Boca Chica TX,PeopleRoster
+Mission Assurance,Propulsion Engineer 6,1,33800,2026-01,open,signed revenue,SX-REQ-0045,Tim Hughes,Cape Canaveral FL,PeopleRoster
+Finance,Avionics Engineer 6,1,35000,2026-01,open,signed revenue,SX-REQ-0046,Elon Musk,Vandenberg CA,PeopleRoster
+People Operations,Mission Manager 6,1,36200,2026-01,open,signed revenue,SX-REQ-0047,Gwynne Shotwell,Redmond WA,PeopleRoster
+Government Relations,Launch Director 6,1,37400,2026-01,open,signed revenue,SX-REQ-0048,Mark Juncosa,Austin TX,PeopleRoster
+Engineering,Ground Systems Engineer 7,2,30750,2026-02,planned,Starship milestone,SX-REQ-0049,Elon Musk,Washington DC,PeopleRoster
+Launch Operations,Finance Manager 7,2,31950,2026-02,planned,Starship milestone,SX-REQ-0050,Gwynne Shotwell,Hawthorne CA,PeopleRoster
+Starlink,Security Engineer 7,2,33150,2026-02,planned,Starship milestone,SX-REQ-0051,Mark Juncosa,Boca Chica TX,PeopleRoster
+Starship Program,Propulsion Engineer 7,2,34350,2026-02,planned,Starship milestone,SX-REQ-0052,Lee Rosen,Cape Canaveral FL,PeopleRoster
+Mission Assurance,Avionics Engineer 7,2,35550,2026-02,planned,Starship milestone,SX-REQ-0053,Tim Hughes,Vandenberg CA,PeopleRoster
+Finance,Mission Manager 7,2,36750,2026-02,planned,Starship milestone,SX-REQ-0054,Elon Musk,Redmond WA,PeopleRoster
+People Operations,Launch Director 7,2,37950,2026-02,planned,Starship milestone,SX-REQ-0055,Gwynne Shotwell,Austin TX,PeopleRoster
+Government Relations,Starlink Network Engineer 7,2,39150,2026-02,planned,Starship milestone,SX-REQ-0056,Mark Juncosa,Seattle WA,PeopleRoster
+Engineering,Finance Manager 8,3,32500,2026-03,filled,security blocker,SX-REQ-0057,Elon Musk,Hawthorne CA,PeopleRoster
+Launch Operations,Security Engineer 8,3,33700,2026-03,filled,security blocker,SX-REQ-0058,Gwynne Shotwell,Boca Chica TX,PeopleRoster
+Starlink,Propulsion Engineer 8,3,34900,2026-03,filled,security blocker,SX-REQ-0059,Mark Juncosa,Cape Canaveral FL,PeopleRoster
+Starship Program,Avionics Engineer 8,3,36100,2026-03,filled,security blocker,SX-REQ-0060,Lee Rosen,Vandenberg CA,PeopleRoster
+Mission Assurance,Mission Manager 8,3,37300,2026-03,filled,security blocker,SX-REQ-0061,Tim Hughes,Redmond WA,PeopleRoster
+Finance,Launch Director 8,3,38500,2026-03,filled,security blocker,SX-REQ-0062,Elon Musk,Austin TX,PeopleRoster

@@ -4,6 +4,7 @@ import Link from "next/link";
 import { motion, useReducedMotion } from "motion/react";
 import type { ComponentProps, ReactNode } from "react";
 import { useMounted } from "@/lib/use-mounted";
+import { hoverLift, pressSubtle, springSnappy } from "@/components/motion/variants";
 
 type MotionLinkProps = ComponentProps<typeof Link> & {
   children: ReactNode;
@@ -33,9 +34,9 @@ export function MotionLink({ children, className, variant = "default", ...props 
   return (
     <motion.div
       className={wrapperClass}
-      whileHover={variant === "landing-cta" ? { scale: 1.03, y: -1 } : { scale: 1.02 }}
-      whileTap={{ scale: 0.97 }}
-      transition={{ type: "spring", stiffness: 480, damping: 28 }}
+      whileHover={variant === "landing-ghost" ? undefined : hoverLift}
+      whileTap={pressSubtle}
+      transition={springSnappy}
     >
       <Link className={className} {...props}>
         {children}

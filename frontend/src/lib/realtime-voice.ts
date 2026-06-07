@@ -178,6 +178,8 @@ function connectedStatus(session: RealtimeSession, detail: string, extras?: Part
     voice: session.voice,
     micMuted: extras?.micMuted,
     listening: extras?.listening,
+    speaking: extras?.speaking,
+    processing: extras?.processing,
   };
 }
 
@@ -280,13 +282,13 @@ export async function connectRealtimeVoice({
 
     if (type === "input_audio_buffer.speech_started") {
       listening = true;
-      pushStatus(micMuted ? "Mic muted — unmute to speak" : "Listening…");
+      pushStatus(micMuted ? "Mic muted — unmute to speak" : "Listening...", { listening: true, processing: false, speaking: false });
       return;
     }
 
     if (type === "input_audio_buffer.speech_stopped") {
       listening = false;
-      pushStatus(micMuted ? "Mic muted" : "Processing speech…");
+      pushStatus(micMuted ? "Mic muted" : "Processing speech...", { listening: false, processing: true, speaking: false });
       return;
     }
 
@@ -316,7 +318,11 @@ export async function connectRealtimeVoice({
         text: transcript,
         final: true,
       });
-      pushStatus(micMuted ? "Mic muted" : "Voice live — speak a decision for the council");
+      pushStatus(micMuted ? "Mic muted" : "Voice live - speak a decision for the council", {
+        listening: false,
+        processing: false,
+        speaking: false,
+      });
       return;
     }
 
@@ -329,6 +335,7 @@ export async function connectRealtimeVoice({
       if (!responseId || !delta) return;
       const next = `${assistantBuffers.get(responseId) ?? ""}${delta}`;
       assistantBuffers.set(responseId, next);
+      pushStatus("Atlas is speaking...", { listening: false, processing: false, speaking: true });
       pushTranscript({
         id: `assistant:${responseId}`,
         role: "assistant",
@@ -359,7 +366,11 @@ export async function connectRealtimeVoice({
         });
       }
       if (responseId) assistantBuffers.delete(responseId);
-      pushStatus(micMuted ? "Mic muted" : "Voice live — speak a decision for the council");
+      pushStatus(micMuted ? "Mic muted" : "Voice live - speak a decision for the council", {
+        listening: false,
+        processing: false,
+        speaking: false,
+      });
       return;
     }
 
@@ -402,7 +413,7 @@ export async function connectRealtimeVoice({
   await waitForDataChannel(dataChannel);
   sendSessionUpdate(dataChannel, session);
 
-  pushStatus("Voice live — speak a decision for the council");
+  pushStatus("Voice live - speak a decision for the council", { listening: false, processing: false, speaking: false });
 
   if (!sessionReady) {
     dataChannel.send(
@@ -428,11 +439,11 @@ export async function connectRealtimeVoice({
     track.enabled = !muted;
     pushStatus(
       muted
-        ? "Mic muted — tap Voice to unmute"
+        ? "Mic muted - tap Voice to unmute"
         : listening
-          ? "Listening…"
-          : "Voice live — speak a decision for the council",
-      { micMuted: muted },
+          ? "Listening..."
+          : "Voice live - speak a decision for the council",
+      { micMuted: muted, listening: !muted && listening, processing: false, speaking: false },
     );
   };
 

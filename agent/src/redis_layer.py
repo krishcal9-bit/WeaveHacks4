@@ -102,6 +102,9 @@ def keys(pattern: str) -> list[str]:
 def embed_texts(texts: list[str]) -> list[list[float]]:
     from openai import OpenAI
 
+    from src.env import load_env
+
+    load_env()
     resp = OpenAI().embeddings.create(model=EMBED_MODEL, input=texts)
     return [d.embedding for d in resp.data]
 
@@ -179,6 +182,7 @@ def ensure_policy_index() -> None:
         TextField("text"),
         TagField("kind"),
         TextField("title"),
+        TagField("source_id"),
         VectorField(
             "embedding",
             "HNSW",
@@ -195,10 +199,10 @@ def ensure_policy_index() -> None:
             raise
 
 
-def upsert_policy(doc_id: str, text: str, kind: str, title: str, embedding: list[float]) -> None:
+def upsert_policy(doc_id: str, text: str, kind: str, title: str, embedding: list[float], source_id: str | None = None) -> None:
     client().hset(
         f"{POLICY_PREFIX}{doc_id}",
-        mapping={"text": text, "kind": kind, "title": title, "embedding": to_bytes(embedding)},
+        mapping={"source_id": source_id or doc_id, "text": text, "kind": kind, "title": title, "embedding": to_bytes(embedding)},
     )
 
 
@@ -211,15 +215,24 @@ def search_policies(query_text: str, k: int = 4) -> list[dict]:
         q = (
             Query(f"*=>[KNN {k} @embedding $vec AS score]")
             .sort_by("score")
-            .return_fields("title", "text", "kind", "score")
+            .return_fields("source_id", "title", "text", "kind", "score")
             .paging(0, k)
             .dialect(2)
         )
         res = client().ft(POLICY_INDEX).search(q, query_params={"vec": qvec})
-        return [
-            {"title": d.title, "kind": d.kind, "text": d.text, "score": float(d.score)}
-            for d in res.docs
-        ]
+        rows: list[dict] = []
+        for d in res.docs:
+            doc_id = str(getattr(d, "id", "") or "")
+            source_id = getattr(d, "source_id", "") or doc_id.rsplit(":", 1)[-1]
+            rows.append({
+                "policy_id": source_id,
+                "source_id": source_id,
+                "title": d.title,
+                "kind": d.kind,
+                "text": d.text,
+                "score": float(d.score),
+            })
+        return rows
     except Exception as exc:
         raise RuntimeError(f"Redis vector policy search unavailable: {exc}") from exc
 
@@ -288,12 +301,17 @@ def ensure_govpolicy_index() -> None:
         TextField("$.title", as_name="title"),
         TextField("$.text", as_name="text"),
         TextField("$.control_id", as_name="control_id"),
+        TextField("$.evidence_required[*]", as_name="evidence_required"),
+        TextField("$.audit_requirements[*]", as_name="audit_requirements"),
         TagField("$.category", as_name="category"),
         TagField("$.severity", as_name="severity"),
         TagField("$.applies_to[*]", as_name="applies_to"),
+        TagField("$.approval_route[*]", as_name="approval_route"),
+        TagField("$.data_sensitivity[*]", as_name="data_sensitivity"),
         NumericField("$.amount_threshold", as_name="amount_threshold"),
         NumericField("$.runway_floor_months", as_name="runway_floor_months"),
         NumericField("$.margin_floor", as_name="margin_floor"),
+        NumericField("$.notice_period_days", as_name="notice_period_days"),
     )
     _create_json_index(GOVPOLICY_INDEX, GOVPOLICY_PREFIX, schema)
 
@@ -374,6 +392,19 @@ def list_json(prefix: str, limit: int = 200) -> list[dict]:
 
 def delete_key(key: str) -> int:
     return int(client().delete(key))
+
+
+def delete_keys_matching(pattern: str) -> int:
+    """Delete every key matching a SCAN pattern (counted, best-effort)."""
+    deleted = 0
+    for key in client().scan_iter(match=pattern, count=500):
+        deleted += int(client().delete(key))
+    return deleted
+
+
+def clear_stream(stream: str) -> int:
+    """Delete an append-only stream key so it can be reseeded from scratch."""
+    return int(client().delete(f"{NS}:stream:{stream}"))
 
 
 # --------------------------------------------------------------------------- #

@@ -114,6 +114,12 @@ class PolicyRule(BaseModel):
     requires_board_notification: bool = False
     requires_board_approval: bool = False
     requires_security_review: bool = False
+    approval_route: list[str] = Field(default_factory=list)
+    notice_period_days: Optional[int] = None
+    exception_process: str = ""
+    data_sensitivity: list[str] = Field(default_factory=list)
+    audit_requirements: list[str] = Field(default_factory=list)
+    obligations: list[dict[str, Any]] = Field(default_factory=list)
     evidence_required: list[str] = Field(default_factory=list)
     remediation: str = ""
 

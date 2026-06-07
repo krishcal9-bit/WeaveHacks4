@@ -2,13 +2,13 @@
 
 import { useCallback, useEffect, useRef, useState, type RefObject } from "react";
 import Link from "next/link";
-import { motion, AnimatePresence, animate, useMotionValue, useTransform } from "motion/react";
+import { motion, AnimatePresence, animate, useMotionValue, useTransform, useReducedMotion } from "motion/react";
 import { ArrowRight, ChevronRight } from "lucide-react";
 import { APP_NAME } from "@/lib/branding";
 import { AtlasIcon, type AtlasIconName } from "@/components/atlas-icon";
 import { MotionLink } from "@/components/motion/motion-link";
 import { Stagger, StaggerItem } from "@/components/motion/stagger";
-import { springSnappy } from "@/components/motion/variants";
+import { hoverLift, hoverLiftStrong, motionDuration, pressSubtle, springSnappy, transitionFade, transitionReveal } from "@/components/motion/variants";
 import { cx } from "@/components/ui";
 import { useMounted } from "@/lib/use-mounted";
 
@@ -44,29 +44,29 @@ const AGENTS = [
     id: "treasury",
     label: "Treasury",
     icon: "runway",
-    role: "Cash, liquidity, and financing",
-    blurb: "Tracks runway month by month and flags when a spend decision tightens the buffer.",
+    role: "Liquidity mechanics",
+    blurb: "Stress-tests runway, payment timing, renewal cash dates, working capital, and late financing close risk.",
   },
   {
     id: "fpna",
     label: "FP&A",
     icon: "scenario",
-    role: "Planning and unit economics",
-    blurb: "Models scenarios against headcount and pipeline so growth bets stay inside plan.",
+    role: "Forecast and unit economics",
+    blurb: "Tests ARR movement, pipeline probability, margin, CAC payback, scenario sensitivity, and plan-vs-actual deltas.",
   },
   {
     id: "risk",
     label: "Risk & Audit",
     icon: "risk",
-    role: "Controls and policy",
-    blurb: "Checks vendor concentration, compliance gaps, and downside cases before you commit.",
+    role: "Controls adversary",
+    blurb: "Challenges policy violations, audit gaps, approvals, data quality, security evidence, and source provenance.",
   },
   {
     id: "procurement",
     label: "Procurement",
     icon: "evidence",
-    role: "Spend and contracts",
-    blurb: "Finds renegotiation levers and flags terms that don't match current policy.",
+    role: "Vendor negotiation",
+    blurb: "Builds leverage from renewal dates, auto-renewal terms, price benchmarks, switching cost, SLAs, and volume discounts.",
   },
 ] as const;
 
@@ -79,17 +79,17 @@ const PREVIEW_LINES = [
   {
     agent: "FP&A",
     tone: "bg-info-bg text-info",
-    text: "Scenario B keeps an 8% headcount buffer while still hitting the Q3 pipeline target.",
+    text: "The case is forecastable only if proposal conversion holds above 34% and CAC payback stays under 9 months.",
   },
   {
     agent: "Risk",
     tone: "bg-warning-bg text-warning",
-    text: "Vendor concentration is at 34% — above policy. We need a mitigation clause in the contract.",
+    text: "Condition this until AUD-21 is closed, the approval route is signed, and source provenance matches the forecast.",
   },
   {
     agent: "Procurement",
     tone: "bg-surface-muted text-muted-foreground",
-    text: "Renegotiating the sensor contract saves $420K without slipping the delivery date.",
+    text: "Ask for a 14% renewal cap, SLA credits, and month-to-month termination before the 45-day notice window closes.",
   },
 ] as const;
 
@@ -130,6 +130,7 @@ function AnimatedStat({
   active: boolean;
 }) {
   const mounted = useMounted();
+  const reduced = Boolean(useReducedMotion());
   const count = useMotionValue(0);
   const display = useTransform(count, (v) =>
     decimals > 0 ? v.toFixed(decimals) : String(Math.round(v)),
@@ -137,9 +138,13 @@ function AnimatedStat({
 
   useEffect(() => {
     if (!active) return;
-    const controls = animate(count, value, { duration: 0.9, ease: [0, 0, 0.2, 1] });
+    if (reduced) {
+      count.set(value);
+      return;
+    }
+    const controls = animate(count, value, { duration: motionDuration.count, ease: [0, 0, 0.2, 1] });
     return () => controls.stop();
-  }, [active, value, count]);
+  }, [active, value, count, reduced]);
 
   const fallback =
     decimals > 0 ? value.toFixed(decimals) : String(Math.round(value));
@@ -159,7 +164,7 @@ function AnimatedStat({
   if (!mounted) return <div>{inner}</div>;
 
   return (
-    <motion.div whileHover={{ y: -3 }} transition={springSnappy}>
+    <motion.div whileHover={reduced ? undefined : hoverLiftStrong} transition={springSnappy}>
       {inner}
     </motion.div>
   );
@@ -167,6 +172,7 @@ function AnimatedStat({
 
 export function LandingPage() {
   const mounted = useMounted();
+  const reduced = Boolean(useReducedMotion());
   const [activeStep, setActiveStep] = useState(0);
   const [selectedAgent, setSelectedAgent] = useState<string>("treasury");
   const [previewIdx, setPreviewIdx] = useState(0);
@@ -320,8 +326,8 @@ export function LandingPage() {
                         ? "border-positive/40 bg-surface shadow-[0_12px_32px_color-mix(in_srgb,var(--positive)_12%,transparent)]"
                         : "border-border bg-surface hover:border-border-strong hover:bg-surface-muted/60",
                     )}
-                    whileHover={{ y: -2 }}
-                    whileTap={{ scale: 0.99 }}
+                    whileHover={reduced ? undefined : hoverLift}
+                    whileTap={reduced ? undefined : pressSubtle}
                     transition={springSnappy}
                     aria-pressed={isActive}
                   >
@@ -339,7 +345,7 @@ export function LandingPage() {
                           initial={{ opacity: 0 }}
                           animate={{ opacity: 1 }}
                           exit={{ opacity: 0 }}
-                          transition={{ duration: 0.2 }}
+                          transition={transitionFade}
                           className="mt-3 font-serif text-[14px] leading-relaxed text-muted-foreground"
                         >
                           {step.detail}
@@ -406,8 +412,8 @@ export function LandingPage() {
                         ? "border-positive/45 bg-positive-bg shadow-sm"
                         : "border-border bg-surface hover:border-border-strong",
                     )}
-                    whileHover={{ y: -3 }}
-                    whileTap={{ scale: 0.98 }}
+                    whileHover={reduced ? undefined : hoverLiftStrong}
+                    whileTap={reduced ? undefined : pressSubtle}
                     transition={springSnappy}
                     aria-pressed={isSelected}
                   >
@@ -424,7 +430,7 @@ export function LandingPage() {
                           initial={{ opacity: 0 }}
                           animate={{ opacity: 1 }}
                           exit={{ opacity: 0 }}
-                          transition={{ duration: 0.2 }}
+                          transition={transitionFade}
                           className="mt-3 font-serif text-[13px] leading-relaxed text-muted-foreground"
                         >
                           {agent.blurb}
@@ -517,6 +523,7 @@ function ProductPreview({
   onSelect: (idx: number) => void;
   mounted: boolean;
 }) {
+  const reduced = Boolean(useReducedMotion());
   const line = PREVIEW_LINES[activeIdx];
 
   return (
@@ -556,10 +563,10 @@ function ProductPreview({
           <AnimatePresence mode="wait">
             <motion.div
               key={activeIdx}
-              initial={{ opacity: 0, x: 12 }}
-              animate={{ opacity: 1, x: 0 }}
-              exit={{ opacity: 0, x: -8 }}
-              transition={{ duration: 0.28, ease: [0.22, 1, 0.36, 1] }}
+              initial={reduced ? { opacity: 0 } : { opacity: 0, x: 12 }}
+              animate={reduced ? { opacity: 1 } : { opacity: 1, x: 0 }}
+              exit={reduced ? { opacity: 0 } : { opacity: 0, x: -8 }}
+              transition={transitionReveal}
               className="rounded-lg border border-border bg-surface-quiet p-3"
             >
               <span

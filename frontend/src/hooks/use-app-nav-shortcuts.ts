@@ -4,7 +4,7 @@ import { useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { isEditableTarget, resolveAppNavFromKeyboard } from "@/lib/app-nav";
 
-/** ⌘⇧1 → Data, ⌘⇧2 → Run, ⌘⇧3 → Settings (Ctrl+⇧ on Windows/Linux). */
+/** ⌘⇧1-5 moves across the app sections (Ctrl+⇧ on Windows/Linux). */
 export function useAppNavShortcuts() {
   const router = useRouter();
 

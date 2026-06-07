@@ -129,8 +129,12 @@ export interface PromotionCandidate {
   agent_id: string;
   version_label: string;
   incumbent_label: string;
+  prompt_hash?: string;
+  candidate_prompt_hash?: string;
   prompt_adjustment?: string;
   promotion_gate?: string;
+  reliability_dimensions?: string[];
+  gate_metric?: string;
   replay_set?: string | null;
   status: "proposed" | "replaying" | "blocked" | "approved" | "needs_review" | string;
   created_at?: string;

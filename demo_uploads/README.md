@@ -11,3 +11,4 @@ Real companies usually do not keep one perfectly organized scenario file. These 
 | `verdant-medtech/` | Verdant MedTech Labs | Clinical workflow platform with privacy evidence, validation spend, and hiring drift | 930 |
 | `cobalt-harbor-fintech/` | Cobalt Harbor Finance | Fintech risk platform with KYC spend, vendor review, and blocked enterprise deals | 930 |
 | `lattice-grove-foods/` | Lattice Grove Foods | Food logistics software with warehouse systems, cold-chain spend, and renewal review | 930 |
+| `spacex/` | SpaceX | Orbital launch and Starlink broadband — public-fact-grounded scale (Falcon 9, Starship, NASA manifest) | 930 |

@@ -210,7 +210,8 @@ def _resolve_custom_evidence(query: str, note: str | None = None, **_: Any) -> l
 
 
 # --------------------------------------------------------------------------- #
-# Conversational command handlers (clarify / route_question / challenge)
+# Conversational command handlers (clarify / route_question / challenge /
+# defend_position / rerun_role)
 # --------------------------------------------------------------------------- #
 def _persona(agent_id: str) -> dict[str, Any]:
     from src.agent import ROSTER  # lazy import; agent module owns the roster
@@ -221,6 +222,33 @@ def _persona(agent_id: str) -> dict[str, Any]:
 def _context_decision(command: dict[str, Any]) -> str:
     ctx = command.get("payload", {}).get("context") or {}
     return str(ctx.get("decision") or "").strip()
+
+
+def role_command_metadata(agent_id: str, command_type: str) -> dict[str, str]:
+    """Role-specific command metadata streamed to the UI and used in prompts."""
+    profile = C.role_command_profile(agent_id)
+    return {
+        "role_lens": str(profile.get("command_lens") or ""),
+        "role_instruction": C.role_command_instruction(agent_id, command_type),
+        "evidence_priorities": str(profile.get("evidence_priorities") or ""),
+        "avoid": str(profile.get("avoid") or ""),
+    }
+
+
+def build_role_command_system(agent_id: str, command_type: str, persona: dict[str, Any], financials: dict[str, Any]) -> str:
+    """Build the system prompt for a role-targeted operator command."""
+    meta = role_command_metadata(agent_id, command_type)
+    return (
+        f"You are {persona['label']} at {_company_name(financials)}, responding to an operator command "
+        f"during a live investment-committee debate. Your standing mandate is {persona['mandate']}.\n"
+        f"ROLE-SPECIFIC COMMAND MANDATE: {meta['role_instruction']}\n"
+        f"ROLE LENS: {meta['role_lens']}\n"
+        f"EVIDENCE TO PREFER: {meta['evidence_priorities']}\n"
+        f"AVOID ROLE DRIFT: {meta['avoid']}\n"
+        "Use the response and key_points fields to make the role lens visible. Cite specific figures from "
+        "the company context or say which exact role-specific evidence is missing. Stay concise, quantified, "
+        "and never mention being an AI."
+    )
 
 
 async def _run_reply(agent_id: str, system_text: str, human_text: str, temperature: float) -> CommandReply:
@@ -244,6 +272,56 @@ def _prior_position_text(command: dict[str, Any]) -> str:
     )
 
 
+def _focus_patch(
+    *,
+    command_type: str,
+    agent_id: str,
+    persona: dict[str, Any],
+    mode: str,
+    prompt: str,
+    reply: CommandReply,
+    revised_stance: str | None = None,
+) -> dict[str, Any]:
+    meta = role_command_metadata(agent_id, command_type)
+    return {
+        "agent": agent_id,
+        "label": persona["label"],
+        "mode": mode,
+        "question": prompt,
+        "headline": reply.headline,
+        "response": reply.response,
+        "key_points": reply.key_points,
+        "revised_stance": revised_stance or reply.revised_stance or "unchanged",
+        **meta,
+        "at": C.now_label(),
+    }
+
+
+def _result_payload(
+    *,
+    command_type: str,
+    agent_id: str,
+    persona: dict[str, Any],
+    kind: str,
+    prompt_key: str,
+    prompt: str,
+    reply: CommandReply,
+    revised_stance: str | None = None,
+) -> dict[str, Any]:
+    meta = role_command_metadata(agent_id, command_type)
+    return {
+        "agent": agent_id,
+        "label": persona["label"],
+        prompt_key: prompt,
+        "headline": reply.headline,
+        "response": reply.response,
+        "key_points": reply.key_points,
+        "revised_stance": revised_stance or reply.revised_stance or "unchanged",
+        "kind": kind,
+        **meta,
+    }
+
+
 @weave.op(name="council_command_clarify")
 async def _handle_clarify(command: dict[str, Any], *, route: bool = False) -> dict[str, Any]:
     agent_id = command.get("agent")
@@ -259,17 +337,13 @@ async def _handle_clarify(command: dict[str, Any], *, route: bool = False) -> di
         return _rejection("missing_input", "Provide a question for the role to address.")
 
     financials = _load_financials()
-    verb = "answer this routed question" if route else "clarify your position"
-    system = (
-        f"You are {persona['label']} at {_company_name(financials)}, a member of its investment "
-        f"committee. Your mandate is {persona['mandate']}. The operator has asked you to {verb} "
-        f"during a live debate. Answer strictly from your function's perspective, cite specific "
-        f"figures from the company context, stay concise and quantified, and never mention being an AI."
-    )
+    command_type = "route_question" if route else "clarify"
+    system = build_role_command_system(agent_id, command_type, persona, financials)
     human = (
         f"DECISION UNDER REVIEW:\n{decision}\n\n"
         f"YOUR PRIOR POSITION:\n{_prior_position_text(command)}\n\n"
         f"COMPANY CONTEXT:\n{json.dumps(financials)}\n\n"
+        f"OPERATOR COMMAND TYPE:\n{command_type}\n\n"
         f"OPERATOR QUESTION:\n{question}"
     )
     try:
@@ -278,30 +352,30 @@ async def _handle_clarify(command: dict[str, Any], *, route: bool = False) -> di
         return _failure(f"Model call failed: {redact_secrets(exc)}")
 
     ctype_label = "Routed question" if route else "Clarification"
+    mode = "route" if route else "clarify"
+    result_payload = _result_payload(
+        command_type=command_type,
+        agent_id=agent_id,
+        persona=persona,
+        kind=mode,
+        prompt_key="question",
+        prompt=question,
+        reply=reply,
+    )
     return {
         "status": "executed",
         "reason": None,
-        "message": f"{ctype_label} delivered by {persona['label']}.",
-        "result": {
-            "agent": agent_id,
-            "label": persona["label"],
-            "question": question,
-            "headline": reply.headline,
-            "response": reply.response,
-            "key_points": reply.key_points,
-            "kind": "route" if route else "clarify",
-        },
+        "message": f"{ctype_label} delivered by {persona['label']} using its {result_payload['role_lens']} lens.",
+        "result": result_payload,
         "state_patch": {
-            "agent_focus": {
-                "agent": agent_id,
-                "label": persona["label"],
-                "mode": "route" if route else "clarify",
-                "question": question,
-                "headline": reply.headline,
-                "response": reply.response,
-                "key_points": reply.key_points,
-                "at": C.now_label(),
-            }
+            "agent_focus": _focus_patch(
+                command_type=command_type,
+                agent_id=agent_id,
+                persona=persona,
+                mode=mode,
+                prompt=question,
+                reply=reply,
+            )
         },
     }
 
@@ -326,17 +400,14 @@ async def _handle_challenge(command: dict[str, Any]) -> dict[str, Any]:
         return _rejection("missing_input", "Provide the claim or challenge for the role to defend.")
 
     financials = _load_financials()
-    system = (
-        f"You are {persona['label']} at {_company_name(financials)}, defending your reasoning before "
-        f"the investment committee. The operator is challenging one of your claims. Either defend it "
-        f"with specific figures or concede and revise your stance — be intellectually honest, quantified, "
-        f"and concise. Set revised_stance to support/oppose/conditional, or 'unchanged' if your stance "
-        f"holds. Never mention being an AI."
-    )
+    command_type = "challenge_claim"
+    system = build_role_command_system(agent_id, command_type, persona, financials)
     human = (
         f"DECISION UNDER REVIEW:\n{decision}\n\n"
         f"YOUR PRIOR POSITION:\n{_prior_position_text(command)}\n\n"
         f"COMPANY CONTEXT:\n{json.dumps(financials)}\n\n"
+        "CHALLENGE CONTRACT:\nEither defend the claim with role-specific figures or concede and revise. "
+        "Set revised_stance to support/oppose/conditional, or 'unchanged' if your stance holds.\n\n"
         f"OPERATOR CHALLENGE:\n{point}"
     )
     try:
@@ -344,32 +415,147 @@ async def _handle_challenge(command: dict[str, Any]) -> dict[str, Any]:
     except Exception as exc:
         return _failure(f"Model call failed: {redact_secrets(exc)}")
 
+    revised = reply.revised_stance or "unchanged"
+    result_payload = _result_payload(
+        command_type=command_type,
+        agent_id=agent_id,
+        persona=persona,
+        kind="challenge",
+        prompt_key="challenge",
+        prompt=point,
+        reply=reply,
+        revised_stance=revised,
+    )
     return {
         "status": "executed",
         "reason": None,
-        "message": f"{persona['label']} responded to the challenge.",
-        "result": {
-            "agent": agent_id,
-            "label": persona["label"],
-            "challenge": point,
-            "headline": reply.headline,
-            "response": reply.response,
-            "key_points": reply.key_points,
-            "revised_stance": reply.revised_stance or "unchanged",
-            "kind": "challenge",
-        },
+        "message": f"{persona['label']} responded through its {result_payload['role_lens']} lens.",
+        "result": result_payload,
         "state_patch": {
-            "agent_focus": {
-                "agent": agent_id,
-                "label": persona["label"],
-                "mode": "challenge",
-                "question": point,
-                "headline": reply.headline,
-                "response": reply.response,
-                "key_points": reply.key_points,
-                "revised_stance": reply.revised_stance or "unchanged",
-                "at": C.now_label(),
-            }
+            "agent_focus": _focus_patch(
+                command_type=command_type,
+                agent_id=agent_id,
+                persona=persona,
+                mode="challenge",
+                prompt=point,
+                reply=reply,
+                revised_stance=revised,
+            )
+        },
+    }
+
+
+@weave.op(name="council_command_defend")
+async def _handle_defend(command: dict[str, Any]) -> dict[str, Any]:
+    agent_id = command.get("agent")
+    persona = _persona(agent_id)
+    decision = _context_decision(command)
+    if not decision:
+        return _rejection(
+            "missing_context",
+            "No decision is under review. The council must have spoken before a role can defend its position.",
+        )
+    focus = str(command.get("payload", {}).get("point") or command.get("payload", {}).get("question") or "").strip()
+    focus = focus or "Defend your current role position."
+
+    financials = _load_financials()
+    command_type = "defend_position"
+    system = build_role_command_system(agent_id, command_type, persona, financials)
+    human = (
+        f"DECISION UNDER REVIEW:\n{decision}\n\n"
+        f"YOUR PRIOR POSITION:\n{_prior_position_text(command)}\n\n"
+        f"COMPANY CONTEXT:\n{json.dumps(financials)}\n\n"
+        "DEFENSE CONTRACT:\nDefend only the part of the position that belongs to your mandate. "
+        "If the prior position lacks role-specific evidence, say so and name the missing evidence.\n\n"
+        f"OPERATOR DEFENSE REQUEST:\n{focus}"
+    )
+    try:
+        reply = await _run_reply(agent_id, system, human, 0.35)
+    except Exception as exc:
+        return _failure(f"Model call failed: {redact_secrets(exc)}")
+
+    result_payload = _result_payload(
+        command_type=command_type,
+        agent_id=agent_id,
+        persona=persona,
+        kind="defend",
+        prompt_key="question",
+        prompt=focus,
+        reply=reply,
+    )
+    return {
+        "status": "executed",
+        "reason": None,
+        "message": f"{persona['label']} defended its position through its {result_payload['role_lens']} lens.",
+        "result": result_payload,
+        "state_patch": {
+            "agent_focus": _focus_patch(
+                command_type=command_type,
+                agent_id=agent_id,
+                persona=persona,
+                mode="defend",
+                prompt=focus,
+                reply=reply,
+            )
+        },
+    }
+
+
+@weave.op(name="council_command_rerun_role")
+async def _handle_rerun_role(command: dict[str, Any]) -> dict[str, Any]:
+    agent_id = command.get("agent")
+    persona = _persona(agent_id)
+    decision = _context_decision(command)
+    if not decision:
+        return _rejection(
+            "missing_context",
+            "No decision is under review. Submit a decision before rerunning a role analysis.",
+        )
+    reason = str(command.get("payload", {}).get("reason") or command.get("payload", {}).get("question") or "").strip()
+    reason = reason or "Rerun this role analysis from scratch."
+
+    financials = _load_financials()
+    command_type = "rerun_role"
+    system = build_role_command_system(agent_id, command_type, persona, financials)
+    human = (
+        f"DECISION UNDER REVIEW:\n{decision}\n\n"
+        f"PREVIOUS POSITION TO IGNORE IF NEEDED:\n{_prior_position_text(command)}\n\n"
+        f"COMPANY CONTEXT:\n{json.dumps(financials)}\n\n"
+        "RERUN CONTRACT:\nRe-analyze from scratch under your unique role mandate. Do not summarize the old answer. "
+        "Return a role-specific stance in revised_stance and cite the numbers or missing evidence that changed the view.\n\n"
+        f"OPERATOR RERUN REASON:\n{reason}"
+    )
+    try:
+        reply = await _run_reply(agent_id, system, human, 0.4)
+    except Exception as exc:
+        return _failure(f"Model call failed: {redact_secrets(exc)}")
+
+    revised = reply.revised_stance or "unchanged"
+    result_payload = _result_payload(
+        command_type=command_type,
+        agent_id=agent_id,
+        persona=persona,
+        kind="rerun",
+        prompt_key="question",
+        prompt=reason,
+        reply=reply,
+        revised_stance=revised,
+    )
+    return {
+        "status": "executed",
+        "reason": None,
+        "message": f"{persona['label']} reran analysis through its {result_payload['role_lens']} lens.",
+        "result": result_payload,
+        "state_patch": {
+            "agent_focus": _focus_patch(
+                command_type=command_type,
+                agent_id=agent_id,
+                persona=persona,
+                mode="rerun",
+                prompt=reason,
+                reply=reply,
+                revised_stance=revised,
+            )
         },
     }
 
@@ -713,6 +899,10 @@ async def dispatch_command(raw_command: dict[str, Any], *, room: str = C.DEFAULT
             result = await _handle_route_question(command)
         elif ctype == "challenge_claim":
             result = await _handle_challenge(command)
+        elif ctype == "defend_position":
+            result = await _handle_defend(command)
+        elif ctype == "rerun_role":
+            result = await _handle_rerun_role(command)
         elif ctype == "scenario_fork":
             result = await _handle_scenario_fork(command)
         elif ctype == "compare_options":

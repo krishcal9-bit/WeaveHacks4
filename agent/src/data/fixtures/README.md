@@ -18,13 +18,25 @@ or by pointing a connector env var at one of these files (e.g.
 
 | File | Connector | Notes |
 | --- | --- | --- |
-| `ledger.csv` | `ledger` | General-ledger cash transactions (payroll, SaaS, revenue). |
-| `invoices.csv` | `invoices` | AP invoices; includes a Datadog overspend and one unmatched (shadow) vendor. |
-| `vendor_export.json` | `vendor_export` | Procurement export incl. a new $250K commitment needing board notification. |
-| `crm_opportunities.csv` | `crm_opportunities` | Pipeline weighted above the seeded forecast assumption. |
-| `headcount_plan.csv` | `headcount_plan` | Actuals incl. an over-plan Engineering team and an unplanned Marketing hire. |
-| `security_evidence.json` | `security_evidence` | SOC 2 controls incl. a revenue-blocking evidence gap. |
+| `ledger.csv` | `ledger` | Bank/card-style transaction export with raw descriptors, card charges, refunds, split transactions, fees, payroll summaries, intercompany transfers, unknown vendors, and uncategorized spend. |
+| `invoices.csv` | `invoices` | AP invoices with inconsistent vendor names, partial payments, overdue and disputed invoices, missing due dates, missing PO numbers, EUR/GBP rows, line descriptions, contract-vs-invoice amount drift, a credit, and one malformed amount. |
+| `vendor_export.json` | `vendor_export` | Procurement export with mixed date formats, vendor-name drift, auto-renew metadata, and a new $250K commitment needing board notification. |
+| `crm_opportunities.csv` | `crm_opportunities` | Pipeline with slipped close dates, stage aging, stale activity, owner changes, probability overrides, duplicate account aliases, renewal/new/expansion mix, weighted-vs-unweighted ARR gaps, and mixed probability/date formats. |
+| `headcount_plan.csv` | `headcount_plan` | HRIS/planning export with planned, open, and filled roles; start-date slippage; fully loaded cost; department mapping drift; contractors; backfills; partial approvals; and unplanned headcount. |
+| `security_evidence.json` | `security_evidence` | SOC 2 / AI governance evidence with stale dates, missing evidence, and revenue-blocking controls. |
 | `board_policies.json` | `board_policy` | Machine-checkable thresholds mirroring the seeded board constraints. |
 
-The values are deliberately consistent with `agent/src/data/seed.py` so
-reconciliation produces explainable discrepancies rather than noise.
+The values are deliberately messy but still realistic. Atlas should normalize
+common export weirdness, preserve provenance, and produce explainable
+discrepancies instead of assuming the uploaded finance files are pristine.
+
+## Scenario-specific messy packs
+
+`agent/src/data/demo_scenarios.py` adds Redis-seeded decision examples for:
+Datadog renewal, security blocker, hiring plan, bridge financing, vendor
+consolidation, pricing change, and pipeline shortfall. Each pack includes a
+council-ready decision prompt plus messy rows from at least three source
+categories (for example ContractVault, PayablesDesk, CloudLedger, PipelineHub,
+PeopleRoster, TrustVault, BoardPortal). These packs power `/api/demo/scenarios`
+and the Decisions-page selector; they are inspectable demo artifacts and do not
+overwrite uploaded connector data.

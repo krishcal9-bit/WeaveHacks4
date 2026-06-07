@@ -52,6 +52,8 @@ export type CouncilWebEdge = {
   kind: WebEdgeKind;
   active: boolean;
   weight?: number;
+  label?: string;
+  challengeType?: string;
 };
 
 function isWorking(status?: AgentStatus): boolean {
@@ -132,6 +134,8 @@ export function buildCouncilWebEdges(args: {
       ...existing,
       active: existing.active || edge.active,
       weight: Math.max(existing.weight ?? 0, edge.weight ?? 0),
+      label: edge.label ?? existing.label,
+      challengeType: edge.challengeType ?? existing.challengeType,
     });
   };
 
@@ -208,7 +212,15 @@ export function buildCouncilWebEdges(args: {
     if (turn.type === "rebuttal") {
       const { from, to } = resolveRebuttalEnds(turn);
       if (!from || !to) continue;
-      upsert({ id: `msg-${from}-${to}-reb`, from, to, kind: "message", active: true });
+      upsert({
+        id: `msg-${from}-${to}-${turn.challenge_type ?? "reb"}`,
+        from,
+        to,
+        kind: "message",
+        active: true,
+        label: turn.challenge_label,
+        challengeType: turn.challenge_type,
+      });
     }
   }
 
