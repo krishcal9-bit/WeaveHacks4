@@ -418,10 +418,14 @@ def seed_financial_os(company: dict, vendors: list[dict], policies: list[dict], 
     migration = S.run_migrations()
 
     # 1) Augment the company system-of-record with machine-readable policy + controls.
-    co = R.get_json(M.COMPANY_KEY) or dict(company)
+    #    Only persist when a company record already exists (seeded opt-in or
+    #    derived from uploads) — the upload-driven default never re-creates it here.
+    persisted = R.get_json(M.COMPANY_KEY)
+    co = dict(persisted) if persisted else dict(company)
     co["board_policy"] = BOARD_POLICY
     co["security_controls"] = SECURITY_CONTROLS
-    R.set_json(M.COMPANY_KEY, co)
+    if persisted is not None:
+        R.set_json(M.COMPANY_KEY, co)
 
     # 2) Merge clauses + an indexable auto_renew flag into each vendor doc.
     for vendor_id, clause in VENDOR_CLAUSES.items():

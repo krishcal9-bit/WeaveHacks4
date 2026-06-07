@@ -42,6 +42,9 @@ RUNTIME_STREAMS: tuple[str, ...] = (
 
 # Ephemeral Redis keys written during debates, uploads, planning, or eval runs.
 RUNTIME_KEY_PATTERNS: tuple[str, ...] = (
+    # Company system of record is upload-derived now, so reset clears it: the
+    # reseed below no longer recreates it, returning the app to "upload required".
+    f"{R.NS}:company:*",
     f"{R.NS}:evaluation:*",
     f"{R.NS}:memo:*",
     f"{R.NS}:plan:*",

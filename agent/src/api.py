@@ -496,6 +496,9 @@ async def connector_import(
             connector_id=connector_id,
             reconcile=False,
         )
+        # Derive the company system of record from the uploaded data *before*
+        # reconciling, so the council debates the operator's own numbers.
+        OPS.apply_company_derivation()
         report = OPS.run_reconciliation()
     except ValueError as exc:
         raise HTTPException(status_code=404, detail=str(exc)) from exc
@@ -523,6 +526,8 @@ async def connector_workbook_import(response: Response, file: UploadFile = File(
             allowed_kinds=WORKBOOK_UPLOAD_KINDS,
         )
         results = OPS.import_workbook(source_name=file.filename or "operations-workbook.xlsx", raw=raw)
+        # Derive the company system of record from the uploaded sheets before reconciling.
+        OPS.apply_company_derivation()
         report = OPS.run_reconciliation()
     except ValueError as exc:
         raise HTTPException(status_code=400, detail=str(exc)) from exc

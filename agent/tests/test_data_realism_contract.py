@@ -21,7 +21,7 @@ def _csv_bytes(fieldnames: list[str], rows: list[dict[str, Any]]) -> bytes:
 
 def _import_messy_uploads() -> None:
     assert R.ping(), "Redis must be running for data-realism contract coverage"
-    seed(verbose=False)
+    seed(verbose=False, include_company=True)
     OPS.reset_demo_state()
 
     ledger = _csv_bytes(
