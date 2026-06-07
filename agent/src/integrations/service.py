@@ -460,6 +460,27 @@ def _load_typed(source_type: SourceType, model) -> list:
 
 
 # --------------------------------------------------------------------------- #
+# Company derivation (upload-driven system of record)
+# --------------------------------------------------------------------------- #
+def apply_company_derivation() -> Optional[dict[str, Any]]:
+    """Derive the company financials record from uploaded datasets and persist it.
+
+    Returns the derived record (and writes it to ``COMPANY_KEY``) when the
+    uploaded ledger carries enough signal to model a company; returns ``None``
+    and leaves any existing record untouched otherwise. This is what lets the
+    council debate the operator's own numbers once a real dataset is uploaded,
+    instead of a seeded baseline.
+    """
+    from src.integrations.derive_company import derive_company_record
+
+    record = derive_company_record()
+    if not record:
+        return None
+    R.set_json(COMPANY_KEY, record)
+    return record
+
+
+# --------------------------------------------------------------------------- #
 # Reconciliation
 # --------------------------------------------------------------------------- #
 def run_reconciliation() -> ReconciliationReport:
@@ -492,7 +513,10 @@ def run_reconciliation() -> ReconciliationReport:
 
     blockers: list[str] = []
     if not company:
-        blockers.append("Company system of record (atlas:company:northwind) is missing; run the seed.")
+        blockers.append(
+            "Company system of record is missing; upload your company files (ledger, headcount, CRM, "
+            "vendors, security, board policy) on the Data tab so the financials can be derived."
+        )
     for summary in summaries:
         blockers.extend(summary.blockers)
 

@@ -69,6 +69,7 @@ def cmd_import(args: argparse.Namespace) -> int:
 
 def cmd_reconcile(_: argparse.Namespace) -> int:
     _require_redis()
+    service.apply_company_derivation()
     report = service.run_reconciliation()
     _print({
         "run_id": report.run_id,

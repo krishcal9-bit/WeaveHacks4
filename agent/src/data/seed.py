@@ -1,8 +1,8 @@
 """
 Seed the demo company — Acme Corp — into Redis.
 
-Loads:
-  • company financials .......... RedisJSON  (atlas:company:northwind)
+Loads (company financials are opt-in — derived from uploads by default):
+  • company financials .......... RedisJSON  (atlas:company:northwind) [include_company]
   • vendor / SaaS contracts ..... RedisJSON  (atlas:vendor:*) + RediSearch index
   • finance policies & past
     board decisions ............. HASH + vector index  (atlas:policy:*) → RAG
@@ -489,13 +489,37 @@ def seed_governance(verbose: bool = True) -> dict:
     return summary
 
 
-def seed(verbose: bool = True) -> dict:
-    """Idempotently load the demo company into Redis."""
+def seed_company() -> dict:
+    """Persist the bundled demo company financials (atlas:company:northwind).
+
+    Opt-in only. Atlas runs upload-driven: the council derives its system of
+    record from the operator's uploaded operations data (see
+    ``src.integrations.derive_company``), so the default seed and the demo-reset
+    no longer create this record. Tests, evals, and the bundled "load the sample
+    company" workflow can still call this to seed the Northwind baseline.
+    """
+    R.set_json(COMPANY_KEY, COMPANY)
+    return COMPANY
+
+
+def seed(verbose: bool = True, *, include_company: bool = False) -> dict:
+    """Idempotently load the demo scaffolding into Redis.
+
+    The company *financials* record is intentionally NOT written by default —
+    Atlas derives it from uploaded operations data so the council debates the
+    operator's own numbers. Everything else (vendors, finance-policy RAG,
+    governance matrix, eval/replay subsystem, financial-OS reference data) is
+    company-agnostic scaffolding the council/tooling depend on, so it still
+    seeds. Pass ``include_company=True`` to also seed the bundled Northwind
+    financials (used by tests and the bundled-demo workflow).
+    """
     if not R.ping():
         raise RuntimeError(f"Redis not reachable at {R.REDIS_URL}")
 
-    # 1) Company financials (JSON system of record)
-    R.set_json(COMPANY_KEY, COMPANY)
+    # 1) Company financials (JSON system of record) — opt-in; otherwise derived
+    #    from uploads at import time (src.integrations.service.apply_company_derivation).
+    if include_company:
+        seed_company()
 
     # 1b) Rolling council reliability priors for influence weighting (idempotent).
     try:
@@ -576,10 +600,11 @@ def seed(verbose: bool = True) -> dict:
             print(f"[seed] orchestration seeding warning: {redact_secrets(exc)}")
 
     summary = {
-        "company": COMPANY["name"],
+        "company": COMPANY["name"] if include_company else None,
+        "company_seeded": include_company,
         "vendors": len(VENDORS),
         "policies": len(POLICIES),
-        "runway_months": COMPANY["runway_months"],
+        "runway_months": COMPANY["runway_months"] if include_company else None,
         "evaluation": evaluation,
         "governance": governance,
         "financial_os": financial_os,
@@ -592,7 +617,13 @@ def seed(verbose: bool = True) -> dict:
 
 
 if __name__ == "__main__":
+    import os
+    import sys
+
     from dotenv import load_dotenv
 
     load_dotenv()
-    seed()
+    # Upload-driven by default; pass --with-company (or ATLAS_SEED_COMPANY=1) to
+    # also seed the bundled Northwind financials baseline.
+    include_company = "--with-company" in sys.argv or os.getenv("ATLAS_SEED_COMPANY", "").strip().lower() in ("1", "true", "yes", "on")
+    seed(include_company=include_company)

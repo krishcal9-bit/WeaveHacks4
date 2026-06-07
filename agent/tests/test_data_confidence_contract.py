@@ -18,7 +18,7 @@ from src.tools import get_operations_data_confidence
 
 def _seed_messy_operations() -> None:
     assert R.ping(), "Redis must be running for operations confidence smoke coverage"
-    seed(verbose=False)
+    seed(verbose=False, include_company=True)
     OPS.reset_demo_state()
     OPS.run_import(demo=True)
 

@@ -144,7 +144,7 @@ def test_xls_parser_supports_legacy_workbooks_with_header_detection() -> None:
 
 def test_single_workbook_import_persists_all_connector_provenance_and_council_evidence() -> None:
     assert R.ping(), "Redis must be running for workbook ingestion coverage"
-    seed(verbose=False)
+    seed(verbose=False, include_company=True)
     OPS.reset_demo_state()
 
     results = OPS.import_workbook(source_name="atlas-ops-workbook.xlsx", raw=_ops_workbook())
@@ -179,7 +179,7 @@ def test_single_workbook_import_persists_all_connector_provenance_and_council_ev
 
 def test_workbook_upload_api_validation_and_response_shape() -> None:
     assert R.ping(), "Redis must be running for workbook upload API coverage"
-    seed(verbose=False)
+    seed(verbose=False, include_company=True)
     OPS.reset_demo_state()
     client = TestClient(router)
 

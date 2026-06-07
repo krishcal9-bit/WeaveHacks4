@@ -23,6 +23,13 @@ TOL = 2.0  # rounding tolerance in dollars / months
 
 def _company() -> dict:
     co = PL.load_company()
+    if not co.get("mrr"):
+        # The company record is upload-derived by default; seed the bundled
+        # baseline for these deterministic planning-math checks.
+        from src.data.seed import seed_company
+
+        seed_company()
+        co = PL.load_company()
     assert co.get("mrr"), "Redis company record missing — seed Redis first."
     return co
 
