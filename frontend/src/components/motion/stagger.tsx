@@ -3,7 +3,7 @@
 import { motion, useReducedMotion } from "motion/react";
 import type { ReactNode } from "react";
 import { useMounted } from "@/lib/use-mounted";
-import { fadeUp, staggerContainer, staggerFast } from "@/components/motion/variants";
+import { fadeUp, staggerContainer, staggerFast, transitionReveal } from "@/components/motion/variants";
 
 type StaggerProps = {
   fast?: boolean;
@@ -70,7 +70,7 @@ export function FadeIn({ children, className, delay = 0 }: FadeInProps) {
       className={className}
       initial={{ opacity: 0, y: 14 }}
       animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.42, delay, ease: [0.22, 1, 0.36, 1] }}
+      transition={{ ...transitionReveal, delay }}
     >
       {children}
     </motion.div>

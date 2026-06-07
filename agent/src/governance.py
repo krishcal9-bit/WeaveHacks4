@@ -321,6 +321,7 @@ def generate_obligations(
     # SOC 2 / security evidence deadline — only when the decision itself touches
     # security or sensitive data (a company-wide open gap is not this decision's task).
     if {"CTRL-SECURITY-REVENUE", "CTRL-DATA-SECURITY"} & controls:
+        security_source_policy = "gov-data-security" if "CTRL-DATA-SECURITY" in controls else "gov-security-revenue"
         soc_due = _security_due_date(financials) or _due(30)
         obligations.append(Obligation(
             title="Collect SOC 2 / security evidence",
@@ -328,7 +329,7 @@ def generate_obligations(
             kind="soc2_evidence",
             owner_role="Risk & Audit",
             due_date=soc_due,
-            source_policy="gov-security-revenue",
+            source_policy=security_source_policy,
             evidence_required=["SOC 2 evidence package", "Security review sign-off"],
         ))
         monitoring.append(MonitoringTrigger(
@@ -698,12 +699,15 @@ def governance_state(req: ApprovalRequest) -> dict[str, Any]:
 def governance_narrative(req: ApprovalRequest) -> str:
     blocking = sum(1 for v in req.violations if v.blocking)
     roles = ", ".join(s.approver_role for s in req.route) or "none required"
+    policy_refs = sorted({v.policy_id for v in req.violations if v.policy_id})
     parts = [
         f"{status_label(req)}.",
         f"{len(req.violations)} control(s) engaged ({blocking} blocking).",
         f"Approval route: {roles}.",
         f"{len(req.obligations)} obligation(s), {len(req.monitoring)} monitoring trigger(s).",
     ]
+    if policy_refs:
+        parts.append("Policy refs: " + ", ".join(policy_refs[:5]) + ".")
     if req.evidence_missing:
         parts.append("Evidence still missing: " + "; ".join(req.evidence_missing[:3]) + ".")
     if req.human_approvals_pending():
@@ -713,7 +717,7 @@ def governance_narrative(req: ApprovalRequest) -> str:
 
 def governance_turn(req: ApprovalRequest) -> dict[str, Any]:
     """A deterministic transcript turn summarizing the governance outcome."""
-    key_points = [f"{v.control_id}: {v.title}" for v in req.violations[:3]]
+    key_points = [f"{v.control_id} / {v.policy_id}: {v.title}" for v in req.violations[:3]]
     if req.route:
         key_points.append("Approvers: " + ", ".join(s.approver_role for s in req.route))
     if req.evidence_missing:

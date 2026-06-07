@@ -1,5 +1,5 @@
 import type { LucideIcon } from "lucide-react";
-import { Database, Scale, Settings } from "lucide-react";
+import { Activity, Database, Scale, Settings, UsersRound } from "lucide-react";
 
 export type AppNavItem = {
   href: string;
@@ -12,7 +12,9 @@ export type AppNavItem = {
 export const APP_NAV: AppNavItem[] = [
   { href: "/dashboard", label: "Data", icon: Database, shortcut: "1" },
   { href: "/decisions", label: "Run", icon: Scale, shortcut: "2" },
-  { href: "/settings", label: "Settings", icon: Settings, shortcut: "3" },
+  { href: "/activity", label: "Activity", icon: Activity, shortcut: "3" },
+  { href: "/department", label: "Department", icon: UsersRound, shortcut: "4" },
+  { href: "/settings", label: "Settings", icon: Settings, shortcut: "5" },
 ];
 
 export function appNavShortcutLabel(shortcut: string): string {

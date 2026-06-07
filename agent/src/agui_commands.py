@@ -87,6 +87,18 @@ COMMAND_TYPES: dict[str, dict[str, Any]] = {
         "needs_context": True,
         "summary": "Force a role to defend or revise a specific claim with figures.",
     },
+    "defend_position": {
+        "label": "Ask a role to defend",
+        "targets_agent": True,
+        "needs_context": True,
+        "summary": "Ask a specific role to defend its current position through its own mandate.",
+    },
+    "rerun_role": {
+        "label": "Rerun a role analysis",
+        "targets_agent": True,
+        "needs_context": True,
+        "summary": "Rerun a specific role's analysis from scratch with its role-specific evidence lens.",
+    },
     "scenario_fork": {
         "label": "Request a scenario fork",
         "targets_agent": False,
@@ -130,6 +142,87 @@ COMMAND_STATUSES = ("queued", "accepted", "executed", "rejected", "failed")
 # Council roles a command may target (mirrors agent.ROSTER ids).
 KNOWN_AGENTS = ("cfo", "treasury", "fpna", "risk", "procurement", "reliability")
 
+ROLE_COMMAND_PROFILES: dict[str, dict[str, Any]] = {
+    "cfo": {
+        "label": "Office of the CFO",
+        "command_lens": "chair synthesis: tradeoffs, dissent, conditions, analyst influence, and board-ready ruling logic",
+        "evidence_priorities": "analyst influence weights, unresolved assumptions, dissent, runway impact basis, governance conditions",
+        "avoid": "do not become Treasury, FP&A, Risk, or Procurement; synthesize and rule as chair",
+        "actions": {
+            "clarify": "Clarify the ruling logic by converting unresolved assumptions into explicit board conditions.",
+            "route_question": "Answer as CFO chair by weighing analyst influence and naming the tradeoff being resolved.",
+            "challenge_claim": "Resolve the challenged claim by deciding which analyst view controls and why.",
+            "defend_position": "Defend the board-ready ruling, confidence, dissent handling, conditions, and runway-impact basis.",
+            "rerun_role": "Rerun the CFO synthesis from the analyst record and issue a revised board-ready ruling if warranted.",
+        },
+    },
+    "treasury": {
+        "label": "Treasury",
+        "command_lens": "liquidity mechanics: cash runway, cash timing, payment terms, working capital, financing delay, and late-cash downside",
+        "evidence_priorities": "cash forecast, ledger movements, invoices, payment terms, renewal payment dates, burn sensitivity, financing scenarios",
+        "avoid": "do not lead with ROI, CAC/payback, forecast storytelling, controls summary, or vendor negotiation leverage",
+        "actions": {
+            "clarify": "Clarify only the liquidity mechanics: cash arrival timing, payment outflows, burn sensitivity, and runway impact.",
+            "route_question": "Answer by explaining what happens to cash if receipts arrive late or terms pull cash forward.",
+            "challenge_claim": "Challenge the claim by stress-testing late cash, annual prepay, renewal timing, and financing delay.",
+            "defend_position": "Defend the liquidity stance with cash forecast, invoice timing, payment terms, and runway buffer evidence.",
+            "rerun_role": "Rerun Treasury from scratch using liquidity timing, working-capital, burn, and financing-risk evidence only.",
+        },
+    },
+    "fpna": {
+        "label": "FP&A",
+        "command_lens": "forecast and unit economics: forecastability, ARR movement, pipeline probability, ROI, CAC/payback, margin, sensitivity, and plan-vs-actual",
+        "evidence_priorities": "forecast assumptions, ARR bridge, pipeline stages, conversion probabilities, ROI, CAC/payback, margins, scenario ranges, plan-vs-actual deltas",
+        "avoid": "do not lead with cash receipt timing, payment terms, policy compliance, audit trail, or vendor negotiation terms",
+        "actions": {
+            "clarify": "Clarify whether the business case is forecastable, which assumptions drive it, and which ranges break it.",
+            "route_question": "Answer by quantifying ARR movement, probability weighting, ROI, CAC/payback, margin, and sensitivity math.",
+            "challenge_claim": "Challenge the claim by testing forecast assumptions, conversion probability, unit economics, and plan-vs-actual deltas.",
+            "defend_position": "Defend the FP&A stance with forecast data, scenario math, unit economics, and variance evidence.",
+            "rerun_role": "Rerun FP&A from scratch using forecast quality, ARR, pipeline probability, ROI, margin, CAC/payback, and sensitivity ranges.",
+        },
+    },
+    "risk": {
+        "label": "Risk & Audit",
+        "command_lens": "controls adversary: policy violations, approvals, audit trail, provenance, data quality, fraud/error risk, compliance blockers, and hidden obligations",
+        "evidence_priorities": "board policies, governance rules, approval route, audit findings, reconciliation discrepancies, source provenance, security evidence, missing evidence",
+        "avoid": "do not summarize the decision or make an optimistic business-case forecast; pressure missing evidence and controls",
+        "actions": {
+            "clarify": "Clarify the control gap, missing evidence, approval dependency, provenance weakness, or hidden obligation.",
+            "route_question": "Answer by identifying policy blockers, audit trail gaps, required approvals, and evidence still missing.",
+            "challenge_claim": "Challenge the claim by testing policy compliance, source provenance, reconciliation quality, and downside controls.",
+            "defend_position": "Defend the Risk & Audit stance with policy IDs, approval route, audit findings, source quality, and compliance evidence.",
+            "rerun_role": "Rerun Risk & Audit from scratch as a controls adversary, conditioning or opposing when evidence is missing.",
+        },
+    },
+    "procurement": {
+        "label": "Procurement",
+        "command_lens": "vendor and commercial negotiation: supplier leverage, renewal dates, auto-renewal, benchmarks, consolidation, switching cost, SLAs, termination, discounts, and negotiation strategy",
+        "evidence_priorities": "vendor exports, invoices, contract metadata, procurement notes, renewal dates, price benchmarks, termination clauses, SLAs, switching cost, prior renewal outcomes",
+        "avoid": "do not lead with runway, ROI, forecast calibration, policy audit, or final CFO balancing",
+        "actions": {
+            "clarify": "Clarify the vendor leverage, renewal clock, clause exposure, benchmark gap, or negotiation ask.",
+            "route_question": "Answer by naming the supplier leverage, contract term, price benchmark, and exact commercial counter.",
+            "challenge_claim": "Challenge the claim by testing auto-renewal risk, termination notice, switching cost, SLAs, discounts, and supplier leverage.",
+            "defend_position": "Defend the Procurement stance with vendor terms, renewal metadata, benchmarks, switching cost, and negotiation levers.",
+            "rerun_role": "Rerun Procurement from scratch using vendor exports, invoices, contract metadata, renewal terms, benchmarks, and negotiation strategy.",
+        },
+    },
+    "reliability": {
+        "label": "Reliability Auditor",
+        "command_lens": "evaluator scorecard: evidence grounding, calibration, policy compliance, debate value, trace quality, weaknesses, replay cases, and prompt directives",
+        "evidence_priorities": "agent scorecards, trace metadata, replay cases, prompt improvement directives, policy compliance, grounding gaps, known weaknesses",
+        "avoid": "do not approve, reject, condition, defer, or re-decide the business case",
+        "actions": {
+            "clarify": "Clarify the evaluator scorecard, scoring rationale, trace issue, weakness, replay case, or prompt directive.",
+            "route_question": "Answer by auditing evidence grounding, calibration, policy compliance, debate value, and trace quality.",
+            "challenge_claim": "Challenge the claim as an auditor by checking evidence grounding, calibration, policy compliance, and trace quality.",
+            "defend_position": "Defend the scorecard and replay directive without taking a normal approve/reject stance.",
+            "rerun_role": "Rerun the Reliability audit as a scorecard only; generate replay cases and prompt-improvement directives.",
+        },
+    },
+}
+
 _AGENT_ALIASES = {
     "office_of_the_cfo": "cfo",
     "chief_financial_officer": "cfo",
@@ -137,6 +230,7 @@ _AGENT_ALIASES = {
     "financial_planning_and_analysis": "fpna",
     "fpa": "fpna",
     "fp&a": "fpna",
+    "fpanda": "fpna",
     "risk_audit": "risk",
     "risk_and_audit": "risk",
     "risk_&_audit": "risk",
@@ -148,6 +242,19 @@ _AGENT_ALIASES = {
 def normalize_agent_id(value: str | None) -> str:
     normalized = (value or "").strip().lower().replace("&", "and").replace("-", "_").replace(" ", "_")
     return _AGENT_ALIASES.get(normalized, normalized)
+
+
+def role_command_profile(agent_id: str | None) -> dict[str, Any]:
+    """Return the role-specific command profile used by validation, prompts, and UI metadata."""
+    normalized = normalize_agent_id(agent_id)
+    return ROLE_COMMAND_PROFILES.get(normalized, ROLE_COMMAND_PROFILES["cfo"])
+
+
+def role_command_instruction(agent_id: str | None, command_type: str | None) -> str:
+    profile = role_command_profile(agent_id)
+    actions = profile.get("actions") or {}
+    ctype = str(command_type or "").strip().lower()
+    return actions.get(ctype) or profile.get("command_lens", "")
 
 
 # --------------------------------------------------------------------------- #
@@ -339,6 +446,10 @@ def apply_result_to_state(
         "at": now_label(),
         "stream_id": stream_id,
     }
+    result_payload = result.get("result") if isinstance(result.get("result"), dict) else {}
+    for meta_key in ("role_lens", "role_instruction", "evidence_priorities", "avoid"):
+        if result_payload.get(meta_key):
+            active[meta_key] = result_payload.get(meta_key)
     next_state["active_command"] = active
 
     next_state["command_audit_log"] = [

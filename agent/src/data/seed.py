@@ -17,6 +17,7 @@ from __future__ import annotations
 
 from src import redis_layer as R
 from src.data import financial_seed as FS
+from src.data.demo_scenarios import seed_demo_scenarios
 from src.approvals import DEFAULT_MATRIX
 from src.policies import DEFAULT_POLICY_RULES
 
@@ -33,7 +34,7 @@ COMPANY: dict = {
     "hq": "Austin, TX",
     "founded": 2022,
     "headcount": 38,
-    "updated": "2026-06-01",
+    "updated": "2026-06-15",
     # Cash & burn
     "cash_on_hand": 4_200_000,
     "monthly_revenue": 312_000,
@@ -119,6 +120,7 @@ COMPANY: dict = {
         {"id": "AUD-17", "area": "Vendor spend", "severity": "medium", "finding": "Three contracts lack owner attestation before renewal", "due": "2026-07-15"},
         {"id": "AUD-21", "area": "Revenue forecast", "severity": "high", "finding": "Pipeline forecast overstates technical-validation conversion by 8-12 points", "due": "2026-07-31"},
         {"id": "AUD-24", "area": "AI governance", "severity": "medium", "finding": "Prompt changes need replay evidence before promotion", "due": "2026-08-10"},
+        {"id": "AUD-31", "area": "Finance operations data", "severity": "high", "finding": "Connector files contain duplicate invoice IDs, vendor aliases, missing POs, and stale security evidence requiring reconciliation before board use", "due": "2026-06-30"},
     ],
     "board_constraints": [
         "Maintain at least 9 months runway unless a signed financing term sheet is in hand.",
@@ -140,10 +142,60 @@ COMPANY: dict = {
         "procurement": 63,
     },
     "prompt_versions": [
-        {"agent": "treasury", "current": "treasury.v3", "candidate": "treasury.v4-liquidity-stress", "promotion_gate": "must beat v3 on runway-risk recall by 5%"},
-        {"agent": "fpna", "current": "fpna.v3", "candidate": "fpna.v4-cohort-calibration", "promotion_gate": "must reduce forecast overconfidence on replay set"},
-        {"agent": "risk", "current": "risk.v4", "candidate": "risk.v5-control-evidence", "promotion_gate": "must catch all high-severity audit blockers"},
-        {"agent": "procurement", "current": "procurement.v2", "candidate": "procurement.v3-renewal-redlines", "promotion_gate": "must improve renewal leverage scoring"},
+        {
+            "agent": "cfo",
+            "current": "cfo.v5-board-chair-ruling",
+            "candidate": "cfo.v6-condition-dissent-chair",
+            "promotion_gate": "must improve board ruling quality, condition specificity, analyst influence weighting, dissent resolution, and runway impact basis",
+            "reliability_dimensions": ["board_ruling_quality", "condition_specificity", "analyst_influence_weighting", "dissent_resolution", "runway_impact_basis"],
+            "gate_metric": "board_ruling_quality",
+            "replay_set": "atlas-cfo-chair-replay",
+        },
+        {
+            "agent": "treasury",
+            "current": "treasury.v6-liquidity-mechanics",
+            "candidate": "treasury.v7-late-cash-covenants",
+            "promotion_gate": "must improve cash timing recall, runway sensitivity, payment-term grounding, working-capital precision, and financing-delay coverage",
+            "reliability_dimensions": ["cash_timing_recall", "runway_sensitivity", "payment_term_grounding", "working_capital_precision", "financing_delay_coverage"],
+            "gate_metric": "cash_timing_recall",
+            "replay_set": "atlas-treasury-liquidity-replay",
+        },
+        {
+            "agent": "fpna",
+            "current": "fpna.v6-forecast-unit-economics",
+            "candidate": "fpna.v7-forecastability-sensitivity",
+            "promotion_gate": "must improve forecastability challenge, ARR bridge accuracy, scenario math quality, unit-economics grounding, and plan-vs-actual calibration",
+            "reliability_dimensions": ["forecastability_challenge", "arr_bridge_accuracy", "scenario_math_quality", "unit_economics_grounding", "plan_vs_actual_calibration"],
+            "gate_metric": "forecastability_challenge",
+            "replay_set": "atlas-fpna-forecast-replay",
+        },
+        {
+            "agent": "risk",
+            "current": "risk.v7-controls-adversary",
+            "candidate": "risk.v8-provenance-policy-adversary",
+            "promotion_gate": "must improve control-gap detection, approval-route accuracy, source-provenance coverage, hidden-obligation recall, and downside evidence pressure",
+            "reliability_dimensions": ["control_gap_detection", "approval_route_accuracy", "source_provenance_coverage", "hidden_obligation_recall", "downside_evidence_pressure"],
+            "gate_metric": "control_gap_detection",
+            "replay_set": "atlas-risk-controls-replay",
+        },
+        {
+            "agent": "procurement",
+            "current": "procurement.v5-commercial-negotiator",
+            "candidate": "procurement.v6-renewal-leverage-redlines",
+            "promotion_gate": "must improve supplier leverage specificity, renewal clause recall, benchmark grounding, termination/SLA redlines, and negotiation strategy quality",
+            "reliability_dimensions": ["supplier_leverage_specificity", "renewal_clause_recall", "benchmark_grounding", "termination_sla_redlines", "negotiation_strategy_quality"],
+            "gate_metric": "supplier_leverage_specificity",
+            "replay_set": "atlas-procurement-commercial-replay",
+        },
+        {
+            "agent": "reliability",
+            "current": "reliability.v3-evaluator-scorecard",
+            "candidate": "reliability.v4-scorecard-replay-directives",
+            "promotion_gate": "must improve scorecard completeness, stance prohibition, trace-quality audit, replay-case generation, and prompt-directive usefulness",
+            "reliability_dimensions": ["scorecard_completeness", "stance_prohibition", "trace_quality_audit", "replay_case_generation", "prompt_directive_usefulness"],
+            "gate_metric": "scorecard_completeness",
+            "replay_set": "atlas-reliability-evaluator-replay",
+        },
     ],
 }
 
@@ -153,34 +205,131 @@ COMPANY: dict = {
 VENDORS: list[dict] = [
     {"id": "aws", "name": "Amazon Web Services", "category": "infrastructure",
      "annual_cost": 336_000, "monthly_cost": 28_000, "renewal_date": "2026-12-01",
-     "status": "active", "notes": "Committed-use discount in place; ~22% of gross burn."},
+     "status": "active", "owner": "Engineering / Platform", "termination_notice_days": 90,
+     "notice_window_days": 90, "auto_renew": True, "board_approved": True, "board_approval_id": "BRD-2026-01-AWS",
+     "billing_frequency": "monthly", "billing_terms": "monthly in arrears against reserved-capacity commitment plus overage accruals",
+     "contract_aliases": ["AWS", "Amazon AWS", "Amazon Web Svcs", "Amazon Web Services"],
+     "tiered_pricing": [
+         {"tier": "reserved compute", "annual_commit": 336_000, "discount_pct": 22},
+         {"tier": "on-demand overage", "price_multiplier": 1.0},
+     ],
+     "owner_history": [
+         {"owner": "Infrastructure", "from": "2023-01-01", "to": "2026-02-28"},
+         {"owner": "Engineering / Platform", "from": "2026-03-01", "reason": "Platform team owns reserved-capacity commitments."},
+     ],
+     "termination_penalty": 84_000, "sla_uptime_pct": 99.9,
+     "sla_credits": "Service credits vary by service and require support-case claim.",
+     "security_clause": "Enterprise agreement includes DPA, encryption, and subprocessor notification.",
+     "data_processing_addendum": True,
+     "notes": "Committed-use discount in place; ~22% of gross burn."},
     {"id": "datadog", "name": "Datadog", "category": "observability",
      "annual_cost": 180_000, "monthly_cost": 15_000, "renewal_date": "2026-08-01",
      "status": "up_for_renewal", "owner": "Engineering", "termination_notice_days": 45,
+     "notice_window_days": 45, "auto_renew": True, "board_approved": True, "board_approval_id": "BRD-2025-11-DDOG",
+     "billing_frequency": "annual", "billing_terms": "annual committed tier with monthly overage true-up invoices",
+     "contract_aliases": ["Datadog", "DataDog Inc", "Data Dog", "DDOG Observability"],
+     "tiered_pricing": [
+         {"tier": "committed hosts", "minimum_hosts": 0, "maximum_hosts": 300, "annual_price": 180_000},
+         {"tier": "burst hosts", "minimum_hosts": 301, "unit": "host_month", "price": 74},
+     ],
+     "owner_history": [
+         {"owner": "Engineering", "from": "2024-08-01", "to": "2026-05-10"},
+         {"owner": "Platform Ops", "from": "2026-05-11", "reason": "Observability budget moved to Platform Ops."},
+     ],
+     "termination_penalty": 30_000, "sla_uptime_pct": 99.8,
+     "sla_credits": "Credits require 30-day claim and are capped at 10% of monthly service fees.",
+     "security_clause": "SOC 2 Type II current; production telemetry allowed, customer PII prohibited.",
+     "data_processing_addendum": True,
      "switching_cost": 70_000, "data_sensitivity": "production telemetry",
      "notes": "Usage-based; trending ~40% over committed tier. Renewal in 8 weeks."},
     {"id": "snowflake", "name": "Snowflake", "category": "data",
      "annual_cost": 108_000, "monthly_cost": 9_000, "renewal_date": "2027-01-15",
      "status": "active", "owner": "FP&A", "termination_notice_days": 60,
+     "notice_window_days": 60, "auto_renew": False, "board_approved": True, "board_approval_id": "BRD-2025-10-SNOW",
+     "billing_frequency": "monthly", "billing_terms": "monthly usage invoice against committed warehouse budget",
+     "contract_aliases": ["Snowflake", "Snowflake Computing", "SNOW data warehouse"],
+     "tiered_pricing": [
+         {"tier": "committed credits", "annual_commit": 108_000, "credit_discount_pct": 18},
+         {"tier": "overage credits", "price_multiplier": 1.0},
+     ],
+     "owner_history": [
+         {"owner": "Data", "from": "2025-01-01", "to": "2025-12-31"},
+         {"owner": "FP&A", "from": "2026-01-01", "reason": "Forecasting team owns warehouse budget guardrails."},
+     ],
+     "termination_penalty": 0, "sla_uptime_pct": 99.9,
+     "sla_credits": "Standard service-credit remedy; no unused-credit refund.",
+     "security_clause": "DPA signed; customer revenue and telemetry data allowed.",
+     "data_processing_addendum": True,
      "switching_cost": 125_000, "data_sensitivity": "customer revenue and telemetry",
      "notes": "Migrated Q4 2025; cut data costs ~22%."},
     {"id": "salesforce", "name": "Salesforce", "category": "crm",
      "annual_cost": 74_400, "monthly_cost": 6_200, "renewal_date": "2026-09-30",
      "status": "active", "owner": "Revenue", "termination_notice_days": 30,
+     "notice_window_days": 30, "auto_renew": False, "board_approved": True, "board_approval_id": "CFO-2025-09-SFDC",
+     "billing_frequency": "annual", "billing_terms": "annual prepaid seat bundle; monthly AP rows are allocations only",
+     "contract_aliases": ["Salesforce", "Sales Force", "SFCI Sales Cloud"],
+     "tiered_pricing": [
+         {"tier": "sales cloud seats", "seats": 32, "annual_price": 74_400},
+         {"tier": "incremental seats", "unit": "seat_year", "price": 2_400},
+     ],
+     "owner_history": [
+         {"owner": "Revenue", "from": "2022-06-01", "to": "2026-05-01"},
+         {"owner": "RevOps", "from": "2026-05-02", "reason": "CRM owner changed during sales-ops reorg."},
+     ],
+     "termination_penalty": 18_600, "sla_uptime_pct": 99.9,
+     "sla_credits": "Standard service credits; credits do not offset unused seats.",
+     "security_clause": "DPA signed; customer contact data permitted, opportunity notes excluded from sandbox refresh.",
+     "data_processing_addendum": True,
      "switching_cost": 48_000, "data_sensitivity": "pipeline and customer contacts",
      "notes": "32 seats; ~9 underused."},
     {"id": "rippling", "name": "Rippling", "category": "hr_payroll",
      "annual_cost": 45_600, "monthly_cost": 3_800, "renewal_date": "2026-11-01",
-     "status": "active", "notes": "HRIS + payroll + IT."},
+     "status": "active", "owner": "People Ops", "termination_notice_days": 30,
+     "notice_window_days": 30, "auto_renew": True, "board_approved": True,
+     "billing_frequency": "monthly", "billing_terms": "monthly per-employee billing",
+     "contract_aliases": ["Rippling", "Rippling HRIS"],
+     "tiered_pricing": [{"tier": "base employees", "unit": "employee_month", "price": 16}],
+     "termination_penalty": 0, "sla_uptime_pct": 99.5,
+     "sla_credits": "Service credits only.",
+     "security_clause": "DPA signed for employee PII.",
+     "data_processing_addendum": True,
+     "notes": "HRIS + payroll + IT."},
     {"id": "gong", "name": "Gong", "category": "sales",
      "annual_cost": 28_800, "monthly_cost": 2_400, "renewal_date": "2026-10-15",
-     "status": "active", "notes": "Sales call intelligence."},
+     "status": "active", "owner": "Sales Ops", "termination_notice_days": 30,
+     "notice_window_days": 30, "auto_renew": True, "board_approved": True,
+     "billing_frequency": "annual", "billing_terms": "annual seat bundle billed as monthly AP accrual",
+     "contract_aliases": ["Gong", "Gong.io"],
+     "tiered_pricing": [{"tier": "sales seats", "seats": 24, "annual_price": 28_800}],
+     "termination_penalty": 7_200, "sla_uptime_pct": 99.5,
+     "sla_credits": "Credits capped at one month.",
+     "security_clause": "Call recordings require retention-policy review.",
+     "data_processing_addendum": True,
+     "notes": "Sales call intelligence."},
     {"id": "github", "name": "GitHub Enterprise", "category": "engineering",
      "annual_cost": 22_800, "monthly_cost": 1_900, "renewal_date": "2026-10-01",
-     "status": "active", "notes": "Includes Copilot seats."},
+     "status": "active", "owner": "Engineering", "termination_notice_days": 30,
+     "notice_window_days": 30, "auto_renew": True, "board_approved": True,
+     "billing_frequency": "monthly", "billing_terms": "monthly seat true-up",
+     "contract_aliases": ["GitHub", "GitHub Enterprise", "GH Enterprise"],
+     "tiered_pricing": [{"tier": "enterprise seats", "unit": "seat_month", "price": 19}],
+     "termination_penalty": 0, "sla_uptime_pct": 99.9,
+     "sla_credits": "Enterprise SLA credits via support case.",
+     "security_clause": "SOC reports available; code repository data covered by DPA.",
+     "data_processing_addendum": True,
+     "notes": "Includes Copilot seats."},
     {"id": "figma", "name": "Figma", "category": "design",
      "annual_cost": 14_400, "monthly_cost": 1_200, "renewal_date": "2026-12-20",
-     "status": "active", "notes": "Design + FigJam."},
+     "status": "active", "owner": "Design", "termination_notice_days": 30,
+     "notice_window_days": 30, "auto_renew": True, "board_approved": True,
+     "billing_frequency": "annual", "billing_terms": "annual creator-seat bundle",
+     "contract_aliases": ["Figma", "FigJam"],
+     "tiered_pricing": [{"tier": "creator seats", "seats": 10, "annual_price": 14_400}],
+     "termination_penalty": 3_600, "sla_uptime_pct": 99.0,
+     "sla_credits": "Service credits only.",
+     "security_clause": "DPA not attached in procurement export; design files may include customer screenshots.",
+     "data_processing_addendum": False,
+     "notes": "Design + FigJam."},
 ]
 
 # --------------------------------------------------------------------------- #
@@ -188,27 +337,53 @@ VENDORS: list[dict] = [
 # --------------------------------------------------------------------------- #
 POLICIES: list[dict] = [
     {"id": "pol-spend", "kind": "policy", "title": "Spend approval thresholds",
-     "text": "Any single financial commitment over $50,000 per year requires CFO approval. "
-             "Commitments over $150,000 per year require board notification before signing."},
+     "text": "Policy ID pol-spend maps to governance controls gov-spend-cfo and gov-board-notify. "
+             "Any single financial commitment over $50,000 per year requires the approval route "
+             "Department Head -> Controller -> CFO, with a CFO approval memo and signed contract or PO retained. "
+             "Commitments over $150,000 per year require board notification before signing, a board memo, "
+             "delivery timestamp, and audit-trail evidence. Exceptions require CFO-documented delegated authority."},
     {"id": "pol-runway", "kind": "policy", "title": "Runway guardrail",
-     "text": "Maintain at least 9 months of cash runway at all times. Any decision that would "
-             "reduce runway below 9 months must be accompanied by an explicit financing plan."},
+     "text": "Policy ID pol-runway maps to governance control gov-runway-floor. Maintain at least "
+             "9 months of cash runway at all times. Any decision that would reduce runway below 9 months "
+             "requires CFO and Board approval, a signed financing term sheet or board-approved runway exception, "
+             "before/after runway forecast, and a 30-day Treasury runway re-check. If cash arrives late, "
+             "the exception must name contingency spend cuts and financing close ownership."},
     {"id": "pol-vendor", "kind": "policy", "title": "Vendor renewal review",
-     "text": "Vendor contracts over $100,000 per year must be competitively reviewed and "
-             "renegotiated at least 60 days before their renewal date."},
+     "text": "Policy ID pol-vendor maps to board policies BP-2 and BP-3. Vendor contracts over "
+             "$100,000 per year must be competitively reviewed and renegotiated at least 60 days before "
+             "renewal or auto-renewal notice deadlines. Required evidence includes contract metadata, "
+             "renewal date, termination notice, benchmark or alternative quote, procurement notes, and prior renewal outcome. "
+             "Missed notice windows require CFO escalation and an audit note on lost leverage."},
     {"id": "pol-hiring", "kind": "policy", "title": "Headcount & burn discipline",
-     "text": "Net-new headcount must keep quarterly net-burn growth under 8% unless the role is "
-             "directly tied to committed revenue."},
+     "text": "Policy ID pol-hiring maps to governance control gov-headcount and board policy BP-5. "
+             "Net-new headcount must keep monthly net-burn growth under 8% unless the role is directly tied "
+             "to committed revenue, security compliance, or runway-positive automation. Required evidence includes "
+             "approved headcount plan row, start date, fully loaded cost, department mapping, and business linkage. "
+             "Partially approved roles, contractors, or unplanned backfills require CFO exception."},
     {"id": "pol-cash", "kind": "policy", "title": "Cash management",
-     "text": "Keep a minimum operating cash buffer of $1.5M. Cash above 12 months of runway may "
-             "be placed in short-term Treasuries."},
+     "text": "Policy ID pol-cash is the Treasury liquidity policy. Keep a minimum operating cash buffer "
+             "of $1.5M, stress cash receipt delays, payment terms, renewal prepayments, payroll timing, "
+             "working-capital swings, and financing close delays. Cash above 12 months of runway may be placed "
+             "in short-term Treasuries only after covenant-style runway and operating-buffer checks are documented."},
     {"id": "pol-ai-promotion", "kind": "policy", "title": "AI council promotion gate",
-     "text": "No agent prompt, model, or policy change may be promoted unless a W&B Weave replay "
-             "evaluation beats the incumbent on reliability, policy compliance, and calibration without "
-             "regressing evidence grounding."},
+     "text": "Policy ID pol-ai-promotion requires that no agent prompt, model, or policy change be "
+             "promoted unless a W&B Weave replay evaluation beats the incumbent on reliability, policy compliance, "
+             "debate value, trace quality, and calibration without regressing evidence grounding. Required evidence "
+             "includes replay cases, prompt-improvement directives, and gate results by role."},
     {"id": "pol-security-blockers", "kind": "policy", "title": "Security-blocked revenue priority",
-     "text": "Controls that unblock signed or late-stage enterprise revenue take priority over broad "
-             "growth spend when runway is under 12 months."},
+     "text": "Policy ID pol-security-blockers maps to governance control gov-security-revenue. Controls "
+             "that unblock signed or late-stage enterprise revenue take priority over broad growth spend when "
+             "runway is under 12 months. Required evidence includes blocked ARR, security evidence freshness, "
+             "Risk & Audit sign-off, and a remediation checkpoint before funding broad growth spend."},
+    {"id": "pol-data-security", "kind": "policy", "title": "Customer and regulated data review",
+     "text": "Policy ID pol-data-security maps to governance control gov-data-security and board policy BP-6. "
+             "Any vendor or workflow processing customer or regulated data requires Security Review, Legal review "
+             "when regulated data is in scope, signed DPA, data-flow owner, and fresh SOC 2 or equivalent security evidence "
+             "before go-live. No regulated-data exception is allowed without Legal and Security Review approval."},
+    {"id": "pol-forecast-calibration", "kind": "policy", "title": "Post-decision forecast calibration",
+     "text": "Policy ID pol-forecast-calibration maps to governance control gov-forecast-calibration and board policy BP-7. "
+             "Every material council decision must compare predicted cash, ARR, margin, and control outcomes against actuals "
+             "within 60 days, record a calibration score, preserve source provenance, and generate replay directives for misses."},
     {"id": "dec-snowflake", "kind": "decision", "title": "Approved Snowflake migration (Q4 2025)",
      "text": "Approved migrating the data warehouse to Snowflake at $108K/yr, cutting data costs "
              "~22% with a projected 7-month payback."},
@@ -352,7 +527,7 @@ def seed(verbose: bool = True) -> dict:
     R.ensure_policy_index()
     embeddings = R.embed_texts([f"{p['title']}. {p['text']}" for p in POLICIES])
     for p, emb in zip(POLICIES, embeddings):
-        R.upsert_policy(p["id"], text=p["text"], kind=p["kind"], title=p["title"], embedding=emb)
+        R.upsert_policy(p["id"], text=p["text"], kind=p["kind"], title=p["title"], embedding=emb, source_id=p["id"])
 
     # 4) Seed the recent-decisions stream from historical board decisions
     if not R.read_events("decisions", count=1):
@@ -382,7 +557,10 @@ def seed(verbose: bool = True) -> dict:
 
         print(f"[seed] financial-OS seeding warning: {redact_secrets(exc)}")
 
-    # 8) Seed the orchestration namespace (atlas:orch:*) ONLY when the engine is
+    # 8) Seed scenario-specific messy decision examples for the demo selector.
+    demo_scenarios = seed_demo_scenarios(verbose=verbose)
+
+    # 9) Seed the orchestration namespace (atlas:orch:*) ONLY when the engine is
     #    enabled, so the core demo seed stays unchanged with ATLAS_ORCHESTRATOR off.
     orchestration: dict = {}
     import os as _os
@@ -405,6 +583,7 @@ def seed(verbose: bool = True) -> dict:
         "evaluation": evaluation,
         "governance": governance,
         "financial_os": financial_os,
+        "demo_scenarios": demo_scenarios,
         "orchestration": orchestration,
     }
     if verbose:

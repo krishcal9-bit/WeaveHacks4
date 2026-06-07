@@ -4,16 +4,10 @@ import { useEffect, useState } from "react";
 import { Workflow } from "lucide-react";
 import { ROSTER, ROSTER_BY_ID } from "@/lib/agents";
 import { api } from "@/lib/api";
-import type { CompanyFinancials, RosterMember } from "@/lib/types";
+import type { CompanyFinancials, PromptVersion, RosterMember } from "@/lib/types";
 import { AtlasIcon, type AtlasIconName } from "@/components/atlas-icon";
 import { cx, Card } from "@/components/ui";
 
-interface PromptVersion {
-  agent: string;
-  current: string;
-  candidate: string;
-  promotion_gate: string;
-}
 interface TrackRecord {
   count: number;
   avg: number;
@@ -47,7 +41,10 @@ export default function DepartmentPage() {
   }, []);
 
   const promptByAgent: Record<string, PromptVersion> = {};
-  for (const p of co?.prompt_versions ?? []) promptByAgent[p.agent] = p;
+  for (const p of co?.prompt_versions ?? []) {
+    const key = p.agent ?? p.role;
+    if (key) promptByAgent[key] = p;
+  }
 
   const trackByMember = buildTrackRecords(co);
 
@@ -64,8 +61,8 @@ export default function DepartmentPage() {
         </div>
       </div>
       <p className="mt-0.5 text-[12px] text-muted-foreground">
-        A standing committee of finance functions. Each reviews every decision from its own mandate before the CFO rules
-        — with a reliability track record and prompt-promotion gate.
+        A standing finance council: four analysts review from their mandates, the CFO rules, and Reliability audits the
+        evidence, calibration, traces, and prompt-promotion gate after the fact.
       </p>
 
       {/* Chair */}
@@ -118,7 +115,7 @@ function MemberCard({
         </div>
       </div>
       {member.mandate && (
-        <p className="mt-3 line-clamp-3 text-[12px] leading-relaxed text-muted-foreground">{member.mandate}</p>
+        <p title={member.mandate} className="mt-3 line-clamp-3 text-[12px] leading-relaxed text-muted-foreground">{member.mandate}</p>
       )}
 
       {(track || prompt) && (
@@ -148,9 +145,25 @@ function MemberCard({
               <div className="text-[10px] font-medium uppercase tracking-[0.08em] text-subtle-foreground">
                 Prompt gate
               </div>
-              <div className="mt-1 truncate text-[11.5px] font-medium tabular-nums text-foreground">
-                {prompt.current} → {prompt.candidate}
+              <div className="mt-1 truncate text-[11.5px] font-medium tabular-nums text-foreground" title={`${prompt.current ?? prompt.version} → ${prompt.candidate ?? "no candidate"}`}>
+                {prompt.current ?? prompt.version} → {prompt.candidate ?? "candidate pending"}
               </div>
+              <div className="mt-1 flex flex-wrap gap-1">
+                <HashChip label="active" value={prompt.active_prompt_hash ?? prompt.prompt_hash} />
+                <HashChip label="candidate" value={prompt.candidate_prompt_hash} />
+              </div>
+              {prompt.gate_metric && (
+                <div className="mt-1 text-[10.5px] font-semibold text-info">{prompt.gate_metric}</div>
+              )}
+              {prompt.reliability_dimensions && prompt.reliability_dimensions.length > 0 && (
+                <div className="mt-1 flex flex-wrap gap-1">
+                  {prompt.reliability_dimensions.slice(0, 3).map((dimension) => (
+                    <span key={dimension} className="rounded border border-border bg-surface px-1.5 py-0.5 text-[9.5px] font-medium text-muted-foreground">
+                      {dimension.replaceAll("_", " ")}
+                    </span>
+                  ))}
+                </div>
+              )}
               <div className="mt-0.5 line-clamp-2 text-[11px] leading-relaxed text-muted-foreground">
                 {prompt.promotion_gate}
               </div>
@@ -159,6 +172,15 @@ function MemberCard({
         </div>
       )}
     </Card>
+  );
+}
+
+function HashChip({ label, value }: { label: string; value?: string }) {
+  if (!value) return null;
+  return (
+    <span className="rounded border border-border bg-surface px-1.5 py-0.5 font-mono text-[9.5px] font-semibold text-subtle-foreground">
+      {label}:{value}
+    </span>
   );
 }
 

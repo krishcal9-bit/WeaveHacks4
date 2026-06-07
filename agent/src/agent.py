@@ -45,6 +45,7 @@ from src import planning as PL
 from src import agui_commands as AGUI
 from src import promotion_gates as PG
 from src import replay_sets as RS
+from src import role_distinction_eval as RD
 from src import weave_eval as WE
 from src import governance as GOV
 from src.governance_models import ActorType
@@ -60,11 +61,17 @@ from src.openai_council import (
     classify_and_plan,
     council_influence,
     cross_examination,
+    ensure_role_specific_exchanges,
     gather_role_evidence,
     init_telemetry,
     merge_telemetry,
     model_family,
+    fpna_evidence_preferences,
+    procurement_evidence_preferences,
     prompt_versions_payload,
+    risk_evidence_preferences,
+    role_challenge_profile,
+    treasury_evidence_preferences,
     tool_plan_entries,
 )
 from src.tools import (
@@ -133,25 +140,25 @@ ROSTER: dict[str, dict] = {
         "label": "Treasury",
         "role": "Treasury",
         "monogram": "TR",
-        "mandate": "liquidity, cash position, runway, and financing risk",
+        "mandate": "cash runway, liquidity timing, payment terms, working capital, renewal cash schedules, and late-cash financing risk",
     },
     "fpna": {
         "label": "FP&A",
-        "role": "Financial Planning & Analysis",
+        "role": "Forecast & Unit Economics",
         "monogram": "FP",
-        "mandate": "growth, ROI, forecast, payback, and unit economics",
+        "mandate": "forecast quality, ARR movement, pipeline probability, ROI, CAC/payback, margin, sensitivity ranges, scenario math, and plan-vs-actual deltas",
     },
     "risk": {
         "label": "Risk & Audit",
-        "role": "Risk & Audit",
+        "role": "Controls Adversary",
         "monogram": "RA",
-        "mandate": "downside scenarios, compliance, controls, and policy adherence",
+        "mandate": "policy violations, audit trail gaps, approvals, data quality, fraud/error risk, compliance blockers, hidden obligations, security evidence, and source provenance",
     },
     "procurement": {
         "label": "Procurement",
-        "role": "Procurement",
+        "role": "Vendor & Commercial Negotiation",
         "monogram": "PR",
-        "mandate": "vendor terms, cost efficiency, and negotiation leverage",
+        "mandate": "supplier leverage, contract terms, auto-renewal, renewal dates, price benchmarks, consolidation, switching cost, SLAs, termination clauses, volume discounts, and negotiation strategy",
     },
     "reliability": {
         "label": "Reliability Auditor",
@@ -187,6 +194,13 @@ class Position(StrictStructuredModel):
 class Exchange(StrictStructuredModel):
     from_role: str = Field(description="the function raising the challenge")
     to_role: str = Field(description="the function being challenged")
+    challenge_type: str = Field(
+        description=(
+            "one of: cash_timing, forecast_assumptions, controls_policy, vendor_terms, synthesis_question"
+        )
+    )
+    challenge_label: str = Field(description="short display label for the challenge type, <= 4 words")
+    challenge_lens: str = Field(description="the role-specific weakness this exchange is testing")
     point: str = Field(description="a sharp, specific, quantified challenge")
 
 
@@ -218,14 +232,25 @@ class ReliabilityScore(StrictStructuredModel):
     rationale: str = Field(description="specific evidence-backed reason for the score")
     known_weaknesses: list[str] = Field(description="known weaknesses to replay or improve")
     prompt_adjustment: str = Field(description="specific prompt or policy improvement to replay")
+    replay_cases: list[str] = Field(
+        description="per-agent replay cases that reproduce grounding, calibration, policy, debate, or trace weaknesses"
+    )
+    prompt_improvement_directive: str = Field(
+        description="imperative directive to feed the self-improvement loop for this agent's next prompt"
+    )
     promotion_gate: str = Field(description="how W&B Weave evals should decide whether this agent improves")
 
 
 class ReliabilityReport(StrictStructuredModel):
-    summary: str = Field(description="board-ready summary of council reliability")
+    audit_scope: str = Field(description="explicit statement that this is an evaluator scorecard, not a case ruling")
+    normal_decision_prohibited: bool = Field(description="must be true; Reliability must not approve, reject, or defer")
+    summary: str = Field(description="board-ready summary of council reliability and calibration")
     scores: list[ReliabilityScore] = Field(description="per-agent reliability scores")
     eval_dataset: str = Field(description="W&B/Weave eval dataset or replay-set label")
     replay_plan: list[str] = Field(description="replay cases or eval steps to run")
+    prompt_improvement_directives: list[str] = Field(
+        description="global prompt-improvement directives extracted from the per-agent scorecards"
+    )
     promotion_gate: str = Field(description="global gate for accepting future prompt/model changes")
 
 
@@ -578,6 +603,7 @@ def _fast_challenge_report(positions: list) -> dict:
     scores: list[int] = []
     for pos in positions:
         role = str(pos.get("agent") or pos.get("role") or "unknown")
+        profile = role_challenge_profile(role)
         metrics = pos.get("cited_metrics") or []
         cited = len(metrics) >= 1
         score = min(100, 42 + len(metrics) * 14)
@@ -587,11 +613,16 @@ def _fast_challenge_report(positions: list) -> dict:
         findings.append(
             {
                 "role": role,
+                **profile,
                 "cited_enough_numbers": cited,
                 "grounding_score": score,
                 "strongest_number": metrics[0] if metrics else "n/a",
                 "missing_evidence": [] if cited else ["Cite concrete figures from Redis context"],
-                "challenge": "None" if cited else "Ground the position in live financials",
+                "challenge": (
+                    f"{profile['challenge_label']}: verify {profile['challenge_lens']} with role-specific evidence."
+                    if cited
+                    else f"{profile['challenge_label']}: ground this lane in live role-specific figures."
+                ),
             }
         )
     overall = round(sum(scores) / len(scores)) if scores else 72
@@ -628,6 +659,13 @@ def _fast_reliability_scorecard(positions: list, recommendation: dict) -> tuple[
             "rationale": "Fast-path score from live citations and council confidence.",
             "known_weaknesses": [] if cited or agent_id == "cfo" else ["Needs more cited figures"],
             "prompt_adjustment": "Keep citing Redis-backed metrics in every position.",
+            "replay_cases": [
+                f"Replay {agent_id} with cited-metric redaction and require the auditor to flag missing Redis grounding.",
+                f"Replay {agent_id} against trace telemetry to verify evidence, calibration, policy, debate, and trace-quality scoring.",
+            ],
+            "prompt_improvement_directive": (
+                "Preserve role-specific reasoning while citing at least two Redis-backed figures and the trace span that supports them."
+            ),
             "promotion_gate": "Replay eval recommended before prompt promotion.",
         }
         item["reliability"] = _weighted_reliability(item)
@@ -650,6 +688,8 @@ def _default_reliability_score(agent_id: str) -> dict:
         "rationale": "Reliability auditor did not return a score for this agent; promotion is blocked until replay evidence exists.",
         "known_weaknesses": ["Missing reliability score"],
         "prompt_adjustment": "Require this role to cite evidence and replay outcomes in every recommendation.",
+        "replay_cases": ["Replay the decision with this agent required to emit a complete reliability scorecard row."],
+        "prompt_improvement_directive": "Block promotion until this agent produces evidence-grounded scorecard outputs with trace provenance.",
         "promotion_gate": "Blocked until W&B Weave replay eval produces a complete scorecard.",
     }
 
@@ -664,6 +704,8 @@ def _normalize_reliability_scores(scores: list[ReliabilityScore]) -> list[dict]:
             continue
         item["agent_id"] = agent_id
         item["reliability"] = _weighted_reliability(item)
+        item.setdefault("replay_cases", [])
+        item.setdefault("prompt_improvement_directive", item.get("prompt_adjustment") or "")
         by_agent[agent_id] = item
     return [by_agent.get(agent_id) or _default_reliability_score(agent_id) for agent_id in expected]
 
@@ -707,6 +749,8 @@ def _attach_reliability_to_statuses(statuses: list | None, scores: list[dict]) -
                 reliability_rationale=score["rationale"],
                 known_weaknesses=score["known_weaknesses"],
                 prompt_adjustment=score["prompt_adjustment"],
+                prompt_improvement_directive=score.get("prompt_improvement_directive"),
+                replay_cases=score.get("replay_cases", []),
                 promotion_gate=score["promotion_gate"],
             )
         updated.append(item)
@@ -780,9 +824,11 @@ def _command_focus_prompt() -> str:
     parts: list[str] = []
     focus = state.get("agent_focus") or {}
     if focus.get("question"):
+        lens = f" Lens: {focus.get('role_lens')}." if focus.get("role_lens") else ""
+        instruction = f" Instruction: {focus.get('role_instruction')}." if focus.get("role_instruction") else ""
         parts.append(
             f"OPERATOR {str(focus.get('mode', 'focus')).upper()} → {focus.get('label', focus.get('agent'))}: "
-            f"{focus.get('question')}"
+            f"{focus.get('question')}.{lens}{instruction}"
         )
     pins = state.get("pinned_evidence") or []
     if pins:
@@ -802,6 +848,43 @@ def _command_focus_prompt() -> str:
         "\n\nLIVE OPERATOR DIRECTIVES (the human steering this debate — address them "
         "explicitly and ground any response in the figures):\n- " + "\n- ".join(parts)
     )
+
+
+def _role_distinction_summary(meta: dict | None) -> dict:
+    report = (meta or {}).get("report") or {}
+    cases = report.get("cases") or []
+    return {
+        "id": report.get("id"),
+        "overall_score": report.get("overall_score"),
+        "passed": report.get("passed"),
+        "case_count": report.get("case_count"),
+        "role_average_scores": report.get("role_average_scores") or {},
+        "collapse_flags": [
+            {"case": case.get("id"), "flags": case.get("collapse_flags")}
+            for case in cases
+            if case.get("collapse_flags")
+        ],
+        "artifact_path": meta.get("artifact_path") if meta else None,
+        "event_id": meta.get("event_id") if meta else None,
+        "redis_error": meta.get("redis_error") if meta else None,
+        "weave": meta.get("weave") if meta else None,
+    }
+
+
+def _runway_impact_summary(impact: dict | None) -> str:
+    """Compact board-facing summary from the compute_runway tool result."""
+    if not impact:
+        return "Runway impact unavailable"
+    current = impact.get("current_runway_months")
+    scenario = impact.get("scenario_runway_months")
+    delta = impact.get("delta_months")
+    if scenario is None:
+        note = impact.get("note") or "scenario becomes cash-flow positive"
+        return f"Runway: {current if current is not None else 'n/a'} months -> cash-flow positive ({note})"
+    delta_text = f"{delta:+.1f} months" if isinstance(delta, (int, float)) else "delta n/a"
+    current_text = f"{current:.1f}" if isinstance(current, (int, float)) else "n/a"
+    scenario_text = f"{scenario:.1f}" if isinstance(scenario, (int, float)) else "n/a"
+    return f"Runway: {current_text} months -> {scenario_text} months ({delta_text})"
 
 
 async def _honor_pause(state: DebateState, config: RunnableConfig, node_label: str) -> None:
@@ -1023,6 +1106,42 @@ async def planner_node(state: DebateState, config: RunnableConfig) -> dict:
         # Honest degradation: no plan → analysts still run on full live context.
         detail = result.telemetry.error or result.telemetry.refusal or "Planner returned no plan"
         agent_statuses = _set_agent_status(agent_statuses, "planner", status="warning", headline="Planning unavailable", detail=detail)
+        treasury_prefs = treasury_evidence_preferences()
+        fpna_prefs = fpna_evidence_preferences()
+        risk_prefs = risk_evidence_preferences()
+        procurement_prefs = procurement_evidence_preferences()
+        fallback_treasury = RoleEvidencePlan(
+            role="treasury",
+            tools=treasury_prefs["tools"],
+            policy_queries=treasury_prefs["policy_queries"],
+            focus_slices=treasury_prefs["focus_slices"],
+            prior_decisions=[],
+            rationale="Fallback Treasury route: preserve liquidity mechanics evidence when the planner degrades.",
+        )
+        fallback_fpna = RoleEvidencePlan(
+            role="fpna",
+            tools=fpna_prefs["tools"],
+            policy_queries=fpna_prefs["policy_queries"],
+            focus_slices=fpna_prefs["focus_slices"],
+            prior_decisions=[],
+            rationale="Fallback FP&A route: preserve forecast and unit-economics evidence when the planner degrades.",
+        )
+        fallback_risk = RoleEvidencePlan(
+            role="risk",
+            tools=risk_prefs["tools"],
+            policy_queries=risk_prefs["policy_queries"],
+            focus_slices=risk_prefs["focus_slices"],
+            prior_decisions=[],
+            rationale="Fallback Risk route: preserve controls, approvals, evidence, and provenance checks when the planner degrades.",
+        )
+        fallback_procurement = RoleEvidencePlan(
+            role="procurement",
+            tools=procurement_prefs["tools"],
+            policy_queries=procurement_prefs["policy_queries"],
+            focus_slices=procurement_prefs["focus_slices"],
+            prior_decisions=[],
+            rationale="Fallback Procurement route: preserve vendor, contract, invoice, renewal, and negotiation evidence when the planner degrades.",
+        )
         fallback = DecisionPlan(
             decision_type="general",
             title=(state.get("decision", "") or "decision")[:60],
@@ -1031,13 +1150,18 @@ async def planner_node(state: DebateState, config: RunnableConfig) -> dict:
             required_facts=[],
             assumptions=[],
             follow_up_questions=[],
-            role_plans=[],
+            role_plans=[fallback_treasury, fallback_fpna, fallback_risk, fallback_procurement],
             decision_specific_focus=[],
         )
         return {
             "decision_type": "general",
-            "decision_plan": {},
-            "evidence_plan": [],
+            "decision_plan": fallback.model_dump(),
+            "evidence_plan": [
+                fallback_treasury.model_dump(),
+                fallback_fpna.model_dump(),
+                fallback_risk.model_dump(),
+                fallback_procurement.model_dump(),
+            ],
             "tool_plan": tool_plan_entries(fallback),
             "follow_up": {},
             "phase": "analysis",
@@ -1198,7 +1322,13 @@ async def _run_analyst_parallel(role_key: str, state: DebateState, config: Runna
     await live.show_thinking(role_key, f"{persona['label']} is querying vendors, policies, and financials from Redis…")
     await live.emit(current_phase="All four analysts working in parallel")
 
-    bundle = gather_role_evidence(role_plan, state.get("context", {}))
+    bundle = gather_role_evidence(
+        role_plan,
+        state.get("context", {}),
+        decision=state.get("decision", ""),
+        decision_type=decision_type,
+        entities=(state.get("decision_plan") or {}).get("entities") or [],
+    )
     redis_items = [
         _redis_ping_activity(health),
         *[_redis_activity(item["label"], item["detail"], item["kind"]) for item in bundle.redis_activity],
@@ -1270,8 +1400,16 @@ async def _run_analyst_parallel(role_key: str, state: DebateState, config: Runna
         headline=pos.headline,
         argument=pos.argument,
         key_points=pos.key_points,
+        role_specific_lens=pos.role_specific_lens,
         cited_metrics=pos.cited_metrics,
         evidence_used=pos.evidence_used,
+        forecast_assumptions=pos.forecast_assumptions,
+        scenario_sensitivities=pos.scenario_sensitivities,
+        plan_vs_actual_deltas=pos.plan_vs_actual_deltas,
+        control_findings=pos.control_findings,
+        missing_evidence_requests=pos.missing_evidence_requests,
+        approval_or_policy_blockers=pos.approval_or_policy_blockers,
+        negotiation_levers=pos.negotiation_levers,
         prompt_version=displayed_version,
         tokens=result.telemetry.total_tokens,
         cost_usd=result.telemetry.cost_usd,
@@ -1408,7 +1546,13 @@ def make_analyst_node(role_key: str):
         )
 
         # Multi-step, live evidence gathering against Redis before the model speaks.
-        bundle = gather_role_evidence(role_plan, state.get("context", {}))
+        bundle = gather_role_evidence(
+        role_plan,
+        state.get("context", {}),
+        decision=state.get("decision", ""),
+        decision_type=decision_type,
+        entities=(state.get("decision_plan") or {}).get("entities") or [],
+    )
         redis_activity = _append(
             state.get("redis_activity"),
             _redis_ping_activity(health),
@@ -1461,8 +1605,16 @@ def make_analyst_node(role_key: str):
             headline=pos.headline,
             argument=pos.argument,
             key_points=pos.key_points,
+            role_specific_lens=pos.role_specific_lens,
             cited_metrics=pos.cited_metrics,
             evidence_used=pos.evidence_used,
+            forecast_assumptions=pos.forecast_assumptions,
+            scenario_sensitivities=pos.scenario_sensitivities,
+            plan_vs_actual_deltas=pos.plan_vs_actual_deltas,
+            control_findings=pos.control_findings,
+            missing_evidence_requests=pos.missing_evidence_requests,
+            approval_or_policy_blockers=pos.approval_or_policy_blockers,
+            negotiation_levers=pos.negotiation_levers,
             prompt_version=displayed_version,
             tokens=result.telemetry.total_tokens,
             cost_usd=result.telemetry.cost_usd,
@@ -1529,6 +1681,20 @@ async def challenge_node(state: DebateState, config: RunnableConfig) -> dict:
     if _fast_council():
         challenge_report = _fast_challenge_report(positions)
         evidence_gaps = challenge_report.get("unresolved_gaps") or []
+        challenge_turn = {
+            "agent": "challenge",
+            "label": "Evidence Challenge Panel",
+            "role": "Grounding QA",
+            "monogram": "EC",
+            "type": "challenge",
+            "headline": f"Council grounding · {challenge_report.get('overall_grounding')}%",
+            "argument": challenge_report.get("summary", "Fast-path evidence check"),
+            "key_points": [
+                f"{finding.get('challenge_label')}: {finding.get('challenge')}"
+                for finding in (challenge_report.get("findings") or [])
+            ][:4],
+            "challenge_findings": challenge_report.get("findings") or [],
+        }
         agent_statuses = _set_agent_status(
             agent_statuses,
             "challenge",
@@ -1539,6 +1705,7 @@ async def challenge_node(state: DebateState, config: RunnableConfig) -> dict:
         return {
             "challenge_report": challenge_report,
             "evidence_gaps": evidence_gaps,
+            "transcript": state.get("transcript", []) + [challenge_turn],
             "phase": "challenge",
             "current_phase": "Evidence check complete",
             "agent_statuses": agent_statuses,
@@ -1587,7 +1754,8 @@ async def challenge_node(state: DebateState, config: RunnableConfig) -> dict:
         "type": "challenge",
         "headline": f"Council grounding · {report.overall_grounding}%",
         "argument": report.summary,
-        "key_points": [finding.challenge for finding in report.findings][:3],
+        "key_points": [f"{finding.challenge_label}: {finding.challenge}" for finding in report.findings][:4],
+        "challenge_findings": [finding.model_dump() for finding in report.findings],
     }
     agent_statuses = _set_agent_status(
         agent_statuses,
@@ -1672,9 +1840,23 @@ async def debate_node(state: DebateState, config: RunnableConfig) -> dict:
     telemetry = merge_telemetry(state.get("model_telemetry"), result.telemetry)
     turns: list[dict] = []
     if result.ok:
+        exchanges = ensure_role_specific_exchanges(
+            result.parsed.exchanges,
+            positions=positions,
+            challenge_report=state.get("challenge_report"),
+        )
         turns = [
-            {"agent": "debate", "type": "rebuttal", "from_role": e.from_role, "to_role": e.to_role, "point": e.point}
-            for e in result.parsed.exchanges
+            {
+                "agent": "debate",
+                "type": "rebuttal",
+                "from_role": exchange.get("from_role"),
+                "to_role": exchange.get("to_role"),
+                "challenge_type": exchange.get("challenge_type"),
+                "challenge_label": exchange.get("challenge_label"),
+                "challenge_lens": exchange.get("challenge_lens"),
+                "point": exchange.get("point"),
+            }
+            for exchange in exchanges
         ]
     for role_key in ANALYSTS:
         agent_statuses = _set_agent_status(
@@ -1928,19 +2110,34 @@ async def synthesis_node(state: DebateState, config: RunnableConfig) -> dict:
     telemetry = merge_telemetry(state.get("model_telemetry"), rec_result.telemetry)
     if rec_result.ok:
         rec = rec_result.parsed
-        rec_decision, rec_rationale = rec.decision, rec.rationale
+        rec_decision, rec_ruling, rec_rationale = rec.decision, rec.ruling, rec.rationale
         rec_confidence, confidence_factors = CI.confidence_adjustment(
             base_confidence=rec.confidence,
             influence=state.get("council_influence"),
             evidence_gaps=state.get("evidence_gaps"),
         )
         rec_key_risks, rec_conditions = rec.key_risks, rec.conditions
+        rec_tradeoffs = rec.tradeoffs
+        rec_analyst_influence = [
+            item.model_dump() if hasattr(item, "model_dump") else dict(item)
+            for item in rec.analyst_influence
+        ]
+        rec_dissent = rec.dissent
+        rec_assumption_conditions = rec.assumptions_converted_to_conditions
+        rec_runway_basis = rec.runway_impact_basis
         extra_monthly, one_time, added_rev = rec.estimated_monthly_cost, rec.estimated_one_time_cost, rec.estimated_added_monthly_revenue
     else:
         # Honest surfacing: DEFER with the real error as rationale (not fabricated analysis).
         detail = rec_result.telemetry.refusal or rec_result.telemetry.error or "CFO synthesis returned no recommendation"
-        rec_decision, rec_confidence, rec_rationale = "DEFER", 0, f"Synthesis could not complete live: {detail}"
+        rec_decision, rec_confidence = "DEFER", 0
+        rec_ruling = "DEFER until live CFO synthesis completes."
+        rec_rationale = f"Synthesis could not complete live: {detail}"
         rec_key_risks, rec_conditions = ["CFO synthesis call did not complete"], []
+        rec_tradeoffs = []
+        rec_analyst_influence = []
+        rec_dissent = "No dissent could be resolved because the CFO synthesis call did not complete."
+        rec_assumption_conditions = []
+        rec_runway_basis = "No incremental cost or revenue levers accepted; model synthesis failed."
         confidence_factors = {}
         extra_monthly = one_time = added_rev = 0.0
 
@@ -1953,12 +2150,20 @@ async def synthesis_node(state: DebateState, config: RunnableConfig) -> dict:
             added_monthly_revenue=added_rev,
         )
     )
+    runway_summary = _runway_impact_summary(impact)
     recommendation = {
         "decision": rec_decision,
+        "ruling": rec_ruling,
         "confidence": rec_confidence,
         "rationale": rec_rationale,
+        "tradeoffs": rec_tradeoffs,
+        "analyst_influence": rec_analyst_influence,
+        "dissent": rec_dissent,
         "key_risks": rec_key_risks,
         "conditions": rec_conditions,
+        "assumptions_converted_to_conditions": rec_assumption_conditions,
+        "runway_impact_basis": rec_runway_basis,
+        "runway_impact_summary": runway_summary,
         "impact": impact,
         "decision_type": decision_type,
         "council_influence": state.get("council_influence") or {},
@@ -1993,13 +2198,25 @@ async def synthesis_node(state: DebateState, config: RunnableConfig) -> dict:
         "cfo",
         type="decision",
         headline=f"{rec_decision} · {rec_confidence}% confidence",
-        argument=rec_rationale,
+        argument=rec_ruling,
         key_points=rec_conditions or rec_key_risks,
+        ruling=rec_ruling,
+        confidence=rec_confidence,
+        rationale=rec_rationale,
+        tradeoffs=rec_tradeoffs,
+        analyst_influence=rec_analyst_influence,
+        dissent=rec_dissent,
+        conditions=rec_conditions,
+        assumptions_converted_to_conditions=rec_assumption_conditions,
+        runway_impact_basis=rec_runway_basis,
+        runway_impact_summary=runway_summary,
+        impact=impact,
         tokens=telemetry.get("total_tokens"),
         cost_usd=telemetry.get("estimated_cost_usd"),
     )
     summary = (
-        f"**Recommendation: {rec_decision}** ({rec_confidence}% confidence)\n\n{rec_rationale}"
+        f"**Recommendation: {rec_decision}** ({rec_confidence}% confidence)\n\n"
+        f"{rec_ruling}\n\n{runway_summary}\n\n{rec_rationale}"
     )
     agent_statuses = _set_agent_status(
         agent_statuses,
@@ -2007,7 +2224,7 @@ async def synthesis_node(state: DebateState, config: RunnableConfig) -> dict:
         status="speaking" if rec_result.ok else "warning",
         stance=rec_decision.lower(),
         headline=f"{rec_decision} · {rec_confidence}% confidence",
-        detail=rec_rationale,
+        detail=rec_ruling,
     )
     return {
         "recommendation": recommendation,
@@ -2198,9 +2415,16 @@ async def reliability_node(state: DebateState, config: RunnableConfig) -> dict:
             gate_status = {}
         latest_gate = (gate_status or {}).get("latest") or {}
         learning_report = {
+            "audit_scope": "Post-decision evaluator scorecard only; Reliability does not re-decide or take a stance.",
+            "normal_decision_prohibited": True,
             "summary": summary,
             "eval_dataset": RS.DEFAULT_SLUG,
             "replay_plan": ["Fast-path scorecard — run full replay eval for promotion gates"],
+            "prompt_improvement_directives": [
+                score.get("prompt_improvement_directive") or score.get("prompt_adjustment") or ""
+                for score in scorecard
+                if (score.get("prompt_improvement_directive") or score.get("prompt_adjustment"))
+            ],
             "promotion_gate": "Full W&B replay required before auto-promotion",
             "weave_project": weave_meta.get("project"),
             "weave_entity": weave_meta.get("entity"),
@@ -2215,6 +2439,24 @@ async def reliability_node(state: DebateState, config: RunnableConfig) -> dict:
             "model_telemetry": state.get("model_telemetry", {}),
             "evidence_gaps": state.get("evidence_gaps", []),
         }
+        try:
+            role_distinction_meta = RD.capture_role_distinction_eval(
+                decision=state.get("decision") or "",
+                decision_type=str(state.get("decision_type") or "live"),
+                positions=positions,
+                recommendation=recommendation,
+                reliability_scores=scorecard,
+                learning_report=learning_report,
+                source="live",
+                artifact_path=None,
+                persist=True,
+                publish=True,
+            )
+            learning_report["role_distinction_eval"] = _role_distinction_summary(role_distinction_meta)
+        except Exception as exc:
+            learning_report["role_distinction_warning"] = redact_secrets(exc)
+            print(f"[reliability] role distinction warning: {learning_report['role_distinction_warning']}")
+
         eval_event_id = None
         eval_warning = None
         try:
@@ -2259,7 +2501,7 @@ async def reliability_node(state: DebateState, config: RunnableConfig) -> dict:
             type="reliability",
             headline=f"Reliability scorecard · {average_score}%",
             argument=summary,
-            key_points=["Fast-path scorecard attached"],
+            key_points=["Evaluator scorecard attached", "No approve/reject stance produced", *learning_report["replay_plan"][:1]],
         )
         return {
             "reliability_scores": scorecard,
@@ -2289,15 +2531,22 @@ async def reliability_node(state: DebateState, config: RunnableConfig) -> dict:
     debate_turns = [t for t in state.get("transcript", []) if t.get("type") == "rebuttal"]
     system = SystemMessage(
         content=(
-            f"You are {persona['label']} for {company_name}. Your job is not to re-decide the case; "
-            "score the reliability of each decision-making agent: cfo, treasury, fpna, risk, procurement. "
-            "Use a live self-improvement rubric: outcome_accuracy 30%, evidence_grounding 20%, "
-            "forecast_calibration 15%, policy_compliance 15%, debate_value 10%, confidence_calibration 5%, "
-            "trace_quality 5%. Cite concrete evidence from the decision, positions, debate, company context, "
-            "prior outcomes, audit findings, board constraints, and W&B/Weave trace quality. "
-            "For every agent, include a specific prompt_adjustment and promotion_gate that can be evaluated "
-            "by W&B Weave replay runs. If current outcome accuracy cannot yet be observed, calibrate it from "
-            "historical analogous outcomes and say so. Never invent external facts."
+            f"You are {persona['label']} for {company_name}: an evaluator, not a participant. Your job is "
+            "not to re-decide the case, not to produce a ruling, and not to output APPROVE/REJECT/"
+            "CONDITIONAL/DEFER as a Reliability stance. Produce a post-decision scorecard only. Score "
+            "the reliability of each decision-making agent: cfo, treasury, fpna, risk, procurement. Use a "
+            "live self-improvement rubric: outcome_accuracy 30%, evidence_grounding 20%, forecast_calibration "
+            "15%, policy_compliance 15%, debate_value 10%, confidence_calibration 5%, trace_quality 5%. "
+            "Cite concrete evidence from the decision, positions, debate, challenge-panel findings, company "
+            "context, governance and board policies, prior outcomes, audit findings, source provenance, model "
+            "telemetry, and W&B/Weave trace quality. For debate_value, audit whether cross-examination "
+            "covered cash_timing, forecast_assumptions, controls_policy, vendor_terms, and CFO synthesis "
+            "questions; penalize generic exchanges. For every agent, include known_weaknesses, replay_cases, "
+            "a prompt_adjustment, a prompt_improvement_directive for the self-improvement loop, and a "
+            "promotion_gate that can be evaluated by W&B Weave replay runs. Set normal_decision_prohibited "
+            "to true and make audit_scope explicitly say this is not a case ruling. If current outcome "
+            "accuracy cannot yet be observed, calibrate it from historical analogous outcomes and say so. "
+            "Never invent external facts."
         )
     )
     human = HumanMessage(
@@ -2305,9 +2554,17 @@ async def reliability_node(state: DebateState, config: RunnableConfig) -> dict:
             f"DECISION:\n{state.get('decision')}\n\n"
             f"COMPANY CONTEXT:\n{json.dumps(state.get('context'))}\n\n"
             f"POSITIONS:\n{json.dumps([{'agent': p.get('agent'), 'role': p.get('role'), 'stance': p.get('stance'), 'headline': p.get('headline'), 'argument': p.get('argument'), 'key_points': p.get('key_points')} for p in positions])}\n\n"
-            f"CROSS-EXAMINATION:\n{json.dumps([{'from': t.get('from_role'), 'to': t.get('to_role'), 'point': t.get('point')} for t in debate_turns])}\n\n"
+            f"CROSS-EXAMINATION:\n{json.dumps([{'from': t.get('from_role'), 'to': t.get('to_role'), 'challenge_type': t.get('challenge_type'), 'challenge_label': t.get('challenge_label'), 'challenge_lens': t.get('challenge_lens'), 'point': t.get('point')} for t in debate_turns])}\n\n"
             f"CFO RECOMMENDATION:\n{json.dumps(state.get('recommendation') or {})}\n\n"
-            f"TRACE SUMMARY:\n{json.dumps(state.get('trace_summary') or {})}"
+            f"TRACE SUMMARY:\n{json.dumps(state.get('trace_summary') or {})}\n\n"
+            "EVALUATOR OUTPUT CONTRACT:\n"
+            "- audit_scope must state that Reliability is auditing the council after the CFO ruling, not taking a decision stance.\n"
+            "- normal_decision_prohibited must be true.\n"
+            "- Do not output stance, decision, ruling, approve, reject, conditional approval, or deferral as Reliability's view.\n"
+            "- Produce one scorecard row for each of cfo, treasury, fpna, risk, procurement.\n"
+            "- For each score include known_weaknesses, replay_cases, prompt_adjustment, prompt_improvement_directive, and promotion_gate.\n"
+            "- Audit whether debate_value included role-specific challenge coverage: cash_timing, forecast_assumptions, controls_policy, vendor_terms, and CFO synthesis questions.\n"
+            "- Global replay_plan and prompt_improvement_directives must be usable by the self-improvement loop."
         )
     )
     report: ReliabilityReport = await model.ainvoke([system, human], config)
@@ -2332,9 +2589,12 @@ async def reliability_node(state: DebateState, config: RunnableConfig) -> dict:
         gate_status = {}
     latest_gate = (gate_status or {}).get("latest") or {}
     learning_report = {
+        "audit_scope": report.audit_scope,
+        "normal_decision_prohibited": report.normal_decision_prohibited,
         "summary": report.summary,
         "eval_dataset": report.eval_dataset,
         "replay_plan": report.replay_plan,
+        "prompt_improvement_directives": report.prompt_improvement_directives,
         "promotion_gate": report.promotion_gate,
         "score_formula": {
             "outcome_accuracy": 0.30,
@@ -2369,6 +2629,23 @@ async def reliability_node(state: DebateState, config: RunnableConfig) -> dict:
         "model_telemetry": state.get("model_telemetry", {}),
         "evidence_gaps": state.get("evidence_gaps", []),
     }
+    try:
+        role_distinction_meta = RD.capture_role_distinction_eval(
+            decision=state.get("decision") or "",
+            decision_type=str(state.get("decision_type") or "live"),
+            positions=state.get("positions") or [],
+            recommendation=state.get("recommendation") or {},
+            reliability_scores=scorecard,
+            learning_report=learning_report,
+            source="live",
+            artifact_path=None,
+            persist=True,
+            publish=True,
+        )
+        learning_report["role_distinction_eval"] = _role_distinction_summary(role_distinction_meta)
+    except Exception as exc:
+        learning_report["role_distinction_warning"] = redact_secrets(exc)
+        print(f"[reliability] role distinction warning: {learning_report['role_distinction_warning']}")
 
     # Capture this run as a durable, queryable W&B Weave eval packet. The six rubric
     # scorers run as nested @weave.op child spans under the reliability_auditor span.
@@ -2426,7 +2703,7 @@ async def reliability_node(state: DebateState, config: RunnableConfig) -> dict:
         type="reliability",
         headline=f"Reliability scorecard · {average_score}%",
         argument=report.summary,
-        key_points=report.replay_plan[:3],
+        key_points=["Evaluator scorecard only", *report.replay_plan[:2]],
     )
     return {
         "reliability_scores": scorecard,

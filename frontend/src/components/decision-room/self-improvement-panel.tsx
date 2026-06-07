@@ -28,6 +28,10 @@ export function SelfImprovementPanel({
   const lastReplaced =
     agentImprovements?.last_replaced ?? agentImprovements?.last_improved ?? latestRound?.replaced ?? latestRound?.improved;
   const latestDirective = lastReplaced ? agents[lastReplaced]?.directive : undefined;
+  const latestPromptDirective =
+    (lastReplaced ? agents[lastReplaced]?.prompt_improvement_directive : undefined) ?? latestRound?.prompt_improvement_directive;
+  const latestReplayCases =
+    (lastReplaced ? agents[lastReplaced]?.replay_cases : undefined) ?? latestRound?.replay_cases ?? [];
   const liveScoreById = useMemo(
     () => Object.fromEntries(reliabilityScores.map((s) => [s.agent_id, s.reliability])),
     [reliabilityScores],
@@ -98,6 +102,24 @@ export function SelfImprovementPanel({
               <p className="mt-1 break-words text-[11px] leading-relaxed text-foreground">{latestDirective}</p>
             </div>
           )}
+
+          {(latestPromptDirective || latestReplayCases.length > 0) && (
+            <div className="mt-2 rounded-md border border-border bg-background px-2.5 py-2">
+              <SectionLabel>Auditor replay input</SectionLabel>
+              {latestPromptDirective && (
+                <p className="mt-1 break-words text-[11px] leading-relaxed text-foreground">{latestPromptDirective}</p>
+              )}
+              {latestReplayCases.length > 0 && (
+                <div className="mt-1.5 flex flex-wrap gap-1.5">
+                  {latestReplayCases.slice(0, 3).map((item) => (
+                    <span key={item} className="rounded border border-border bg-surface px-1.5 py-0.5 text-[10px] font-medium text-muted-foreground">
+                      {item}
+                    </span>
+                  ))}
+                </div>
+              )}
+            </div>
+          )}
         </>
       )}
     </Panel>
@@ -166,6 +188,12 @@ function AgentTrendRow({
           {seat?.generation ? ` · g${seat.generation}` : ""}
         </span>
       </div>
+
+      {replacedThisRound && seat?.prompt_improvement_directive && (
+        <p className="mt-1.5 break-words text-[10px] leading-relaxed text-muted-foreground">
+          {seat.prompt_improvement_directive}
+        </p>
+      )}
     </div>
   );
 }

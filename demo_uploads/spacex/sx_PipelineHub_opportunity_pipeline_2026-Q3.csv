@@ -1,0 +1,151 @@
+opportunity_id,name,account,stage,arr,probability,weighted_arr,close_date,owner,segment,forecast_category,security_review_required,source_system
+SX-OPP-00001,NASA Commercial Crew - orbital launch and Starlink broadband services,NASA Commercial Crew,Prospecting,28000000,0.12,3360000.0,2026-07-01,Gwynne Shotwell,enterprise,pipeline,yes,PipelineHub
+SX-OPP-00002,NASA Artemis HLS - orbital launch and Starlink broadband services,NASA Artemis HLS,Technical validation,30100000,0.25,7525000.0,2026-08-02,Tim Hughes,mid-market,best case,no,PipelineHub
+SX-OPP-00003,NASA CRS Resupply - orbital launch and Starlink broadband services,NASA CRS Resupply,Legal,32200000,0.45,14490000.0,2026-09-03,Bret Johnsen,strategic,commit,no,PipelineHub
+SX-OPP-00004,US Space Force NSSL - orbital launch and Starlink broadband services,US Space Force NSSL,Security review,34300000,0.55,18865000.0,2026-10-04,Mark Juncosa,commercial,pipeline,no,PipelineHub
+SX-OPP-00005,National Reconnaissance Office - orbital launch and Starlink broadband services,National Reconnaissance Office,Procurement,36400000,0.65,23660000.0,2026-11-05,Lee Rosen,government,best case,no,PipelineHub
+SX-OPP-00006,SES Global - orbital launch and Starlink broadband services,SES Global,Closed won,38500000,0.75,28875000.0,2026-12-06,Kathy Lueders,enterprise,commit,no,PipelineHub
+SX-OPP-00007,Eutelsat - orbital launch and Starlink broadband services,Eutelsat,Verbal commit,40600000,0.88,35728000.0,2026-07-07,Gwynne Shotwell,mid-market,pipeline,no,PipelineHub
+SX-OPP-00008,OneWeb - orbital launch and Starlink broadband services,OneWeb,Qualification,42700000,1.0,42700000.0,2026-08-08,Tim Hughes,strategic,best case,yes,PipelineHub
+SX-OPP-00009,Intuitive Machines - orbital launch and Starlink broadband services,Intuitive Machines,Prospecting,44800000,0.12,5376000.0,2026-09-09,Bret Johnsen,commercial,commit,no,PipelineHub
+SX-OPP-00010,AST SpaceMobile - orbital launch and Starlink broadband services,AST SpaceMobile,Technical validation,46900000,0.25,11725000.0,2026-10-10,Mark Juncosa,government,pipeline,no,PipelineHub
+SX-OPP-00011,Telesat Lightspeed - orbital launch and Starlink broadband services,Telesat Lightspeed,Legal,49000000,0.45,22050000.0,2026-11-11,Lee Rosen,enterprise,best case,no,PipelineHub
+SX-OPP-00012,EchoStar Hughes - orbital launch and Starlink broadband services,EchoStar Hughes,Security review,51100000,0.55,28105000.0,2026-12-12,Kathy Lueders,mid-market,commit,no,PipelineHub
+SX-OPP-00013,US Air Force Research Lab - orbital launch and Starlink broadband services,US Air Force Research Lab,Procurement,53200000,0.65,34580000.0,2026-07-13,Gwynne Shotwell,strategic,pipeline,no,PipelineHub
+SX-OPP-00014,European Space Agency - orbital launch and Starlink broadband services,European Space Agency,Closed won,55300000,0.75,41475000.0,2026-08-14,Tim Hughes,commercial,best case,no,PipelineHub
+SX-OPP-00015,JAXA - orbital launch and Starlink broadband services,JAXA,Verbal commit,57400000,0.88,50512000.0,2026-09-15,Bret Johnsen,government,commit,yes,PipelineHub
+SX-OPP-00016,Planet Labs - orbital launch and Starlink broadband services,Planet Labs,Qualification,59500000,1.0,59500000.0,2026-10-16,Mark Juncosa,enterprise,pipeline,no,PipelineHub
+SX-OPP-00017,Maxar Technologies - orbital launch and Starlink broadband services,Maxar Technologies,Prospecting,61600000,0.12,7392000.0,2026-11-17,Lee Rosen,mid-market,best case,no,PipelineHub
+SX-OPP-00018,Spire Global - orbital launch and Starlink broadband services,Spire Global,Technical validation,63700000,0.25,15925000.0,2026-12-18,Kathy Lueders,strategic,commit,no,PipelineHub
+SX-OPP-00019,Capella Space - orbital launch and Starlink broadband services,Capella Space,Legal,65800000,0.45,29610000.0,2026-07-19,Gwynne Shotwell,commercial,pipeline,no,PipelineHub
+SX-OPP-00020,BlackSky - orbital launch and Starlink broadband services,BlackSky,Security review,67900000,0.55,37345000.0,2026-08-20,Tim Hughes,government,best case,no,PipelineHub
+SX-OPP-00021,US Coast Guard Starlink - orbital launch and Starlink broadband services,US Coast Guard Starlink,Procurement,70000000,0.65,45500000.0,2026-09-21,Bret Johnsen,enterprise,commit,no,PipelineHub
+SX-OPP-00022,US Army Starlink - orbital launch and Starlink broadband services,US Army Starlink,Closed won,72100000,0.75,54075000.0,2026-10-22,Mark Juncosa,mid-market,pipeline,yes,PipelineHub
+SX-OPP-00023,Royal Caribbean Starlink - orbital launch and Starlink broadband services,Royal Caribbean Starlink,Verbal commit,74200000,0.88,65296000.0,2026-11-23,Lee Rosen,strategic,best case,no,PipelineHub
+SX-OPP-00024,Hawaiian Airlines Starlink - orbital launch and Starlink broadband services,Hawaiian Airlines Starlink,Qualification,76300000,1.0,76300000.0,2026-12-24,Kathy Lueders,commercial,commit,no,PipelineHub
+SX-OPP-00025,Philippines DICT Starlink - orbital launch and Starlink broadband services,Philippines DICT Starlink,Prospecting,78400000,0.12,9408000.0,2026-07-25,Gwynne Shotwell,government,pipeline,no,PipelineHub
+SX-OPP-00026,NASA Commercial Crew - orbital launch and Starlink broadband services,NASA Commercial Crew,Technical validation,28000000,0.25,7000000.0,2026-08-26,Tim Hughes,enterprise,best case,no,PipelineHub
+SX-OPP-00027,NASA Artemis HLS - orbital launch and Starlink broadband services,NASA Artemis HLS,Legal,30100000,0.45,13545000.0,2026-09-27,Bret Johnsen,mid-market,commit,no,PipelineHub
+SX-OPP-00028,NASA CRS Resupply - orbital launch and Starlink broadband services,NASA CRS Resupply,Security review,32200000,0.55,17710000.0,2026-10-28,Mark Juncosa,strategic,pipeline,no,PipelineHub
+SX-OPP-00029,US Space Force NSSL - orbital launch and Starlink broadband services,US Space Force NSSL,Procurement,34300000,0.65,22295000.0,2026-11-01,Lee Rosen,commercial,best case,yes,PipelineHub
+SX-OPP-00030,National Reconnaissance Office - orbital launch and Starlink broadband services,National Reconnaissance Office,Closed won,36400000,0.75,27300000.0,2026-12-02,Kathy Lueders,government,commit,no,PipelineHub
+SX-OPP-00031,SES Global - orbital launch and Starlink broadband services,SES Global,Verbal commit,38500000,0.88,33880000.0,2026-07-03,Gwynne Shotwell,enterprise,pipeline,no,PipelineHub
+SX-OPP-00032,Eutelsat - orbital launch and Starlink broadband services,Eutelsat,Qualification,40600000,1.0,40600000.0,2026-08-04,Tim Hughes,mid-market,best case,no,PipelineHub
+SX-OPP-00033,OneWeb - orbital launch and Starlink broadband services,OneWeb,Prospecting,42700000,0.12,5124000.0,2026-09-05,Bret Johnsen,strategic,commit,no,PipelineHub
+SX-OPP-00034,Intuitive Machines - orbital launch and Starlink broadband services,Intuitive Machines,Technical validation,44800000,0.25,11200000.0,2026-10-06,Mark Juncosa,commercial,pipeline,no,PipelineHub
+SX-OPP-00035,AST SpaceMobile - orbital launch and Starlink broadband services,AST SpaceMobile,Legal,46900000,0.45,21105000.0,2026-11-07,Lee Rosen,government,best case,no,PipelineHub
+SX-OPP-00036,Telesat Lightspeed - orbital launch and Starlink broadband services,Telesat Lightspeed,Security review,49000000,0.55,26950000.0,2026-12-08,Kathy Lueders,enterprise,commit,yes,PipelineHub
+SX-OPP-00037,EchoStar Hughes - orbital launch and Starlink broadband services,EchoStar Hughes,Procurement,51100000,0.65,33215000.0,2026-07-09,Gwynne Shotwell,mid-market,pipeline,no,PipelineHub
+SX-OPP-00038,US Air Force Research Lab - orbital launch and Starlink broadband services,US Air Force Research Lab,Closed won,53200000,0.75,39900000.0,2026-08-10,Tim Hughes,strategic,best case,no,PipelineHub
+SX-OPP-00039,European Space Agency - orbital launch and Starlink broadband services,European Space Agency,Verbal commit,55300000,0.88,48664000.0,2026-09-11,Bret Johnsen,commercial,commit,no,PipelineHub
+SX-OPP-00040,JAXA - orbital launch and Starlink broadband services,JAXA,Qualification,57400000,1.0,57400000.0,2026-10-12,Mark Juncosa,government,pipeline,no,PipelineHub
+SX-OPP-00041,Planet Labs - orbital launch and Starlink broadband services,Planet Labs,Prospecting,59500000,0.12,7140000.0,2026-11-13,Lee Rosen,enterprise,best case,no,PipelineHub
+SX-OPP-00042,Maxar Technologies - orbital launch and Starlink broadband services,Maxar Technologies,Technical validation,61600000,0.25,15400000.0,2026-12-14,Kathy Lueders,mid-market,commit,no,PipelineHub
+SX-OPP-00043,Spire Global - orbital launch and Starlink broadband services,Spire Global,Legal,63700000,0.45,28665000.0,2026-07-15,Gwynne Shotwell,strategic,pipeline,yes,PipelineHub
+SX-OPP-00044,Capella Space - orbital launch and Starlink broadband services,Capella Space,Security review,65800000,0.55,36190000.0,2026-08-16,Tim Hughes,commercial,best case,no,PipelineHub
+SX-OPP-00045,BlackSky - orbital launch and Starlink broadband services,BlackSky,Procurement,67900000,0.65,44135000.0,2026-09-17,Bret Johnsen,government,commit,no,PipelineHub
+SX-OPP-00046,US Coast Guard Starlink - orbital launch and Starlink broadband services,US Coast Guard Starlink,Closed won,70000000,0.75,52500000.0,2026-10-18,Mark Juncosa,enterprise,pipeline,no,PipelineHub
+SX-OPP-00047,US Army Starlink - orbital launch and Starlink broadband services,US Army Starlink,Verbal commit,72100000,0.88,63448000.0,2026-11-19,Lee Rosen,mid-market,best case,no,PipelineHub
+SX-OPP-00048,Royal Caribbean Starlink - orbital launch and Starlink broadband services,Royal Caribbean Starlink,Qualification,74200000,1.0,74200000.0,2026-12-20,Kathy Lueders,strategic,commit,no,PipelineHub
+SX-OPP-00049,Hawaiian Airlines Starlink - orbital launch and Starlink broadband services,Hawaiian Airlines Starlink,Prospecting,76300000,0.12,9156000.0,2026-07-21,Gwynne Shotwell,commercial,pipeline,no,PipelineHub
+SX-OPP-00050,Philippines DICT Starlink - orbital launch and Starlink broadband services,Philippines DICT Starlink,Technical validation,78400000,0.25,19600000.0,2026-08-22,Tim Hughes,government,best case,yes,PipelineHub
+SX-OPP-00051,NASA Commercial Crew - orbital launch and Starlink broadband services,NASA Commercial Crew,Legal,28000000,0.45,12600000.0,2026-09-23,Bret Johnsen,enterprise,commit,no,PipelineHub
+SX-OPP-00052,NASA Artemis HLS - orbital launch and Starlink broadband services,NASA Artemis HLS,Security review,30100000,0.55,16555000.0,2026-10-24,Mark Juncosa,mid-market,pipeline,no,PipelineHub
+SX-OPP-00053,NASA CRS Resupply - orbital launch and Starlink broadband services,NASA CRS Resupply,Procurement,32200000,0.65,20930000.0,2026-11-25,Lee Rosen,strategic,best case,no,PipelineHub
+SX-OPP-00054,US Space Force NSSL - orbital launch and Starlink broadband services,US Space Force NSSL,Closed won,34300000,0.75,25725000.0,2026-12-26,Kathy Lueders,commercial,commit,no,PipelineHub
+SX-OPP-00055,National Reconnaissance Office - orbital launch and Starlink broadband services,National Reconnaissance Office,Verbal commit,36400000,0.88,32032000.0,2026-07-27,Gwynne Shotwell,government,pipeline,no,PipelineHub
+SX-OPP-00056,SES Global - orbital launch and Starlink broadband services,SES Global,Qualification,38500000,1.0,38500000.0,2026-08-28,Tim Hughes,enterprise,best case,no,PipelineHub
+SX-OPP-00057,Eutelsat - orbital launch and Starlink broadband services,Eutelsat,Prospecting,40600000,0.12,4872000.0,2026-09-01,Bret Johnsen,mid-market,commit,yes,PipelineHub
+SX-OPP-00058,OneWeb - orbital launch and Starlink broadband services,OneWeb,Technical validation,42700000,0.25,10675000.0,2026-10-02,Mark Juncosa,strategic,pipeline,no,PipelineHub
+SX-OPP-00059,Intuitive Machines - orbital launch and Starlink broadband services,Intuitive Machines,Legal,44800000,0.45,20160000.0,2026-11-03,Lee Rosen,commercial,best case,no,PipelineHub
+SX-OPP-00060,AST SpaceMobile - orbital launch and Starlink broadband services,AST SpaceMobile,Security review,46900000,0.55,25795000.0,2026-12-04,Kathy Lueders,government,commit,no,PipelineHub
+SX-OPP-00061,Telesat Lightspeed - orbital launch and Starlink broadband services,Telesat Lightspeed,Procurement,49000000,0.65,31850000.0,2026-07-05,Gwynne Shotwell,enterprise,pipeline,no,PipelineHub
+SX-OPP-00062,EchoStar Hughes - orbital launch and Starlink broadband services,EchoStar Hughes,Closed won,51100000,0.75,38325000.0,2026-08-06,Tim Hughes,mid-market,best case,no,PipelineHub
+SX-OPP-00063,US Air Force Research Lab - orbital launch and Starlink broadband services,US Air Force Research Lab,Verbal commit,53200000,0.88,46816000.0,2026-09-07,Bret Johnsen,strategic,commit,no,PipelineHub
+SX-OPP-00064,European Space Agency - orbital launch and Starlink broadband services,European Space Agency,Qualification,55300000,1.0,55300000.0,2026-10-08,Mark Juncosa,commercial,pipeline,yes,PipelineHub
+SX-OPP-00065,JAXA - orbital launch and Starlink broadband services,JAXA,Prospecting,57400000,0.12,6888000.0,2026-11-09,Lee Rosen,government,best case,no,PipelineHub
+SX-OPP-00066,Planet Labs - orbital launch and Starlink broadband services,Planet Labs,Technical validation,59500000,0.25,14875000.0,2026-12-10,Kathy Lueders,enterprise,commit,no,PipelineHub
+SX-OPP-00067,Maxar Technologies - orbital launch and Starlink broadband services,Maxar Technologies,Legal,61600000,0.45,27720000.0,2026-07-11,Gwynne Shotwell,mid-market,pipeline,no,PipelineHub
+SX-OPP-00068,Spire Global - orbital launch and Starlink broadband services,Spire Global,Security review,63700000,0.55,35035000.0,2026-08-12,Tim Hughes,strategic,best case,no,PipelineHub
+SX-OPP-00069,Capella Space - orbital launch and Starlink broadband services,Capella Space,Procurement,65800000,0.65,42770000.0,2026-09-13,Bret Johnsen,commercial,commit,no,PipelineHub
+SX-OPP-00070,BlackSky - orbital launch and Starlink broadband services,BlackSky,Closed won,67900000,0.75,50925000.0,2026-10-14,Mark Juncosa,government,pipeline,no,PipelineHub
+SX-OPP-00071,US Coast Guard Starlink - orbital launch and Starlink broadband services,US Coast Guard Starlink,Verbal commit,70000000,0.88,61600000.0,2026-11-15,Lee Rosen,enterprise,best case,yes,PipelineHub
+SX-OPP-00072,US Army Starlink - orbital launch and Starlink broadband services,US Army Starlink,Qualification,72100000,1.0,72100000.0,2026-12-16,Kathy Lueders,mid-market,commit,no,PipelineHub
+SX-OPP-00073,Royal Caribbean Starlink - orbital launch and Starlink broadband services,Royal Caribbean Starlink,Prospecting,74200000,0.12,8904000.0,2026-07-17,Gwynne Shotwell,strategic,pipeline,no,PipelineHub
+SX-OPP-00074,Hawaiian Airlines Starlink - orbital launch and Starlink broadband services,Hawaiian Airlines Starlink,Technical validation,76300000,0.25,19075000.0,2026-08-18,Tim Hughes,commercial,best case,no,PipelineHub
+SX-OPP-00075,Philippines DICT Starlink - orbital launch and Starlink broadband services,Philippines DICT Starlink,Legal,78400000,0.45,35280000.0,2026-09-19,Bret Johnsen,government,commit,no,PipelineHub
+SX-OPP-00076,NASA Commercial Crew - orbital launch and Starlink broadband services,NASA Commercial Crew,Security review,28000000,0.55,15400000.0,2026-10-20,Mark Juncosa,enterprise,pipeline,no,PipelineHub
+SX-OPP-00077,NASA Artemis HLS - orbital launch and Starlink broadband services,NASA Artemis HLS,Procurement,30100000,0.65,19565000.0,2026-11-21,Lee Rosen,mid-market,best case,no,PipelineHub
+SX-OPP-00078,NASA CRS Resupply - orbital launch and Starlink broadband services,NASA CRS Resupply,Closed won,32200000,0.75,24150000.0,2026-12-22,Kathy Lueders,strategic,commit,yes,PipelineHub
+SX-OPP-00079,US Space Force NSSL - orbital launch and Starlink broadband services,US Space Force NSSL,Verbal commit,34300000,0.88,30184000.0,2026-07-23,Gwynne Shotwell,commercial,pipeline,no,PipelineHub
+SX-OPP-00080,National Reconnaissance Office - orbital launch and Starlink broadband services,National Reconnaissance Office,Qualification,36400000,1.0,36400000.0,2026-08-24,Tim Hughes,government,best case,no,PipelineHub
+SX-OPP-00081,SES Global - orbital launch and Starlink broadband services,SES Global,Prospecting,38500000,0.12,4620000.0,2026-09-25,Bret Johnsen,enterprise,commit,no,PipelineHub
+SX-OPP-00082,Eutelsat - orbital launch and Starlink broadband services,Eutelsat,Technical validation,40600000,0.25,10150000.0,2026-10-26,Mark Juncosa,mid-market,pipeline,no,PipelineHub
+SX-OPP-00083,OneWeb - orbital launch and Starlink broadband services,OneWeb,Legal,42700000,0.45,19215000.0,2026-11-27,Lee Rosen,strategic,best case,no,PipelineHub
+SX-OPP-00084,Intuitive Machines - orbital launch and Starlink broadband services,Intuitive Machines,Security review,44800000,0.55,24640000.0,2026-12-28,Kathy Lueders,commercial,commit,no,PipelineHub
+SX-OPP-00085,AST SpaceMobile - orbital launch and Starlink broadband services,AST SpaceMobile,Procurement,46900000,0.65,30485000.0,2026-07-01,Gwynne Shotwell,government,pipeline,yes,PipelineHub
+SX-OPP-00086,Telesat Lightspeed - orbital launch and Starlink broadband services,Telesat Lightspeed,Closed won,49000000,0.75,36750000.0,2026-08-02,Tim Hughes,enterprise,best case,no,PipelineHub
+SX-OPP-00087,EchoStar Hughes - orbital launch and Starlink broadband services,EchoStar Hughes,Verbal commit,51100000,0.88,44968000.0,2026-09-03,Bret Johnsen,mid-market,commit,no,PipelineHub
+SX-OPP-00088,US Air Force Research Lab - orbital launch and Starlink broadband services,US Air Force Research Lab,Qualification,53200000,1.0,53200000.0,2026-10-04,Mark Juncosa,strategic,pipeline,no,PipelineHub
+SX-OPP-00089,European Space Agency - orbital launch and Starlink broadband services,European Space Agency,Prospecting,55300000,0.12,6636000.0,2026-11-05,Lee Rosen,commercial,best case,no,PipelineHub
+SX-OPP-00090,JAXA - orbital launch and Starlink broadband services,JAXA,Technical validation,57400000,0.25,14350000.0,2026-12-06,Kathy Lueders,government,commit,no,PipelineHub
+SX-OPP-00091,Planet Labs - orbital launch and Starlink broadband services,Planet Labs,Legal,59500000,0.45,26775000.0,2026-07-07,Gwynne Shotwell,enterprise,pipeline,no,PipelineHub
+SX-OPP-00092,Maxar Technologies - orbital launch and Starlink broadband services,Maxar Technologies,Security review,61600000,0.55,33880000.0,2026-08-08,Tim Hughes,mid-market,best case,yes,PipelineHub
+SX-OPP-00093,Spire Global - orbital launch and Starlink broadband services,Spire Global,Procurement,63700000,0.65,41405000.0,2026-09-09,Bret Johnsen,strategic,commit,no,PipelineHub
+SX-OPP-00094,Capella Space - orbital launch and Starlink broadband services,Capella Space,Closed won,65800000,0.75,49350000.0,2026-10-10,Mark Juncosa,commercial,pipeline,no,PipelineHub
+SX-OPP-00095,BlackSky - orbital launch and Starlink broadband services,BlackSky,Verbal commit,67900000,0.88,59752000.0,2026-11-11,Lee Rosen,government,best case,no,PipelineHub
+SX-OPP-00096,US Coast Guard Starlink - orbital launch and Starlink broadband services,US Coast Guard Starlink,Qualification,70000000,1.0,70000000.0,2026-12-12,Kathy Lueders,enterprise,commit,no,PipelineHub
+SX-OPP-00097,US Army Starlink - orbital launch and Starlink broadband services,US Army Starlink,Prospecting,72100000,0.12,8652000.0,2026-07-13,Gwynne Shotwell,mid-market,pipeline,no,PipelineHub
+SX-OPP-00098,Royal Caribbean Starlink - orbital launch and Starlink broadband services,Royal Caribbean Starlink,Technical validation,74200000,0.25,18550000.0,2026-08-14,Tim Hughes,strategic,best case,no,PipelineHub
+SX-OPP-00099,Hawaiian Airlines Starlink - orbital launch and Starlink broadband services,Hawaiian Airlines Starlink,Legal,76300000,0.45,34335000.0,2026-09-15,Bret Johnsen,commercial,commit,yes,PipelineHub
+SX-OPP-00100,Philippines DICT Starlink - orbital launch and Starlink broadband services,Philippines DICT Starlink,Security review,78400000,0.55,43120000.0,2026-10-16,Mark Juncosa,government,pipeline,no,PipelineHub
+SX-OPP-00101,NASA Commercial Crew - orbital launch and Starlink broadband services,NASA Commercial Crew,Procurement,28000000,0.65,18200000.0,2026-11-17,Lee Rosen,enterprise,best case,no,PipelineHub
+SX-OPP-00102,NASA Artemis HLS - orbital launch and Starlink broadband services,NASA Artemis HLS,Closed won,30100000,0.75,22575000.0,2026-12-18,Kathy Lueders,mid-market,commit,no,PipelineHub
+SX-OPP-00103,NASA CRS Resupply - orbital launch and Starlink broadband services,NASA CRS Resupply,Verbal commit,32200000,0.88,28336000.0,2026-07-19,Gwynne Shotwell,strategic,pipeline,no,PipelineHub
+SX-OPP-00104,US Space Force NSSL - orbital launch and Starlink broadband services,US Space Force NSSL,Qualification,34300000,1.0,34300000.0,2026-08-20,Tim Hughes,commercial,best case,no,PipelineHub
+SX-OPP-00105,National Reconnaissance Office - orbital launch and Starlink broadband services,National Reconnaissance Office,Prospecting,36400000,0.12,4368000.0,2026-09-21,Bret Johnsen,government,commit,no,PipelineHub
+SX-OPP-00106,SES Global - orbital launch and Starlink broadband services,SES Global,Technical validation,38500000,0.25,9625000.0,2026-10-22,Mark Juncosa,enterprise,pipeline,yes,PipelineHub
+SX-OPP-00107,Eutelsat - orbital launch and Starlink broadband services,Eutelsat,Legal,40600000,0.45,18270000.0,2026-11-23,Lee Rosen,mid-market,best case,no,PipelineHub
+SX-OPP-00108,OneWeb - orbital launch and Starlink broadband services,OneWeb,Security review,42700000,0.55,23485000.0,2026-12-24,Kathy Lueders,strategic,commit,no,PipelineHub
+SX-OPP-00109,Intuitive Machines - orbital launch and Starlink broadband services,Intuitive Machines,Procurement,44800000,0.65,29120000.0,2026-07-25,Gwynne Shotwell,commercial,pipeline,no,PipelineHub
+SX-OPP-00110,AST SpaceMobile - orbital launch and Starlink broadband services,AST SpaceMobile,Closed won,46900000,0.75,35175000.0,2026-08-26,Tim Hughes,government,best case,no,PipelineHub
+SX-OPP-00111,Telesat Lightspeed - orbital launch and Starlink broadband services,Telesat Lightspeed,Verbal commit,49000000,0.88,43120000.0,2026-09-27,Bret Johnsen,enterprise,commit,no,PipelineHub
+SX-OPP-00112,EchoStar Hughes - orbital launch and Starlink broadband services,EchoStar Hughes,Qualification,51100000,1.0,51100000.0,2026-10-28,Mark Juncosa,mid-market,pipeline,no,PipelineHub
+SX-OPP-00113,US Air Force Research Lab - orbital launch and Starlink broadband services,US Air Force Research Lab,Prospecting,53200000,0.12,6384000.0,2026-11-01,Lee Rosen,strategic,best case,yes,PipelineHub
+SX-OPP-00114,European Space Agency - orbital launch and Starlink broadband services,European Space Agency,Technical validation,55300000,0.25,13825000.0,2026-12-02,Kathy Lueders,commercial,commit,no,PipelineHub
+SX-OPP-00115,JAXA - orbital launch and Starlink broadband services,JAXA,Legal,57400000,0.45,25830000.0,2026-07-03,Gwynne Shotwell,government,pipeline,no,PipelineHub
+SX-OPP-00116,Planet Labs - orbital launch and Starlink broadband services,Planet Labs,Security review,59500000,0.55,32725000.0,2026-08-04,Tim Hughes,enterprise,best case,no,PipelineHub
+SX-OPP-00117,Maxar Technologies - orbital launch and Starlink broadband services,Maxar Technologies,Procurement,61600000,0.65,40040000.0,2026-09-05,Bret Johnsen,mid-market,commit,no,PipelineHub
+SX-OPP-00118,Spire Global - orbital launch and Starlink broadband services,Spire Global,Closed won,63700000,0.75,47775000.0,2026-10-06,Mark Juncosa,strategic,pipeline,no,PipelineHub
+SX-OPP-00119,Capella Space - orbital launch and Starlink broadband services,Capella Space,Verbal commit,65800000,0.88,57904000.0,2026-11-07,Lee Rosen,commercial,best case,no,PipelineHub
+SX-OPP-00120,BlackSky - orbital launch and Starlink broadband services,BlackSky,Qualification,67900000,1.0,67900000.0,2026-12-08,Kathy Lueders,government,commit,yes,PipelineHub
+SX-OPP-00121,US Coast Guard Starlink - orbital launch and Starlink broadband services,US Coast Guard Starlink,Prospecting,70000000,0.12,8400000.0,2026-07-09,Gwynne Shotwell,enterprise,pipeline,no,PipelineHub
+SX-OPP-00122,US Army Starlink - orbital launch and Starlink broadband services,US Army Starlink,Technical validation,72100000,0.25,18025000.0,2026-08-10,Tim Hughes,mid-market,best case,no,PipelineHub
+SX-OPP-00123,Royal Caribbean Starlink - orbital launch and Starlink broadband services,Royal Caribbean Starlink,Legal,74200000,0.45,33390000.0,2026-09-11,Bret Johnsen,strategic,commit,no,PipelineHub
+SX-OPP-00124,Hawaiian Airlines Starlink - orbital launch and Starlink broadband services,Hawaiian Airlines Starlink,Security review,76300000,0.55,41965000.0,2026-10-12,Mark Juncosa,commercial,pipeline,no,PipelineHub
+SX-OPP-00125,Philippines DICT Starlink - orbital launch and Starlink broadband services,Philippines DICT Starlink,Procurement,78400000,0.65,50960000.0,2026-11-13,Lee Rosen,government,best case,no,PipelineHub
+SX-OPP-00126,NASA Commercial Crew - orbital launch and Starlink broadband services,NASA Commercial Crew,Closed won,28000000,0.75,21000000.0,2026-12-14,Kathy Lueders,enterprise,commit,no,PipelineHub
+SX-OPP-00127,NASA Artemis HLS - orbital launch and Starlink broadband services,NASA Artemis HLS,Verbal commit,30100000,0.88,26488000.0,2026-07-15,Gwynne Shotwell,mid-market,pipeline,yes,PipelineHub
+SX-OPP-00128,NASA CRS Resupply - orbital launch and Starlink broadband services,NASA CRS Resupply,Qualification,32200000,1.0,32200000.0,2026-08-16,Tim Hughes,strategic,best case,no,PipelineHub
+SX-OPP-00129,US Space Force NSSL - orbital launch and Starlink broadband services,US Space Force NSSL,Prospecting,34300000,0.12,4116000.0,2026-09-17,Bret Johnsen,commercial,commit,no,PipelineHub
+SX-OPP-00130,National Reconnaissance Office - orbital launch and Starlink broadband services,National Reconnaissance Office,Technical validation,36400000,0.25,9100000.0,2026-10-18,Mark Juncosa,government,pipeline,no,PipelineHub
+SX-OPP-00131,SES Global - orbital launch and Starlink broadband services,SES Global,Legal,38500000,0.45,17325000.0,2026-11-19,Lee Rosen,enterprise,best case,no,PipelineHub
+SX-OPP-00132,Eutelsat - orbital launch and Starlink broadband services,Eutelsat,Security review,40600000,0.55,22330000.0,2026-12-20,Kathy Lueders,mid-market,commit,no,PipelineHub
+SX-OPP-00133,OneWeb - orbital launch and Starlink broadband services,OneWeb,Procurement,42700000,0.65,27755000.0,2026-07-21,Gwynne Shotwell,strategic,pipeline,no,PipelineHub
+SX-OPP-00134,Intuitive Machines - orbital launch and Starlink broadband services,Intuitive Machines,Closed won,44800000,0.75,33600000.0,2026-08-22,Tim Hughes,commercial,best case,yes,PipelineHub
+SX-OPP-00135,AST SpaceMobile - orbital launch and Starlink broadband services,AST SpaceMobile,Verbal commit,46900000,0.88,41272000.0,2026-09-23,Bret Johnsen,government,commit,no,PipelineHub
+SX-OPP-00136,Telesat Lightspeed - orbital launch and Starlink broadband services,Telesat Lightspeed,Qualification,49000000,1.0,49000000.0,2026-10-24,Mark Juncosa,enterprise,pipeline,no,PipelineHub
+SX-OPP-00137,EchoStar Hughes - orbital launch and Starlink broadband services,EchoStar Hughes,Prospecting,51100000,0.12,6132000.0,2026-11-25,Lee Rosen,mid-market,best case,no,PipelineHub
+SX-OPP-00138,US Air Force Research Lab - orbital launch and Starlink broadband services,US Air Force Research Lab,Technical validation,53200000,0.25,13300000.0,2026-12-26,Kathy Lueders,strategic,commit,no,PipelineHub
+SX-OPP-00139,European Space Agency - orbital launch and Starlink broadband services,European Space Agency,Legal,55300000,0.45,24885000.0,2026-07-27,Gwynne Shotwell,commercial,pipeline,no,PipelineHub
+SX-OPP-00140,JAXA - orbital launch and Starlink broadband services,JAXA,Security review,57400000,0.55,31570000.0,2026-08-28,Tim Hughes,government,best case,no,PipelineHub
+SX-OPP-00141,Planet Labs - orbital launch and Starlink broadband services,Planet Labs,Procurement,59500000,0.65,38675000.0,2026-09-01,Bret Johnsen,enterprise,commit,yes,PipelineHub
+SX-OPP-00142,Maxar Technologies - orbital launch and Starlink broadband services,Maxar Technologies,Closed won,61600000,0.75,46200000.0,2026-10-02,Mark Juncosa,mid-market,pipeline,no,PipelineHub
+SX-OPP-00143,Spire Global - orbital launch and Starlink broadband services,Spire Global,Verbal commit,63700000,0.88,56056000.0,2026-11-03,Lee Rosen,strategic,best case,no,PipelineHub
+SX-OPP-00144,Capella Space - orbital launch and Starlink broadband services,Capella Space,Qualification,65800000,1.0,65800000.0,2026-12-04,Kathy Lueders,commercial,commit,no,PipelineHub
+SX-OPP-00145,BlackSky - orbital launch and Starlink broadband services,BlackSky,Prospecting,67900000,0.12,8148000.0,2026-07-05,Gwynne Shotwell,government,pipeline,no,PipelineHub
+SX-OPP-00146,US Coast Guard Starlink - orbital launch and Starlink broadband services,US Coast Guard Starlink,Technical validation,70000000,0.25,17500000.0,2026-08-06,Tim Hughes,enterprise,best case,no,PipelineHub
+SX-OPP-00147,US Army Starlink - orbital launch and Starlink broadband services,US Army Starlink,Legal,72100000,0.45,32445000.0,2026-09-07,Bret Johnsen,mid-market,commit,no,PipelineHub
+SX-OPP-00148,Royal Caribbean Starlink - orbital launch and Starlink broadband services,Royal Caribbean Starlink,Security review,74200000,0.55,40810000.0,2026-10-08,Mark Juncosa,strategic,pipeline,yes,PipelineHub
+SX-OPP-00149,Hawaiian Airlines Starlink - orbital launch and Starlink broadband services,Hawaiian Airlines Starlink,Procurement,76300000,0.65,49595000.0,2026-11-09,Lee Rosen,commercial,best case,no,PipelineHub
+SX-OPP-00150,Philippines DICT Starlink - orbital launch and Starlink broadband services,Philippines DICT Starlink,Closed won,78400000,0.75,58800000.0,2026-12-10,Kathy Lueders,government,commit,no,PipelineHub

@@ -83,16 +83,16 @@ export const NODE_LABEL: Record<string, string> = {
   intake: "Convening the committee",
   planner: "Planning evidence for each role",
   committee_parallel: "All four analysts working in parallel",
-  treasury: "Treasury is forming its position",
-  fpna: "FP&A is forming its position",
-  risk: "Risk & Audit is forming its position",
-  procurement: "Procurement is forming its position",
+  treasury: "Treasury is stress-testing liquidity timing",
+  fpna: "FP&A is testing forecastability",
+  risk: "Risk & Audit is challenging controls",
+  procurement: "Procurement is building negotiation levers",
   challenge: "Evidence challenge panel",
   debate: "Committee cross-examination",
   influence: "Council is assigning influence weights",
   synthesis: "The CFO is deliberating",
-  reliability: "Reliability auditor is scoring the council",
-  reliability_auditor: "Reliability auditor is scoring the council",
+  reliability: "Reliability Auditor is building evaluator scorecards",
+  reliability_auditor: "Reliability Auditor is building evaluator scorecards",
   persist: "Recording the decision",
 };
 
@@ -206,6 +206,8 @@ export interface RealtimeView {
   voice?: string;
   micMuted?: boolean;
   listening?: boolean;
+  speaking?: boolean;
+  processing?: boolean;
 }
 
 export interface TimelineStep {
@@ -529,7 +531,7 @@ export function getAgentStanceLabel(
   recommendation?: DebateState["recommendation"],
 ): string {
   if (member.id === "cfo" && recommendation?.decision) return recommendation.decision;
-  if (member.id === "reliability") return "Auditor";
+  if (member.id === "reliability") return "Evaluator";
   if (turn?.stance) {
     const stance = String(turn.stance).toLowerCase();
     if (stance === "conditional") return "Conditional";
@@ -619,6 +621,7 @@ export function getAgentSnippet(args: {
   started: boolean;
 }): string {
   const { agentStatus, member, turn, recommendation, healthReady, started } = args;
+  if (member.id === "cfo" && recommendation?.ruling) return recommendation.ruling;
   if (member.id === "cfo" && recommendation?.rationale) return recommendation.rationale;
   if (agentStatus?.detail && agentStatus.detail !== "Awaiting council turn") return agentStatus.detail;
   if (turn?.argument) return turn.argument;

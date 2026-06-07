@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import { FileText } from "lucide-react";
+import { onDemoReset } from "@/lib/demo-reset";
 import { api } from "@/lib/api";
 import type { DecisionEvent } from "@/lib/types";
 import { DecisionRow, MetricTile, NotAvailable, Panel, type Tone } from "@/components/dashboard";
@@ -37,9 +38,14 @@ export default function ActivityPage() {
     };
     load();
     const id = setInterval(load, POLL_MS);
+    const unsubscribe = onDemoReset(() => {
+      got.current = false;
+      void load();
+    });
     return () => {
       active = false;
       clearInterval(id);
+      unsubscribe();
     };
   }, []);
 

@@ -6,13 +6,18 @@ and department views can render without running a debate.
 
 from __future__ import annotations
 
+import asyncio
+import json
 import os
+from pathlib import Path
 from typing import Any
 
-from fastapi import APIRouter, Body, File, HTTPException, Response, UploadFile
+from fastapi import APIRouter, BackgroundTasks, Body, File, HTTPException, Response, UploadFile
+from fastapi.responses import StreamingResponse
 from openai import AsyncOpenAI
 
 from src.env import redact_secrets
+from src.errors import ExecutiveStateCode, executive_state, http_exception_detail, to_executive_error
 from src.health import (
     evaluation_health,
     observability_health,
@@ -25,8 +30,28 @@ from src import realtime as RT
 from src import promotion_gates as PG
 from src import redis_layer as R
 from src import replay_sets as RS
+from src import role_distinction_eval as RD
 from src import weave_eval as WE
 from src.integrations import service as OPS
+from src.integrations.file_validation import (
+    CONNECTOR_UPLOAD_KINDS,
+    MAX_UPLOAD_BYTES,
+    UploadValidationError,
+    WORKBOOK_UPLOAD_KINDS,
+    accepted_types_label,
+    validate_upload,
+)
+from src.documents.models import DocumentRetrievalFilter, ParseJobStatus
+from src.documents.pipeline import DOCUMENT_UPLOAD_KINDS, create_parse_job, run_parse_pipeline
+from src.documents.store import (
+    delete_document,
+    get_document,
+    get_parse_job,
+    list_document_chunks,
+    list_documents,
+    list_parse_jobs,
+    search_document_chunks,
+)
 
 router = APIRouter(prefix="/api")
 
@@ -35,6 +60,27 @@ router = APIRouter(prefix="/api")
 from src.financial_api import financial_router  # noqa: E402
 
 router.include_router(financial_router)
+
+def _upload_validation_http_error(exc: UploadValidationError) -> HTTPException:
+    return HTTPException(status_code=400, detail=to_executive_error(exc, context="upload"))
+
+
+def _read_and_validate_upload(
+    raw: bytes,
+    *,
+    filename: str,
+    content_type: str | None,
+    allowed_kinds: set[str],
+) -> None:
+    try:
+        validate_upload(
+            raw,
+            filename=filename,
+            content_type=content_type,
+            allowed_kinds=allowed_kinds,
+        )
+    except UploadValidationError as exc:
+        raise _upload_validation_http_error(exc) from exc
 
 # Mount the orchestration engine's read-mostly router additively, ONLY when the
 # ATLAS_ORCHESTRATOR engine is enabled (default off → this module is unchanged).
@@ -55,7 +101,16 @@ COMPANY_KEY = f"{R.NS}:company:northwind"
 
 @router.get("/company")
 def company() -> dict:
-    return R.get_json(COMPANY_KEY) or {}
+    payload = R.get_json(COMPANY_KEY) or {}
+    try:
+        from src.openai_council import prompt_versions_payload
+
+        payload = dict(payload)
+        payload["prompt_versions"] = prompt_versions_payload({"financials": payload})
+    except Exception as exc:
+        payload = dict(payload)
+        payload["prompt_version_error"] = redact_secrets(exc)
+    return payload
 
 
 @router.get("/vendors")
@@ -141,7 +196,11 @@ def command_state(room: str = AGUI.DEFAULT_ROOM) -> dict:
 @router.get("/command/types")
 def command_types() -> dict:
     """The command vocabulary the operator panel and CopilotKit actions expose."""
-    return {"types": AGUI.COMMAND_TYPES, "agents": list(AGUI.KNOWN_AGENTS)}
+    return {
+        "types": AGUI.COMMAND_TYPES,
+        "agents": list(AGUI.KNOWN_AGENTS),
+        "role_profiles": AGUI.ROLE_COMMAND_PROFILES,
+    }
 
 
 @router.post("/command")
@@ -264,6 +323,33 @@ def promotions(limit: int = 25) -> dict:
     }
 
 
+@router.get("/evals/role-distinction")
+def role_distinction_reports(limit: int = 25) -> dict:
+    """List role-distinction eval artifacts that guard against persona collapse."""
+    latest = RD.latest_role_distinction_report()
+    return {
+        "latest": latest,
+        "reports": RD.list_role_distinction_reports(limit),
+        "thresholds": {"overall": RD.PASSING_SCORE, "role": RD.ROLE_PASSING_SCORE},
+    }
+
+
+@router.post("/evals/role-distinction")
+def run_role_distinction(response: Response, publish: bool = True) -> dict:
+    """Run the representative role-distinction harness and persist it."""
+    try:
+        require_live_ready()
+    except Exception as exc:
+        response.status_code = 503
+        raise HTTPException(status_code=503, detail=redact_secrets(exc)) from exc
+    try:
+        report = RD.run_role_distinction_eval(source="representative")
+        persisted = RD.persist_role_distinction_report(report, publish=publish)
+    except Exception as exc:
+        raise HTTPException(status_code=502, detail=redact_secrets(exc)) from exc
+    return {"report": report.model_dump(mode="json"), "persistence": persisted}
+
+
 @router.post("/evals/promotions")
 async def promotions_action(
     response: Response,
@@ -335,18 +421,58 @@ def connectors() -> dict:
         "mode": "strict-live",
         "connectors": OPS.connector_statuses(),
         "confidence": OPS.import_confidence().model_dump(mode="json"),
+        "upload_policy": {
+            "connector": {
+                "accepted_kinds": sorted(CONNECTOR_UPLOAD_KINDS),
+                "accepted_label": accepted_types_label(CONNECTOR_UPLOAD_KINDS),
+                "max_bytes": MAX_UPLOAD_BYTES,
+            },
+            "workbook": {
+                "accepted_kinds": sorted(WORKBOOK_UPLOAD_KINDS),
+                "accepted_label": accepted_types_label(WORKBOOK_UPLOAD_KINDS),
+                "max_bytes": MAX_UPLOAD_BYTES,
+            },
+            "document": {
+                "accepted_kinds": sorted(DOCUMENT_UPLOAD_KINDS),
+                "accepted_label": accepted_types_label(DOCUMENT_UPLOAD_KINDS),
+                "max_bytes": MAX_UPLOAD_BYTES,
+            },
+        },
     }
 
 
 @router.post("/connectors/import/{connector_id}")
-async def connector_import(response: Response, connector_id: str, file: UploadFile = File(...)) -> dict:
+async def connector_import(
+    response: Response,
+    connector_id: str,
+    background_tasks: BackgroundTasks,
+    file: UploadFile = File(...),
+) -> dict:
     """Import one uploaded connector file, then immediately reconcile."""
+    parse_job_id: str | None = None
     try:
         raw = await file.read()
+        _read_and_validate_upload(
+            raw,
+            filename=file.filename or connector_id,
+            content_type=file.content_type,
+            allowed_kinds=CONNECTOR_UPLOAD_KINDS,
+        )
         result = OPS.import_uploaded_file(
             connector_id,
             source_name=file.filename or connector_id,
             raw=raw,
+        )
+        job = create_parse_job(filename=file.filename or connector_id, connector_id=connector_id)
+        parse_job_id = job.job_id
+        background_tasks.add_task(
+            run_parse_pipeline,
+            job.job_id,
+            raw,
+            filename=file.filename or connector_id,
+            content_type=file.content_type,
+            connector_id=connector_id,
+            reconcile=False,
         )
         report = OPS.run_reconciliation()
     except ValueError as exc:
@@ -356,6 +482,40 @@ async def connector_import(response: Response, connector_id: str, file: UploadFi
         raise HTTPException(status_code=503, detail=redact_secrets(exc)) from exc
     return {
         "import_result": result.model_dump(mode="json"),
+        "parse_job_id": parse_job_id,
+        "connectors": OPS.connector_statuses(),
+        "confidence": OPS.import_confidence().model_dump(mode="json"),
+        "reconciliation": report.model_dump(mode="json"),
+    }
+
+
+@router.post("/connectors/import-workbook")
+async def connector_workbook_import(response: Response, file: UploadFile = File(...)) -> dict:
+    """Import one multi-sheet Excel workbook across all finance-operation connectors."""
+    try:
+        raw = await file.read()
+        _read_and_validate_upload(
+            raw,
+            filename=file.filename or "workbook",
+            content_type=file.content_type,
+            allowed_kinds=WORKBOOK_UPLOAD_KINDS,
+        )
+        results = OPS.import_workbook(source_name=file.filename or "operations-workbook.xlsx", raw=raw)
+        report = OPS.run_reconciliation()
+    except ValueError as exc:
+        raise HTTPException(status_code=400, detail=str(exc)) from exc
+    except Exception as exc:
+        response.status_code = 503
+        raise HTTPException(status_code=503, detail=redact_secrets(exc)) from exc
+    imported = [result.provenance.connector_id for result in results if result.provenance.has_data()]
+    failed = [result.provenance.connector_id for result in results if not result.provenance.has_data()]
+    return {
+        "workbook": {
+            "source_name": file.filename,
+            "imported_connectors": imported,
+            "failed_connectors": failed,
+        },
+        "import_results": [result.model_dump(mode="json") for result in results],
         "connectors": OPS.connector_statuses(),
         "confidence": OPS.import_confidence().model_dump(mode="json"),
         "reconciliation": report.model_dump(mode="json"),
@@ -420,15 +580,37 @@ def discrepancy_detail(discrepancy_id: str) -> dict:
 
 @router.post("/demo/reset")
 def demo_reset(response: Response) -> dict:
-    """Clear uploaded connector, reconciliation, and command-panel state only."""
+    """Full demo reset: clear runtime state, reseed Redis, reset command panel."""
+    from src.data.demo_reset import full_demo_reset
+
     try:
-        payload = OPS.reset_demo_state()
-        payload["deleted"][AGUI.command_state_key()] = R.delete_key(AGUI.command_state_key())
-        payload["command_state"] = AGUI.default_command_state()
-        return payload
+        return full_demo_reset(verbose=False)
     except Exception as exc:
         response.status_code = 503
         raise HTTPException(status_code=503, detail=redact_secrets(exc)) from exc
+
+
+@router.get("/demo/scenarios")
+def demo_scenarios() -> dict:
+    """Scenario-specific messy data packs and council decision prompts."""
+    from src.data.demo_scenarios import list_seeded_demo_scenarios
+
+    scenarios = list_seeded_demo_scenarios()
+    return {"count": len(scenarios), "scenarios": scenarios}
+
+
+@router.get("/demo/scenarios/{scenario_id}")
+def demo_scenario(scenario_id: str) -> dict:
+    """One messy scenario pack by selector id or scenario-engine branch id."""
+    from src.data.demo_scenarios import get_demo_scenario, list_seeded_demo_scenarios
+
+    for scenario in list_seeded_demo_scenarios():
+        if scenario.get("id") == scenario_id or scenario.get("branch_id") == scenario_id:
+            return scenario
+    fallback = get_demo_scenario(scenario_id)
+    if fallback:
+        return fallback
+    raise HTTPException(status_code=404, detail=f"Unknown demo scenario: {scenario_id}")
 
 
 # --------------------------------------------------------------------------- #
@@ -640,7 +822,10 @@ class ExceptionBody(BaseModel):
 
 def _require_redis() -> None:
     if not R.ping():
-        raise HTTPException(status_code=503, detail="Redis is not reachable; governance store unavailable.")
+        raise HTTPException(
+            status_code=503,
+            detail=executive_state(ExecutiveStateCode.REDIS_UNAVAILABLE, context="redis"),
+        )
 
 
 @router.get("/policies")
@@ -819,3 +1004,141 @@ def approval_matrix() -> dict:
     from src import approvals as APV
 
     return APV.load_matrix()
+
+
+# --------------------------------------------------------------------------- #
+# Uploaded documents — parse jobs, metadata, source-aware chunk retrieval
+# --------------------------------------------------------------------------- #
+@router.post("/documents/upload")
+async def documents_upload(
+    background_tasks: BackgroundTasks,
+    file: UploadFile = File(...),
+    connector_id: str | None = None,
+) -> dict:
+    """Upload a document, create a parse job, and index chunks in the background."""
+    _require_redis()
+    raw = await file.read()
+    job = create_parse_job(filename=file.filename or "upload", connector_id=connector_id)
+    background_tasks.add_task(
+        run_parse_pipeline,
+        job.job_id,
+        raw,
+        filename=file.filename or "upload",
+        content_type=file.content_type,
+        connector_id=connector_id,
+    )
+    return {"parse_job": get_parse_job(job.job_id).model_dump(mode="json")}
+
+
+@router.get("/documents")
+def documents_list(
+    source_category: str | None = None,
+    connector_id: str | None = None,
+    q: str | None = None,
+    offset: int = 0,
+    limit: int = 25,
+) -> dict:
+    _require_redis()
+    docs, total = list_documents(
+        source_category=source_category,
+        connector_id=connector_id,
+        q=q,
+        offset=offset,
+        limit=limit,
+    )
+    return {
+        "count": len(docs),
+        "total": total,
+        "offset": offset,
+        "limit": limit,
+        "documents": [doc.model_dump(mode="json") for doc in docs],
+    }
+
+
+@router.get("/documents/parse-jobs")
+def documents_parse_jobs(limit: int = 25) -> dict:
+    _require_redis()
+    jobs = list_parse_jobs(limit=limit)
+    return {"count": len(jobs), "jobs": [job.model_dump(mode="json") for job in jobs]}
+
+
+@router.get("/documents/parse-jobs/{job_id}")
+def documents_parse_job(job_id: str) -> dict:
+    _require_redis()
+    job = get_parse_job(job_id)
+    if job is None:
+        raise HTTPException(status_code=404, detail=f"Parse job not found: {job_id}")
+    return job.model_dump(mode="json")
+
+
+@router.get("/documents/parse-jobs/{job_id}/stream")
+async def documents_parse_job_stream(job_id: str) -> StreamingResponse:
+    _require_redis()
+    if get_parse_job(job_id) is None:
+        raise HTTPException(status_code=404, detail=f"Parse job not found: {job_id}")
+
+    async def event_stream():
+        terminal = {
+            ParseJobStatus.READY.value,
+            ParseJobStatus.NEEDS_REVIEW.value,
+            ParseJobStatus.FAILED.value,
+        }
+        seen = 0
+        while True:
+            job = get_parse_job(job_id)
+            if job is None:
+                break
+            timeline = job.timeline[seen:]
+            for entry in timeline:
+                payload = {"job_id": job_id, **entry, "doc_id": job.doc_id, "status": job.status.value}
+                yield f"data: {json.dumps(payload)}\n\n"
+                seen += 1
+            if job.status.value in terminal:
+                break
+            await asyncio.sleep(0.4)
+
+    return StreamingResponse(event_stream(), media_type="text/event-stream")
+
+
+@router.get("/documents/{doc_id}")
+def documents_detail(doc_id: str) -> dict:
+    _require_redis()
+    doc = get_document(doc_id)
+    if doc is None:
+        raise HTTPException(status_code=404, detail=f"Document not found: {doc_id}")
+    return doc.model_dump(mode="json")
+
+
+@router.get("/documents/{doc_id}/chunks")
+def documents_chunks(
+    doc_id: str,
+    offset: int = 0,
+    limit: int = 20,
+    include_text: bool = False,
+) -> dict:
+    _require_redis()
+    if get_document(doc_id) is None:
+        raise HTTPException(
+            status_code=404,
+            detail=http_exception_detail(f"Document not found: {doc_id}", context="documents"),
+        )
+    chunks, total = list_document_chunks(doc_id, offset=offset, limit=limit, include_text=include_text)
+    return {"doc_id": doc_id, "count": len(chunks), "total": total, "offset": offset, "limit": limit, "chunks": chunks}
+
+
+@router.post("/documents/search")
+def documents_search(body: dict = Body(...)) -> dict:
+    _require_redis()
+    query = str(body.get("query") or "")
+    filters = DocumentRetrievalFilter.model_validate(body.get("filters") or {})
+    k = int(body.get("k") or 6)
+    hits = search_document_chunks(query, filters=filters, k=k)
+    return {"count": len(hits), "hits": hits}
+
+
+@router.delete("/documents/{doc_id}")
+def documents_delete(doc_id: str) -> dict:
+    _require_redis()
+    if not delete_document(doc_id):
+        raise HTTPException(status_code=404, detail=f"Document not found: {doc_id}")
+    return {"deleted": doc_id}

@@ -2,6 +2,7 @@
 
 import { AnimatePresence, motion, useReducedMotion } from "motion/react";
 import type { ReactNode } from "react";
+import { springSnappy, transitionReveal } from "@/components/motion/variants";
 
 export function CollapseIn({
   show,
@@ -24,7 +25,7 @@ export function CollapseIn({
           initial={{ opacity: 0, height: 0, y: -6 }}
           animate={{ opacity: 1, height: "auto", y: 0 }}
           exit={{ opacity: 0, height: 0, y: -4 }}
-          transition={{ duration: 0.32, ease: [0.22, 1, 0.36, 1] }}
+          transition={transitionReveal}
         >
           {children}
         </motion.div>
@@ -54,7 +55,7 @@ export function PopIn({
           initial={{ opacity: 0, scale: 0.92, filter: "blur(4px)" }}
           animate={{ opacity: 1, scale: 1, filter: "blur(0px)" }}
           exit={{ opacity: 0, scale: 0.96, filter: "blur(2px)" }}
-          transition={{ type: "spring", stiffness: 380, damping: 28 }}
+          transition={springSnappy}
         >
           {children}
         </motion.div>

@@ -51,10 +51,10 @@ ROLE_LABELS = {
 
 # Incumbent prompt-version anchors (mirror src.openai_council._PROMPT_VERSION_IDS).
 BASE_VERSIONS = {
-    "treasury": "treasury.v4-evidence-plan",
-    "fpna": "fpna.v4-cohort-calibration",
-    "risk": "risk.v5-control-evidence",
-    "procurement": "procurement.v3-renewal-redlines",
+    "treasury": "treasury.v6-liquidity-mechanics",
+    "fpna": "fpna.v6-forecast-unit-economics",
+    "risk": "risk.v7-controls-adversary",
+    "procurement": "procurement.v5-commercial-negotiator",
 }
 
 IMPROVE_NS = f"{R.NS}:evaluation:agent_improvement"
@@ -87,6 +87,8 @@ def _blank_agent(role: str) -> dict[str, Any]:
         "mandate_emphasis": "",
         "focus": "",
         "targeted_dimension": "",
+        "replay_cases": [],
+        "prompt_improvement_directive": "",
         "applied_round": 0,
         "reliability_history": [],
         "improvement_history": [],
@@ -107,6 +109,8 @@ def agent_improvement_state(company_id: str) -> dict[str, Any]:
                 seat.setdefault("generation", 1)
                 seat.setdefault("incarnation_id", _new_incarnation_id(role, int(seat.get("generation", 1))))
                 seat.setdefault("mandate_emphasis", "")
+                seat.setdefault("replay_cases", [])
+                seat.setdefault("prompt_improvement_directive", "")
                 seat.setdefault("lineage", [])
         stored["agents"] = agents
         return stored
@@ -138,10 +142,18 @@ def _select_weakest(scorecard: list[dict]) -> tuple[str, dict]:
     return weakest, (by_agent.get(weakest) or {})
 
 
+def prompt_directive_from_reliability_score(score: dict) -> str:
+    """Return the auditor directive that should feed the next prompt."""
+    directive = str(score.get("prompt_improvement_directive") or "").strip()
+    if directive:
+        return directive
+    return str(score.get("prompt_adjustment") or "").strip()
+
+
 def _deterministic_replacement(score: dict, persona_label: str) -> tuple[str, str, str, str, str, str]:
     """Derive a replacement incarnation from the live Weave trace without a model call."""
     weaknesses = [w for w in (score.get("known_weaknesses") or []) if w]
-    adjustment = str(score.get("prompt_adjustment") or "").strip()
+    adjustment = prompt_directive_from_reliability_score(score)
     dimensions = {
         "evidence_grounding": score.get("evidence_grounding"),
         "forecast_calibration": score.get("forecast_calibration"),
@@ -186,6 +198,8 @@ class AgentReplacementSnapshot(BaseModel):
     directive: str
     targeted_dimension: str = ""
     expected_gain: str = ""
+    replay_cases: list[str] = Field(default_factory=list)
+    prompt_improvement_directive: str = ""
     prior_reliability: int = 0
     council_average: int = 0
     source: str = "openai"
@@ -246,6 +260,8 @@ async def replace_weakest_agent(
     prior_reliability = int((weak_score or {}).get("reliability", 0) or 0)
     retired_generation = int(prior.get("generation", 1))
     retired_incarnation = str(prior.get("incarnation_id") or _new_incarnation_id(weakest, retired_generation))
+    replay_cases = [str(case).strip() for case in (weak_score.get("replay_cases") or []) if str(case).strip()]
+    prompt_improvement_directive = prompt_directive_from_reliability_score(weak_score)
 
     lineage_entry = {
         "round": round_no,
@@ -262,6 +278,8 @@ async def replace_weakest_agent(
             "reliability": prior_reliability,
             "known_weaknesses": weak_score.get("known_weaknesses") or [],
             "prompt_adjustment": weak_score.get("prompt_adjustment"),
+            "replay_cases": replay_cases,
+            "prompt_improvement_directive": prompt_improvement_directive,
         },
     }
     lineage = list(prior.get("lineage") or []) + [lineage_entry]
@@ -328,6 +346,8 @@ async def replace_weakest_agent(
         "directive": directive,
         "targeted_dimension": targeted_dimension,
         "expected_gain": expected_gain,
+        "replay_cases": replay_cases,
+        "prompt_improvement_directive": prompt_improvement_directive,
         "prior_reliability": prior_reliability,
         "source": source,
         "at": _now(),
@@ -343,6 +363,8 @@ async def replace_weakest_agent(
         mandate_emphasis=mandate_emphasis,
         focus=focus,
         targeted_dimension=targeted_dimension,
+        replay_cases=replay_cases,
+        prompt_improvement_directive=prompt_improvement_directive,
         applied_round=round_no,
         improvement_history=improvement_history[-HISTORY_CAP:],
         lineage=lineage[-HISTORY_CAP:],
@@ -372,6 +394,8 @@ async def replace_weakest_agent(
         "replacement_rationale": replacement_rationale,
         "mandate_emphasis": mandate_emphasis,
         "targeted_dimension": targeted_dimension,
+        "replay_cases": replay_cases,
+        "prompt_improvement_directive": prompt_improvement_directive,
         "prior_reliability": prior_reliability,
         "council_average": council_average,
         "scores": council_scores,
@@ -410,6 +434,8 @@ async def replace_weakest_agent(
         directive=directive,
         targeted_dimension=targeted_dimension,
         expected_gain=expected_gain,
+        replay_cases=replay_cases,
+        prompt_improvement_directive=prompt_improvement_directive,
         prior_reliability=prior_reliability,
         council_average=council_average,
         source=source,
@@ -430,6 +456,8 @@ async def replace_weakest_agent(
         "directive": directive,
         "targeted_dimension": targeted_dimension,
         "expected_gain": expected_gain,
+        "replay_cases": replay_cases,
+        "prompt_improvement_directive": prompt_improvement_directive,
         "version_label": version_label,
         "generation": new_generation,
         "incarnation_id": incarnation_id,
@@ -447,6 +475,16 @@ async def replace_weakest_agent(
                 "directive": state["agents"][role]["directive"],
                 "mandate_emphasis": state["agents"][role]["mandate_emphasis"],
                 "focus": state["agents"][role]["focus"],
+                "replay_cases": (
+                    ((state["agents"][role].get("improvement_history") or [{}])[-1] or {}).get("replay_cases")
+                    if role == weakest
+                    else []
+                ),
+                "prompt_improvement_directive": (
+                    ((state["agents"][role].get("improvement_history") or [{}])[-1] or {}).get("prompt_improvement_directive")
+                    if role == weakest
+                    else ""
+                ),
                 "reliability_history": state["agents"][role]["reliability_history"],
                 "replaced_this_round": role == weakest,
                 "improved_this_round": role == weakest,

@@ -70,8 +70,12 @@ class PromotionCandidate(BaseModel):
     agent_id: str
     version_label: str
     incumbent_label: str
+    prompt_hash: str = ""
+    candidate_prompt_hash: str = ""
     prompt_adjustment: str = ""
     promotion_gate: str = ""
+    reliability_dimensions: list[str] = Field(default_factory=list)
+    gate_metric: str = ""
     replay_set: str | None = None
     status: str = Field(default="proposed", description="proposed | replaying | blocked | approved | needs_review")
     created_at: str = ""
@@ -272,19 +276,27 @@ def list_candidates() -> list[dict]:
 
 def _default_directive(agent_id: str, version_label: str) -> str:
     return {
+        "cfo": "Resolve dissent into explicit board conditions and cite the computed runway-impact basis before ruling.",
         "treasury": "Stress-test liquidity under the downside cash forecast and always state months of runway remaining.",
         "fpna": "Calibrate growth claims against cohort churn/NDR and flag forecast overconfidence explicitly.",
         "risk": "Enumerate every high-severity audit finding and security blocker and tie each to a control.",
         "procurement": "Quantify renewal leverage, switching cost, and termination notice for each vendor commitment.",
+        "reliability": "Produce evaluator-only scorecards with replay cases and prompt directives; never take an approve/reject stance.",
     }.get(agent_id, f"Apply the {version_label} prompt revision rigorously and cite evidence.")
 
 
 def upsert_candidates_from_prompt_versions() -> list[dict]:
     """Idempotently register a PromotionCandidate for each seeded prompt version."""
     company = R.get_json(f"{R.NS}:company:northwind") or {}
+    try:
+        from src.openai_council import prompt_versions_payload
+
+        versions = prompt_versions_payload({"financials": company})
+    except Exception:
+        versions = company.get("prompt_versions") or []
     created: list[dict] = []
-    for version in company.get("prompt_versions") or []:
-        agent_id = version.get("agent")
+    for version in versions:
+        agent_id = version.get("agent") or version.get("role")
         version_label = version.get("candidate")
         if not agent_id or not version_label:
             continue
@@ -298,9 +310,13 @@ def upsert_candidates_from_prompt_versions() -> list[dict]:
             agent_id=agent_id,
             version_label=version_label,
             incumbent_label=version.get("current") or f"{agent_id}.incumbent",
+            prompt_hash=version.get("prompt_hash") or version.get("active_prompt_hash") or "",
+            candidate_prompt_hash=version.get("candidate_prompt_hash") or "",
             prompt_adjustment=version.get("directive") or _default_directive(agent_id, version_label),
             promotion_gate=version.get("promotion_gate") or "",
-            replay_set=DEFAULT_SLUG,
+            reliability_dimensions=list(version.get("reliability_dimensions") or []),
+            gate_metric=version.get("gate_metric") or "",
+            replay_set=version.get("replay_set") or DEFAULT_SLUG,
             status="proposed",
             created_at=_now(),
             updated_at=_now(),

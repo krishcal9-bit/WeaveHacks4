@@ -42,24 +42,37 @@ export function PageTransition({ pathname, children }: { pathname: string; child
     setRoute({ previous: route.current, current: pathname });
   }
 
-  const variants = resolveVariants(route.current, route.previous, reduced ?? false);
+  const shouldReduce = reduced ?? false;
+  const variants = resolveVariants(route.current, route.previous, shouldReduce);
 
   if (!mounted) {
     return <div className="min-h-full w-full">{children}</div>;
   }
 
   return (
-    <AnimatePresence mode="wait" initial={false}>
-      <motion.div
-        key={route.current}
-        className="min-h-full w-full"
-        variants={variants}
-        initial="initial"
-        animate="animate"
-        exit="exit"
-      >
-        {children}
-      </motion.div>
-    </AnimatePresence>
+    <div
+      className="relative grid min-h-full w-full overflow-x-clip"
+      data-route-transition
+      data-route-current={route.current}
+      data-route-previous={route.previous}
+    >
+      <AnimatePresence mode="sync" initial={false}>
+        <motion.div
+          key={route.current}
+          className="min-h-full w-full"
+          style={{
+            gridArea: "1 / 1",
+            transformOrigin: "50% 18%",
+            willChange: shouldReduce ? "auto" : "opacity, transform",
+          }}
+          variants={variants}
+          initial="initial"
+          animate="animate"
+          exit="exit"
+        >
+          {children}
+        </motion.div>
+      </AnimatePresence>
+    </div>
   );
 }

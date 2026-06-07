@@ -2,45 +2,242 @@
   "board_policy": [
     {
       "policy_id": "BP-1",
+      "control_id": "CTRL-BOARD-NOTIFY",
       "title": "Vendor commitment board notification",
       "category": "governance",
-      "text": "Any single vendor commitment above $150K annualized requires board notification before signing.",
+      "severity": "medium",
+      "text": "Any single vendor commitment above $150K annualized, any material runway movement, or any commitment touching customer or regulated data requires board notification before signing.",
       "rule": "vendor_commitment_board_notification",
       "threshold": 150000,
-      "unit": "usd_per_year"
+      "unit": "usd_per_year",
+      "approval_route": ["CFO", "Board"],
+      "notice_period_days": 7,
+      "required_evidence": [
+        "Board notification memo",
+        "Runway impact summary",
+        "Data-sensitivity appendix when customer or regulated data is in scope"
+      ],
+      "exception_process": "CFO may log an urgent-signing exception only if the board is notified within 2 business days and the exception is included in the next audit packet.",
+      "data_sensitivity": ["customer_data", "regulated"],
+      "audit_requirements": [
+        "Retain notification memo and delivery timestamp",
+        "Attach final contract value and approval route"
+      ],
+      "obligations": [
+        {
+          "kind": "board_notification",
+          "owner_role": "Office of the CFO",
+          "due_in_days": 5,
+          "evidence_required": ["Board notification memo", "Delivery receipt"]
+        }
+      ],
+      "owner_role": "Office of the CFO",
+      "effective_date": "2026-01-01"
     },
     {
       "policy_id": "BP-2",
+      "control_id": "CTRL-VENDOR-REVIEW",
       "title": "Vendor competitive review value",
       "category": "procurement",
-      "text": "Vendor contracts over $100,000 per year must be competitively reviewed before renewal.",
+      "severity": "medium",
+      "text": "Vendor contracts over $100,000 per year must be competitively reviewed before renewal or extension.",
       "rule": "vendor_competitive_review_value",
       "threshold": 100000,
-      "unit": "usd_per_year"
+      "unit": "usd_per_year",
+      "approval_route": ["Procurement", "Department Head", "CFO"],
+      "notice_period_days": 60,
+      "required_evidence": [
+        "Competitive review worksheet",
+        "Benchmark or alternative quote",
+        "Prior renewal outcome",
+        "Supplier negotiation notes"
+      ],
+      "exception_process": "Procurement may request a sole-source exception with CFO sign-off and a documented benchmark.",
+      "audit_requirements": [
+        "Retain benchmark source and negotiation log",
+        "Record renewal decision before notice window closes"
+      ],
+      "obligations": [
+        {
+          "kind": "competitive_review",
+          "owner_role": "Procurement",
+          "due_in_days": 30,
+          "evidence_required": ["Competitive review worksheet", "Benchmark source"]
+        }
+      ],
+      "owner_role": "Procurement",
+      "effective_date": "2026-01-01"
     },
     {
       "policy_id": "BP-3",
+      "control_id": "CTRL-VENDOR-RENEWAL-WINDOW",
       "title": "Vendor competitive review window",
       "category": "procurement",
-      "text": "High-value vendor contracts must be competitively reviewed at least 60 days before their renewal date.",
+      "severity": "high",
+      "text": "High-value vendor contracts must be competitively reviewed at least 60 days before their renewal date and before any auto-renewal notice deadline.",
       "rule": "vendor_competitive_review_days",
       "threshold": 60,
-      "unit": "days"
+      "unit": "days",
+      "approval_route": ["Procurement", "Contract Owner", "CFO"],
+      "notice_period_days": 60,
+      "required_evidence": [
+        "Renewal date",
+        "Auto-renewal notice deadline",
+        "Termination clause",
+        "Owner attestation"
+      ],
+      "exception_process": "If the 60-day window is missed, Procurement must escalate renewal urgency to the CFO and document the lost leverage.",
+      "audit_requirements": [
+        "Track notice deadline in the renewal calendar",
+        "Attach owner attestation after contract-owner changes"
+      ],
+      "obligations": [
+        {
+          "kind": "renewal_notice",
+          "owner_role": "Procurement",
+          "due_in_days": 0,
+          "evidence_required": ["Filed notice or signed renewal decision"]
+        }
+      ],
+      "owner_role": "Procurement",
+      "effective_date": "2026-01-01"
     },
     {
       "policy_id": "BP-4",
+      "control_id": "CTRL-RUNWAY-FLOOR",
       "title": "Minimum runway guardrail",
       "category": "treasury",
-      "text": "Maintain at least 9 months runway unless a signed financing term sheet is in hand.",
+      "severity": "critical",
+      "text": "Maintain at least 9 months runway unless a signed financing term sheet is in hand or the board grants a runway exception with named mitigations.",
       "rule": "min_runway_months",
       "threshold": 9,
-      "unit": "months"
+      "unit": "months",
+      "approval_route": ["CFO", "Board"],
+      "notice_period_days": 0,
+      "required_evidence": [
+        "Cash forecast",
+        "Before/after runway model",
+        "Signed financing term sheet or board exception",
+        "Contingency spend cuts"
+      ],
+      "exception_process": "Board-approved exception must name financing owner, closing date, and trigger-based spend reductions.",
+      "audit_requirements": [
+        "Archive runway model with source cash forecast",
+        "Log exception or financing term sheet in the governance audit stream"
+      ],
+      "obligations": [
+        {
+          "kind": "runway_recheck",
+          "owner_role": "Treasury",
+          "due_in_days": 30,
+          "evidence_required": ["Updated cash forecast", "Financing close status"]
+        }
+      ],
+      "owner_role": "Treasury",
+      "effective_date": "2026-01-01"
     },
     {
       "policy_id": "BP-5",
+      "control_id": "CTRL-HEADCOUNT",
       "title": "Headcount funding basis",
       "category": "people",
-      "text": "New headcount must map to signed revenue, security compliance, or runway-positive automation."
+      "severity": "high",
+      "text": "New headcount must map to signed revenue, security compliance, or runway-positive automation and must not push monthly net-burn growth above the approved cap without CFO exception.",
+      "rule": "headcount_funding_basis",
+      "threshold": 0.08,
+      "unit": "net_burn_growth_fraction",
+      "approval_route": ["Department Head", "People Ops", "CFO"],
+      "notice_period_days": 14,
+      "required_evidence": [
+        "Approved headcount plan row",
+        "Start date",
+        "Fully loaded cost",
+        "Revenue/compliance/automation mapping"
+      ],
+      "exception_process": "CFO may approve a staged-start exception if the owner documents the business linkage and burn sensitivity.",
+      "audit_requirements": [
+        "Reconcile planned, open, filled, contractor, and backfill roles monthly",
+        "Retain approval status and department mapping"
+      ],
+      "obligations": [
+        {
+          "kind": "headcount_reconciliation",
+          "owner_role": "People Ops",
+          "due_in_days": 30,
+          "evidence_required": ["Approved headcount row", "Start-date reconciliation"]
+        }
+      ],
+      "owner_role": "People Ops",
+      "effective_date": "2026-01-01"
+    },
+    {
+      "policy_id": "BP-6",
+      "control_id": "CTRL-DATA-SECURITY",
+      "title": "Customer and regulated data vendor review",
+      "category": "data_governance",
+      "severity": "high",
+      "text": "Any vendor or workflow that processes customer or regulated data requires security review, Legal review when regulated data is in scope, and a signed data processing agreement before go-live.",
+      "rule": "customer_regulated_data_review",
+      "threshold": 0,
+      "unit": "customer_or_regulated_data_scope",
+      "approval_route": ["Security Review", "Legal"],
+      "notice_period_days": 0,
+      "required_evidence": [
+        "Security review sign-off",
+        "Signed DPA",
+        "Data-flow owner",
+        "Fresh SOC 2 or equivalent security evidence"
+      ],
+      "exception_process": "No go-live exception is permitted for regulated data without both Legal and Security Review approval.",
+      "data_sensitivity": ["customer_data", "regulated"],
+      "audit_requirements": [
+        "Store DPA, security review, data-flow owner, and access grant evidence",
+        "Reconcile vendor security evidence freshness before access"
+      ],
+      "obligations": [
+        {
+          "kind": "data_access_review",
+          "owner_role": "Security Review",
+          "due_in_days": 0,
+          "evidence_required": ["Security review sign-off", "Signed DPA"]
+        }
+      ],
+      "owner_role": "Risk & Audit",
+      "effective_date": "2026-01-01"
+    },
+    {
+      "policy_id": "BP-7",
+      "control_id": "CTRL-FORECAST-CALIBRATION",
+      "title": "Post-decision forecast calibration",
+      "category": "forecast_governance",
+      "severity": "low",
+      "text": "Every material council decision must compare predicted cash, ARR, margin, and control outcomes against actuals within 60 days and feed misses into replay cases.",
+      "rule": "forecast_calibration_checkpoint",
+      "threshold": 60,
+      "unit": "days",
+      "approval_route": ["FP&A"],
+      "notice_period_days": 60,
+      "required_evidence": [
+        "Predicted vs actual outcome",
+        "Calibration score",
+        "Source provenance",
+        "Replay directive for misses"
+      ],
+      "exception_process": "CFO must approve skipping calibration and record why actuals cannot be measured.",
+      "audit_requirements": [
+        "Retain predicted-vs-actual scorecard",
+        "Attach prompt or process improvement directive when calibration misses exceed tolerance"
+      ],
+      "obligations": [
+        {
+          "kind": "forecast_calibration",
+          "owner_role": "FP&A",
+          "due_in_days": 60,
+          "evidence_required": ["Predicted vs actual outcome", "Calibration score"]
+        }
+      ],
+      "owner_role": "FP&A",
+      "effective_date": "2026-01-01"
     }
   ]
 }

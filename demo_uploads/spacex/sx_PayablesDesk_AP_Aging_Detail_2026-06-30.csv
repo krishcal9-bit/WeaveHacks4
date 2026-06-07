@@ -1,0 +1,241 @@
+invoice_id,vendor_name,vendor_id,issue_date,due_date,amount,currency,status,po_number,period,department,cost_center,approver,source_system
+SX-AP-00001,Panasonic Energy,SX-VEN-001,2026-01-01,2026-02-08,322000.0,USD,approved,,2026-01,Starlink,SX-100,Controller,PayablesDesk
+SX-AP-00002,Amazon Web Services,SX-VEN-002,2026-02-02,2026-03-12,219333.33,USD,in review,SX-PO-07101,2026-02,Ground Systems,SX-101,VP Operations,PayablesDesk
+SX-AP-00003,Honeywell Aerospace,SX-VEN-003,2026-03-03,2026-04-10,156000.0,USD,approved,SX-PO-07102,2026-03,Avionics,SX-102,Security Lead,PayablesDesk
+SX-AP-00004,L3Harris Technologies,SX-VEN-004,2026-04-04,2026-05-12,137200.0,USD,in review,SX-PO-07103,2026-04,Starlink,SX-103,Revenue Ops,PayablesDesk
+SX-AP-00005,Ball Aerospace,SX-VEN-005,2026-05-05,2026-06-12,200000.0,USD,approved,SX-PO-07104,2026-05,Starlink,SX-104,CFO,PayablesDesk
+SX-AP-00006,ViaSat Ground Network,SX-VEN-006,2026-06-06,2026-07-14,75650.0,USD,in review,SX-PO-07105,2026-06,Ground Systems,SX-105,Controller,PayablesDesk
+SX-AP-00007,Microsoft Azure,SX-VEN-007,2026-01-07,2026-02-14,104000.0,USD,approved,SX-PO-07106,2026-01,Ground Systems,SX-106,VP Operations,PayablesDesk
+SX-AP-00008,Deloitte Aerospace Advisory,SX-VEN-008,2026-02-08,2026-03-18,49833.34,USD,in review,SX-PO-07107,2026-02,Finance,SX-107,Security Lead,PayablesDesk
+SX-AP-00009,Kirkland & Ellis LLP,SX-VEN-009,2026-03-09,2026-04-16,76766.67,USD,approved,SX-PO-07108,2026-03,Finance,SX-108,Revenue Ops,PayablesDesk
+SX-AP-00010,Marsh Aerospace Insurance,SX-VEN-010,2026-04-10,2026-05-18,256000.0,USD,in review,SX-PO-07109,2026-04,Mission Assurance,SX-109,CFO,PayablesDesk
+SX-AP-00011,Jacobs Engineering,SX-VEN-011,2026-05-11,2026-06-18,89833.34,USD,approved,SX-PO-07110,2026-05,Launch Operations,SX-110,Controller,PayablesDesk
+SX-AP-00012,AECOM Launch Pad Services,SX-VEN-012,2026-06-12,2026-07-20,120833.33,USD,in review,,2026-06,Launch Operations,SX-111,VP Operations,PayablesDesk
+SX-AP-00013,Ansys Simulation,SX-VEN-013,2026-01-13,2026-02-20,35700.0,USD,approved,SX-PO-07112,2026-01,Propulsion,SX-112,Security Lead,PayablesDesk
+SX-AP-00014,Siemens PLM,SX-VEN-014,2026-02-14,2026-03-24,32933.34,USD,in review,SX-PO-07113,2026-02,Starship Program,SX-113,Revenue Ops,PayablesDesk
+SX-AP-00015,Salesforce Government Cloud,SX-VEN-015,2026-03-15,2026-04-22,22233.34,USD,approved,SX-PO-07114,2026-03,Government Relations,SX-114,CFO,PayablesDesk
+SX-AP-00016,Workday HCM,SX-VEN-016,2026-04-16,2026-05-24,39950.0,USD,in review,SX-PO-07115,2026-04,People Operations,SX-115,Controller,PayablesDesk
+SX-AP-00017,Okta Identity,SX-VEN-017,2026-05-17,2026-06-24,14400.0,USD,approved,SX-PO-07116,2026-05,Mission Assurance,SX-116,VP Operations,PayablesDesk
+SX-AP-00018,CrowdStrike Falcon,SX-VEN-018,2026-06-18,2026-07-26,19600.0,USD,in review,SX-PO-07117,2026-06,Mission Assurance,SX-117,Security Lead,PayablesDesk
+SX-AP-00019,Splunk Enterprise,SX-VEN-019,2026-01-19,2026-02-26,26666.67,USD,approved,SX-PO-07118,2026-01,Ground Systems,SX-118,Revenue Ops,PayablesDesk
+SX-AP-00020,Datadog Infrastructure,SX-VEN-020,2026-02-20,2026-03-30,23375.0,USD,in review,SX-PO-07119,2026-02,Starlink,SX-119,CFO,PayablesDesk
+SX-AP-00021,Flex Ltd Manufacturing,SX-VEN-021,2026-03-21,2026-04-28,485333.34,USD,approved,SX-PO-07120,2026-03,Starlink,SX-120,Controller,PayablesDesk
+SX-AP-00022,Precision Castparts,SX-VEN-022,2026-04-22,2026-05-30,237666.66,USD,in review,SX-PO-07121,2026-04,Propulsion,SX-121,VP Operations,PayablesDesk
+SX-AP-00023,ATI Titanium,SX-VEN-023,2026-05-23,2026-06-30,211500.0,USD,approved,,2026-05,Starship Program,SX-122,Security Lead,PayablesDesk
+SX-AP-00024,Spaceport America Ops,SX-VEN-024,2026-06-24,2026-08-01,62400.0,USD,in review,SX-PO-07123,2026-06,Launch Operations,SX-123,Revenue Ops,PayablesDesk
+SX-AP-00025,Cape Canaveral Support Services,SX-VEN-025,2026-01-25,2026-03-04,75133.34,USD,approved,SX-PO-07124,2026-01,Launch Operations,SX-124,CFO,PayablesDesk
+SX-AP-00026,FCC Spectrum Licensing,SX-VEN-026,2026-02-26,2026-04-05,37500.0,USD,in review,SX-PO-07125,2026-02,Starlink,SX-125,Controller,PayablesDesk
+SX-AP-00027,FAA Launch Licensing,SX-VEN-027,2026-03-27,2026-05-04,32300.0,USD,approved,SX-PO-07126,2026-03,Launch Operations,SX-126,VP Operations,PayablesDesk
+SX-AP-00028,LinkedIn Recruiting,SX-VEN-028,2026-04-01,2026-05-09,36400.0,USD,in review,SX-PO-07127,2026-04,People Operations,SX-127,Security Lead,PayablesDesk
+SX-AP-00029,Glassdoor Employer Brand,SX-VEN-029,2026-05-02,2026-06-09,7283.34,USD,approved,SX-PO-07128,2026-05,People Operations,SX-100,Revenue Ops,PayablesDesk
+SX-AP-00030,Concur Travel,SX-VEN-030,2026-06-03,2026-07-11,12533.33,USD,in review,SX-PO-07129,2026-06,Finance,SX-101,CFO,PayablesDesk
+SX-AP-00031,American Express Corporate,SX-VEN-031,2026-01-04,2026-02-11,17600.0,USD,approved,SX-PO-07130,2026-01,Finance,SX-102,Controller,PayablesDesk
+SX-AP-00032,Deloitte Tax,SX-VEN-032,2026-02-05,2026-03-15,27766.66,USD,in review,SX-PO-07131,2026-02,Finance,SX-103,VP Operations,PayablesDesk
+SX-AP-00033,Ernst & Young Audit,SX-VEN-033,2026-03-06,2026-04-13,74166.67,USD,approved,SX-PO-07132,2026-03,Finance,SX-104,Security Lead,PayablesDesk
+SX-AP-00034,Palantir Foundry,SX-VEN-034,2026-04-07,2026-05-15,57800.0,USD,in review,,2026-04,Starlink,SX-105,Revenue Ops,PayablesDesk
+SX-AP-00035,Snowflake Analytics,SX-VEN-035,2026-05-08,2026-06-15,45066.66,USD,approved,SX-PO-07134,2026-05,Starlink,SX-106,CFO,PayablesDesk
+SX-AP-00036,ServiceNow ITSM,SX-VEN-036,2026-06-09,2026-07-17,31433.34,USD,in review,SX-PO-07135,2026-06,Ground Systems,SX-107,Controller,PayablesDesk
+SX-AP-00037,Atlassian Jira,SX-VEN-037,2026-01-10,2026-02-17,14883.33,USD,approved,SX-PO-07136,2026-01,Propulsion,SX-108,VP Operations,PayablesDesk
+SX-AP-00038,GitHub Enterprise,SX-VEN-038,2026-02-11,2026-03-21,16800.0,USD,in review,SX-PO-07137,2026-02,Avionics,SX-109,Security Lead,PayablesDesk
+SX-AP-00039,Ansys HFSS,SX-VEN-039,2026-03-12,2026-04-19,12658.34,USD,approved,SX-PO-07138,2026-03,Avionics,SX-110,Revenue Ops,PayablesDesk
+SX-AP-00040,Keysight Test Equipment,SX-VEN-040,2026-04-13,2026-05-21,40000.0,USD,in review,SX-PO-07139,2026-04,Mission Assurance,SX-111,CFO,PayablesDesk
+SX-AP-00041,National Instruments,SX-VEN-041,2026-05-14,2026-06-21,30600.0,USD,approved,SX-PO-07140,2026-05,Mission Assurance,SX-112,Controller,PayablesDesk
+SX-AP-00042,Blue Origin Launch Pad Lease,SX-VEN-042,2026-06-15,2026-07-23,104000.0,USD,in review,SX-PO-07141,2026-06,Launch Operations,SX-113,VP Operations,PayablesDesk
+SX-AP-00043,Brownsville Port Authority,SX-VEN-043,2026-01-16,2026-02-23,18400.0,USD,approved,SX-PO-07142,2026-01,Starship Program,SX-114,Security Lead,PayablesDesk
+SX-AP-00044,Starlink Dish Logistics,SX-VEN-044,2026-02-17,2026-03-27,56400.0,USD,in review,SX-PO-07143,2026-02,Starlink,SX-115,Revenue Ops,PayablesDesk
+SX-AP-00045,FedEx Critical Parts,SX-VEN-045,2026-03-18,2026-04-25,30400.0,USD,approved,,2026-03,Launch Operations,SX-116,CFO,PayablesDesk
+SX-AP-00046,UPS Supply Chain,SX-VEN-046,2026-04-19,2026-05-27,23683.34,USD,in review,SX-PO-07145,2026-04,Propulsion,SX-117,Controller,PayablesDesk
+SX-AP-00047,Clean Harbors Waste,SX-VEN-047,2026-05-20,2026-06-27,14583.33,USD,approved,SX-PO-07146,2026-05,Launch Operations,SX-118,VP Operations,PayablesDesk
+SX-AP-00048,Aon Cyber Insurance,SX-VEN-048,2026-06-21,2026-07-29,47600.0,USD,in review,SX-PO-07147,2026-06,Mission Assurance,SX-119,Security Lead,PayablesDesk
+SX-AP-00049,Zscaler Zero Trust,SX-VEN-049,2026-01-22,2026-03-01,16900.0,USD,approved,SX-PO-07148,2026-01,Mission Assurance,SX-120,Revenue Ops,PayablesDesk
+SX-AP-00050,Palo Alto Networks,SX-VEN-050,2026-02-23,2026-04-02,21466.66,USD,in review,SX-PO-07149,2026-02,Ground Systems,SX-121,CFO,PayablesDesk
+SX-AP-00051,DocuSign Enterprise,SX-VEN-051,2026-03-24,2026-05-01,6658.33,USD,approved,SX-PO-07150,2026-03,Finance,SX-122,Controller,PayablesDesk
+SX-AP-00052,Iron Mountain Records,SX-VEN-052,2026-04-25,2026-06-02,9600.0,USD,in review,SX-PO-07151,2026-04,Finance,SX-123,VP Operations,PayablesDesk
+SX-AP-00053,Gartner Research,SX-VEN-053,2026-05-26,2026-07-03,7758.34,USD,approved,SX-PO-07152,2026-05,Finance,SX-124,Security Lead,PayablesDesk
+SX-AP-00054,Space Foundation Membership,SX-VEN-054,2026-06-27,2026-08-04,3750.0,USD,in review,SX-PO-07153,2026-06,Government Relations,SX-125,Revenue Ops,PayablesDesk
+SX-AP-00055,Satellite Industry Association,SX-VEN-055,2026-01-01,2026-02-08,3230.0,USD,approved,SX-PO-07154,2026-01,Government Relations,SX-126,CFO,PayablesDesk
+SX-AP-00056,Panasonic Energy Starlink,SX-VEN-056,2026-02-02,2026-03-12,355333.34,USD,in review,,2026-02,Starlink,SX-127,Controller,PayablesDesk
+SX-AP-00057,AWS GovCloud,SX-VEN-057,2026-03-03,2026-04-10,145666.66,USD,approved,SX-PO-07156,2026-03,Government Relations,SX-100,VP Operations,PayablesDesk
+SX-AP-00058,Microsoft Starlink Partnership,SX-VEN-058,2026-04-04,2026-05-12,105750.0,USD,in review,SX-PO-07157,2026-04,Starlink,SX-101,Security Lead,PayablesDesk
+SX-AP-00059,Panasonic Energy,SX-VEN-001,2026-05-05,2026-06-12,336000.0,USD,approved,SX-PO-07158,2026-05,Starlink,SX-102,Revenue Ops,PayablesDesk
+SX-AP-00060,Amazon Web Services,SX-VEN-002,2026-06-06,2026-07-14,228666.66,USD,in review,SX-PO-07159,2026-06,Ground Systems,SX-103,CFO,PayablesDesk
+SX-AP-00061,Honeywell Aerospace,SX-VEN-003,2026-01-07,2026-02-14,162500.0,USD,approved,SX-PO-07160,2026-01,Avionics,SX-104,Controller,PayablesDesk
+SX-AP-00062,L3Harris Technologies,SX-VEN-004,2026-02-08,2026-03-18,142800.0,USD,in review,SX-PO-07161,2026-02,Starlink,SX-105,VP Operations,PayablesDesk
+SX-AP-00063,Ball Aerospace,SX-VEN-005,2026-03-09,2026-04-16,208000.0,USD,approved,SX-PO-07162,2026-03,Starlink,SX-106,Security Lead,PayablesDesk
+SX-AP-00064,ViaSat Ground Network,SX-VEN-006,2026-04-10,2026-05-18,68233.34,USD,in review,SX-PO-07163,2026-04,Ground Systems,SX-107,Revenue Ops,PayablesDesk
+SX-AP-00065,Microsoft Azure,SX-VEN-007,2026-05-11,2026-06-18,94000.0,USD,approved,SX-PO-07164,2026-05,Ground Systems,SX-108,CFO,PayablesDesk
+SX-AP-00066,Deloitte Aerospace Advisory,SX-VEN-008,2026-06-12,2026-07-20,52000.0,USD,in review,SX-PO-07165,2026-06,Finance,SX-109,Controller,PayablesDesk
+SX-AP-00067,Kirkland & Ellis LLP,SX-VEN-009,2026-01-13,2026-02-20,80033.34,USD,approved,,2026-01,Finance,SX-110,VP Operations,PayablesDesk
+SX-AP-00068,Marsh Aerospace Insurance,SX-VEN-010,2026-02-14,2026-03-24,266666.67,USD,in review,SX-PO-07167,2026-02,Mission Assurance,SX-111,Security Lead,PayablesDesk
+SX-AP-00069,Jacobs Engineering,SX-VEN-011,2026-03-15,2026-04-22,93500.0,USD,approved,SX-PO-07168,2026-03,Launch Operations,SX-112,Revenue Ops,PayablesDesk
+SX-AP-00070,AECOM Launch Pad Services,SX-VEN-012,2026-04-16,2026-05-24,125666.66,USD,in review,SX-PO-07169,2026-04,Launch Operations,SX-113,CFO,PayablesDesk
+SX-AP-00071,Ansys Simulation,SX-VEN-013,2026-05-17,2026-06-24,32200.0,USD,approved,SX-PO-07170,2026-05,Propulsion,SX-114,Controller,PayablesDesk
+SX-AP-00072,Siemens PLM,SX-VEN-014,2026-06-18,2026-07-26,29766.67,USD,in review,SX-PO-07171,2026-06,Starship Program,SX-115,VP Operations,PayablesDesk
+SX-AP-00073,Salesforce Government Cloud,SX-VEN-015,2026-01-19,2026-02-26,23200.0,USD,approved,SX-PO-07172,2026-01,Government Relations,SX-116,Security Lead,PayablesDesk
+SX-AP-00074,Workday HCM,SX-VEN-016,2026-02-20,2026-03-30,41650.0,USD,in review,SX-PO-07173,2026-02,People Operations,SX-117,Revenue Ops,PayablesDesk
+SX-AP-00075,Okta Identity,SX-VEN-017,2026-03-21,2026-04-28,15000.0,USD,approved,SX-PO-07174,2026-03,Mission Assurance,SX-118,CFO,PayablesDesk
+SX-AP-00076,CrowdStrike Falcon,SX-VEN-018,2026-04-22,2026-05-30,20400.0,USD,in review,SX-PO-07175,2026-04,Mission Assurance,SX-119,Controller,PayablesDesk
+SX-AP-00077,Splunk Enterprise,SX-VEN-019,2026-05-23,2026-06-30,27733.34,USD,approved,SX-PO-07176,2026-05,Ground Systems,SX-120,VP Operations,PayablesDesk
+SX-AP-00078,Datadog Infrastructure,SX-VEN-020,2026-06-24,2026-08-01,21083.34,USD,in review,,2026-06,Starlink,SX-121,Security Lead,PayablesDesk
+SX-AP-00079,Flex Ltd Manufacturing,SX-VEN-021,2026-01-25,2026-03-04,438666.67,USD,approved,SX-PO-07178,2026-01,Starlink,SX-122,Revenue Ops,PayablesDesk
+SX-AP-00080,Precision Castparts,SX-VEN-022,2026-02-26,2026-04-05,248000.0,USD,in review,SX-PO-07179,2026-02,Propulsion,SX-123,CFO,PayablesDesk
+SX-AP-00081,ATI Titanium,SX-VEN-023,2026-03-27,2026-05-04,220500.0,USD,approved,SX-PO-07180,2026-03,Starship Program,SX-124,Controller,PayablesDesk
+SX-AP-00082,Spaceport America Ops,SX-VEN-024,2026-04-01,2026-05-09,65000.0,USD,in review,SX-PO-07181,2026-04,Launch Operations,SX-125,VP Operations,PayablesDesk
+SX-AP-00083,Cape Canaveral Support Services,SX-VEN-025,2026-05-02,2026-06-09,78200.0,USD,approved,SX-PO-07182,2026-05,Launch Operations,SX-126,Security Lead,PayablesDesk
+SX-AP-00084,FCC Spectrum Licensing,SX-VEN-026,2026-06-03,2026-07-11,39000.0,USD,in review,SX-PO-07183,2026-06,Starlink,SX-127,Revenue Ops,PayablesDesk
+SX-AP-00085,FAA Launch Licensing,SX-VEN-027,2026-01-04,2026-02-11,29133.34,USD,approved,SX-PO-07184,2026-01,Launch Operations,SX-100,CFO,PayablesDesk
+SX-AP-00086,LinkedIn Recruiting,SX-VEN-028,2026-02-05,2026-03-15,32900.0,USD,in review,SX-PO-07185,2026-02,People Operations,SX-101,Controller,PayablesDesk
+SX-AP-00087,Glassdoor Employer Brand,SX-VEN-029,2026-03-06,2026-04-13,7600.0,USD,approved,SX-PO-07186,2026-03,People Operations,SX-102,VP Operations,PayablesDesk
+SX-AP-00088,Concur Travel,SX-VEN-030,2026-04-07,2026-05-15,13066.66,USD,in review,SX-PO-07187,2026-04,Finance,SX-103,Security Lead,PayablesDesk
+SX-AP-00089,American Express Corporate,SX-VEN-031,2026-05-08,2026-06-15,18333.33,USD,approved,,2026-05,Finance,SX-104,Revenue Ops,PayablesDesk
+SX-AP-00090,Deloitte Tax,SX-VEN-032,2026-06-09,2026-07-17,28900.0,USD,in review,SX-PO-07189,2026-06,Finance,SX-105,CFO,PayablesDesk
+SX-AP-00091,Ernst & Young Audit,SX-VEN-033,2026-01-10,2026-02-17,77133.34,USD,approved,SX-PO-07190,2026-01,Finance,SX-106,Controller,PayablesDesk
+SX-AP-00092,Palantir Foundry,SX-VEN-034,2026-02-11,2026-03-21,52133.34,USD,in review,SX-PO-07191,2026-02,Starlink,SX-107,VP Operations,PayablesDesk
+SX-AP-00093,Snowflake Analytics,SX-VEN-035,2026-03-12,2026-04-19,40733.33,USD,approved,SX-PO-07192,2026-03,Starlink,SX-108,Security Lead,PayablesDesk
+SX-AP-00094,ServiceNow ITSM,SX-VEN-036,2026-04-13,2026-05-21,32800.0,USD,in review,SX-PO-07193,2026-04,Ground Systems,SX-109,Revenue Ops,PayablesDesk
+SX-AP-00095,Atlassian Jira,SX-VEN-037,2026-05-14,2026-06-21,15516.66,USD,approved,SX-PO-07194,2026-05,Propulsion,SX-110,CFO,PayablesDesk
+SX-AP-00096,GitHub Enterprise,SX-VEN-038,2026-06-15,2026-07-23,17500.0,USD,in review,SX-PO-07195,2026-06,Avionics,SX-111,Controller,PayablesDesk
+SX-AP-00097,Ansys HFSS,SX-VEN-039,2026-01-16,2026-02-23,13175.0,USD,approved,SX-PO-07196,2026-01,Avionics,SX-112,VP Operations,PayablesDesk
+SX-AP-00098,Keysight Test Equipment,SX-VEN-040,2026-02-17,2026-03-27,41600.0,USD,in review,SX-PO-07197,2026-02,Mission Assurance,SX-113,Security Lead,PayablesDesk
+SX-AP-00099,National Instruments,SX-VEN-041,2026-03-18,2026-04-25,27600.0,USD,approved,SX-PO-07198,2026-03,Mission Assurance,SX-114,Revenue Ops,PayablesDesk
+SX-AP-00100,Blue Origin Launch Pad Lease,SX-VEN-042,2026-04-19,2026-05-27,94000.0,USD,in review,,2026-04,Launch Operations,SX-115,CFO,PayablesDesk
+SX-AP-00101,Brownsville Port Authority,SX-VEN-043,2026-05-20,2026-06-27,19200.0,USD,approved,SX-PO-07200,2026-05,Starship Program,SX-116,Controller,PayablesDesk
+SX-AP-00102,Starlink Dish Logistics,SX-VEN-044,2026-06-21,2026-07-29,58800.0,USD,in review,SX-PO-07201,2026-06,Starlink,SX-117,VP Operations,PayablesDesk
+SX-AP-00103,FedEx Critical Parts,SX-VEN-045,2026-01-22,2026-03-01,31666.67,USD,approved,SX-PO-07202,2026-01,Launch Operations,SX-118,Security Lead,PayablesDesk
+SX-AP-00104,UPS Supply Chain,SX-VEN-046,2026-02-23,2026-04-02,24650.0,USD,in review,SX-PO-07203,2026-02,Propulsion,SX-119,Revenue Ops,PayablesDesk
+SX-AP-00105,Clean Harbors Waste,SX-VEN-047,2026-03-24,2026-05-01,15166.66,USD,approved,SX-PO-07204,2026-03,Launch Operations,SX-120,CFO,PayablesDesk
+SX-AP-00106,Aon Cyber Insurance,SX-VEN-048,2026-04-25,2026-06-02,42933.34,USD,in review,SX-PO-07205,2026-04,Mission Assurance,SX-121,Controller,PayablesDesk
+SX-AP-00107,Zscaler Zero Trust,SX-VEN-049,2026-05-26,2026-07-03,15275.0,USD,approved,SX-PO-07206,2026-05,Mission Assurance,SX-122,VP Operations,PayablesDesk
+SX-AP-00108,Palo Alto Networks,SX-VEN-050,2026-06-27,2026-08-04,22400.0,USD,in review,SX-PO-07207,2026-06,Ground Systems,SX-123,Security Lead,PayablesDesk
+SX-AP-00109,DocuSign Enterprise,SX-VEN-051,2026-01-01,2026-02-08,6941.66,USD,approved,SX-PO-07208,2026-01,Finance,SX-124,Revenue Ops,PayablesDesk
+SX-AP-00110,Iron Mountain Records,SX-VEN-052,2026-02-02,2026-03-12,10000.0,USD,in review,SX-PO-07209,2026-02,Finance,SX-125,CFO,PayablesDesk
+SX-AP-00111,Gartner Research,SX-VEN-053,2026-03-03,2026-04-10,8075.0,USD,approved,,2026-03,Finance,SX-126,Controller,PayablesDesk
+SX-AP-00112,Space Foundation Membership,SX-VEN-054,2026-04-04,2026-05-12,3900.0,USD,in review,SX-PO-07211,2026-04,Government Relations,SX-127,VP Operations,PayablesDesk
+SX-AP-00113,Satellite Industry Association,SX-VEN-055,2026-05-05,2026-06-12,2913.34,USD,approved,SX-PO-07212,2026-05,Government Relations,SX-100,Security Lead,PayablesDesk
+SX-AP-00114,Panasonic Energy Starlink,SX-VEN-056,2026-06-06,2026-07-14,321166.67,USD,in review,SX-PO-07213,2026-06,Starlink,SX-101,Revenue Ops,PayablesDesk
+SX-AP-00115,AWS GovCloud,SX-VEN-057,2026-01-07,2026-02-14,152000.0,USD,approved,SX-PO-07214,2026-01,Government Relations,SX-102,CFO,PayablesDesk
+SX-AP-00116,Microsoft Starlink Partnership,SX-VEN-058,2026-02-08,2026-03-18,110250.0,USD,in review,SX-PO-07215,2026-02,Starlink,SX-103,Controller,PayablesDesk
+SX-AP-00117,Panasonic Energy,SX-VEN-001,2026-03-09,2026-04-16,350000.0,USD,approved,SX-PO-07216,2026-03,Starlink,SX-104,VP Operations,PayablesDesk
+SX-AP-00118,Amazon Web Services,SX-VEN-002,2026-04-10,2026-05-18,238000.0,USD,in review,SX-PO-07217,2026-04,Ground Systems,SX-105,Security Lead,PayablesDesk
+SX-AP-00119,Honeywell Aerospace,SX-VEN-003,2026-05-11,2026-06-18,169000.0,USD,approved,SX-PO-07218,2026-05,Avionics,SX-106,Revenue Ops,PayablesDesk
+SX-AP-00120,L3Harris Technologies,SX-VEN-004,2026-06-12,2026-07-20,128800.0,USD,in review,SX-PO-07219,2026-06,Starlink,SX-107,CFO,PayablesDesk
+SX-AP-00121,Ball Aerospace,SX-VEN-005,2026-01-13,2026-02-20,188000.0,USD,approved,SX-PO-07220,2026-01,Starlink,SX-108,Controller,PayablesDesk
+SX-AP-00122,ViaSat Ground Network,SX-VEN-006,2026-02-14,2026-03-24,71200.0,USD,in review,,2026-02,Ground Systems,SX-109,VP Operations,PayablesDesk
+SX-AP-00123,Microsoft Azure,SX-VEN-007,2026-03-15,2026-04-22,98000.0,USD,approved,SX-PO-07222,2026-03,Ground Systems,SX-110,Security Lead,PayablesDesk
+SX-AP-00124,Deloitte Aerospace Advisory,SX-VEN-008,2026-04-16,2026-05-24,54166.67,USD,in review,SX-PO-07223,2026-04,Finance,SX-111,Revenue Ops,PayablesDesk
+SX-AP-00125,Kirkland & Ellis LLP,SX-VEN-009,2026-05-17,2026-06-24,83300.0,USD,approved,SX-PO-07224,2026-05,Finance,SX-112,CFO,PayablesDesk
+SX-AP-00126,Marsh Aerospace Insurance,SX-VEN-010,2026-06-18,2026-07-26,277333.34,USD,in review,SX-PO-07225,2026-06,Mission Assurance,SX-113,Controller,PayablesDesk
+SX-AP-00127,Jacobs Engineering,SX-VEN-011,2026-01-19,2026-02-26,84333.34,USD,approved,SX-PO-07226,2026-01,Launch Operations,SX-114,VP Operations,PayablesDesk
+SX-AP-00128,AECOM Launch Pad Services,SX-VEN-012,2026-02-20,2026-03-30,113583.33,USD,in review,SX-PO-07227,2026-02,Launch Operations,SX-115,Security Lead,PayablesDesk
+SX-AP-00129,Ansys Simulation,SX-VEN-013,2026-03-21,2026-04-28,33600.0,USD,approved,SX-PO-07228,2026-03,Propulsion,SX-116,Revenue Ops,PayablesDesk
+SX-AP-00130,Siemens PLM,SX-VEN-014,2026-04-22,2026-05-30,31033.34,USD,in review,SX-PO-07229,2026-04,Starship Program,SX-117,CFO,PayablesDesk
+SX-AP-00131,Salesforce Government Cloud,SX-VEN-015,2026-05-23,2026-06-30,24166.67,USD,approved,SX-PO-07230,2026-05,Government Relations,SX-118,Controller,PayablesDesk
+SX-AP-00132,Workday HCM,SX-VEN-016,2026-06-24,2026-08-01,43350.0,USD,in review,SX-PO-07231,2026-06,People Operations,SX-119,VP Operations,PayablesDesk
+SX-AP-00133,Okta Identity,SX-VEN-017,2026-01-25,2026-03-04,15600.0,USD,approved,,2026-01,Mission Assurance,SX-120,Security Lead,PayablesDesk
+SX-AP-00134,CrowdStrike Falcon,SX-VEN-018,2026-02-26,2026-04-05,18400.0,USD,in review,SX-PO-07233,2026-02,Mission Assurance,SX-121,Revenue Ops,PayablesDesk
+SX-AP-00135,Splunk Enterprise,SX-VEN-019,2026-03-27,2026-05-04,25066.67,USD,approved,SX-PO-07234,2026-03,Ground Systems,SX-122,CFO,PayablesDesk
+SX-AP-00136,Datadog Infrastructure,SX-VEN-020,2026-04-01,2026-05-09,22000.0,USD,in review,SX-PO-07235,2026-04,Starlink,SX-123,Controller,PayablesDesk
+SX-AP-00137,Flex Ltd Manufacturing,SX-VEN-021,2026-05-02,2026-06-09,457333.34,USD,approved,SX-PO-07236,2026-05,Starlink,SX-124,VP Operations,PayablesDesk
+SX-AP-00138,Precision Castparts,SX-VEN-022,2026-06-03,2026-07-11,258333.33,USD,in review,SX-PO-07237,2026-06,Propulsion,SX-125,Security Lead,PayablesDesk
+SX-AP-00139,ATI Titanium,SX-VEN-023,2026-01-04,2026-02-11,229500.0,USD,approved,SX-PO-07238,2026-01,Starship Program,SX-126,Revenue Ops,PayablesDesk
+SX-AP-00140,Spaceport America Ops,SX-VEN-024,2026-02-05,2026-03-15,67600.0,USD,in review,SX-PO-07239,2026-02,Launch Operations,SX-127,CFO,PayablesDesk
+SX-AP-00141,Cape Canaveral Support Services,SX-VEN-025,2026-03-06,2026-04-13,70533.34,USD,approved,SX-PO-07240,2026-03,Launch Operations,SX-100,Controller,PayablesDesk
+SX-AP-00142,FCC Spectrum Licensing,SX-VEN-026,2026-04-07,2026-05-15,35250.0,USD,in review,SX-PO-07241,2026-04,Starlink,SX-101,VP Operations,PayablesDesk
+SX-AP-00143,FAA Launch Licensing,SX-VEN-027,2026-05-08,2026-06-15,30400.0,USD,approved,SX-PO-07242,2026-05,Launch Operations,SX-102,Security Lead,PayablesDesk
+SX-AP-00144,LinkedIn Recruiting,SX-VEN-028,2026-06-09,2026-07-17,34300.0,USD,in review,,2026-06,People Operations,SX-103,Revenue Ops,PayablesDesk
+SX-AP-00145,Glassdoor Employer Brand,SX-VEN-029,2026-01-10,2026-02-17,7916.67,USD,approved,SX-PO-07244,2026-01,People Operations,SX-104,CFO,PayablesDesk
+SX-AP-00146,Concur Travel,SX-VEN-030,2026-02-11,2026-03-21,13600.0,USD,in review,SX-PO-07245,2026-02,Finance,SX-105,Controller,PayablesDesk
+SX-AP-00147,American Express Corporate,SX-VEN-031,2026-03-12,2026-04-19,19066.66,USD,approved,SX-PO-07246,2026-03,Finance,SX-106,VP Operations,PayablesDesk
+SX-AP-00148,Deloitte Tax,SX-VEN-032,2026-04-13,2026-05-21,26066.66,USD,in review,SX-PO-07247,2026-04,Finance,SX-107,Security Lead,PayablesDesk
+SX-AP-00149,Ernst & Young Audit,SX-VEN-033,2026-05-14,2026-06-21,69716.67,USD,approved,SX-PO-07248,2026-05,Finance,SX-108,Revenue Ops,PayablesDesk
+SX-AP-00150,Palantir Foundry,SX-VEN-034,2026-06-15,2026-07-23,54400.0,USD,in review,SX-PO-07249,2026-06,Starlink,SX-109,CFO,PayablesDesk
+SX-AP-00151,Snowflake Analytics,SX-VEN-035,2026-01-16,2026-02-23,42466.66,USD,approved,SX-PO-07250,2026-01,Starlink,SX-110,Controller,PayablesDesk
+SX-AP-00152,ServiceNow ITSM,SX-VEN-036,2026-02-17,2026-03-27,34166.67,USD,in review,SX-PO-07251,2026-02,Ground Systems,SX-111,VP Operations,PayablesDesk
+SX-AP-00153,Atlassian Jira,SX-VEN-037,2026-03-18,2026-04-25,16150.0,USD,approved,SX-PO-07252,2026-03,Propulsion,SX-112,Security Lead,PayablesDesk
+SX-AP-00154,GitHub Enterprise,SX-VEN-038,2026-04-19,2026-05-27,18200.0,USD,in review,SX-PO-07253,2026-04,Avionics,SX-113,Revenue Ops,PayablesDesk
+SX-AP-00155,Ansys HFSS,SX-VEN-039,2026-05-20,2026-06-27,11883.34,USD,approved,,2026-05,Avionics,SX-114,CFO,PayablesDesk
+SX-AP-00156,Keysight Test Equipment,SX-VEN-040,2026-06-21,2026-07-29,37600.0,USD,in review,SX-PO-07255,2026-06,Mission Assurance,SX-115,Controller,PayablesDesk
+SX-AP-00157,National Instruments,SX-VEN-041,2026-01-22,2026-03-01,28800.0,USD,approved,SX-PO-07256,2026-01,Mission Assurance,SX-116,VP Operations,PayablesDesk
+SX-AP-00158,Blue Origin Launch Pad Lease,SX-VEN-042,2026-02-23,2026-04-02,98000.0,USD,in review,SX-PO-07257,2026-02,Launch Operations,SX-117,Security Lead,PayablesDesk
+SX-AP-00159,Brownsville Port Authority,SX-VEN-043,2026-03-24,2026-05-01,20000.0,USD,approved,SX-PO-07258,2026-03,Starship Program,SX-118,Revenue Ops,PayablesDesk
+SX-AP-00160,Starlink Dish Logistics,SX-VEN-044,2026-04-25,2026-06-02,61200.0,USD,in review,SX-PO-07259,2026-04,Starlink,SX-119,CFO,PayablesDesk
+SX-AP-00161,FedEx Critical Parts,SX-VEN-045,2026-05-26,2026-07-03,32933.34,USD,approved,SX-PO-07260,2026-05,Launch Operations,SX-120,Controller,PayablesDesk
+SX-AP-00162,UPS Supply Chain,SX-VEN-046,2026-06-27,2026-08-04,22233.34,USD,in review,SX-PO-07261,2026-06,Propulsion,SX-121,VP Operations,PayablesDesk
+SX-AP-00163,Clean Harbors Waste,SX-VEN-047,2026-01-01,2026-02-08,13708.33,USD,approved,SX-PO-07262,2026-01,Launch Operations,SX-122,Security Lead,PayablesDesk
+SX-AP-00164,Aon Cyber Insurance,SX-VEN-048,2026-02-02,2026-03-12,44800.0,USD,in review,SX-PO-07263,2026-02,Mission Assurance,SX-123,Revenue Ops,PayablesDesk
+SX-AP-00165,Zscaler Zero Trust,SX-VEN-049,2026-03-03,2026-04-10,15925.0,USD,approved,SX-PO-07264,2026-03,Mission Assurance,SX-124,CFO,PayablesDesk
+SX-AP-00166,Palo Alto Networks,SX-VEN-050,2026-04-04,2026-05-12,23333.33,USD,in review,,2026-04,Ground Systems,SX-125,Controller,PayablesDesk
+SX-AP-00167,DocuSign Enterprise,SX-VEN-051,2026-05-05,2026-06-12,7225.0,USD,approved,SX-PO-07266,2026-05,Finance,SX-126,VP Operations,PayablesDesk
+SX-AP-00168,Iron Mountain Records,SX-VEN-052,2026-06-06,2026-07-14,10400.0,USD,in review,SX-PO-07267,2026-06,Finance,SX-127,Security Lead,PayablesDesk
+SX-AP-00169,Gartner Research,SX-VEN-053,2026-01-07,2026-02-14,7283.34,USD,approved,SX-PO-07268,2026-01,Finance,SX-100,Revenue Ops,PayablesDesk
+SX-AP-00170,Space Foundation Membership,SX-VEN-054,2026-02-08,2026-03-18,3525.0,USD,in review,SX-PO-07269,2026-02,Government Relations,SX-101,CFO,PayablesDesk
+SX-AP-00171,Satellite Industry Association,SX-VEN-055,2026-03-09,2026-04-16,3040.0,USD,approved,SX-PO-07270,2026-03,Government Relations,SX-102,Controller,PayablesDesk
+SX-AP-00172,Panasonic Energy Starlink,SX-VEN-056,2026-04-10,2026-05-18,334833.34,USD,in review,SX-PO-07271,2026-04,Starlink,SX-103,VP Operations,PayablesDesk
+SX-AP-00173,AWS GovCloud,SX-VEN-057,2026-05-11,2026-06-18,158333.33,USD,approved,SX-PO-07272,2026-05,Government Relations,SX-104,Security Lead,PayablesDesk
+SX-AP-00174,Microsoft Starlink Partnership,SX-VEN-058,2026-06-12,2026-07-20,114750.0,USD,in review,SX-PO-07273,2026-06,Starlink,SX-105,Revenue Ops,PayablesDesk
+SX-AP-00175,Panasonic Energy,SX-VEN-001,2026-01-13,2026-02-20,364000.0,USD,approved,SX-PO-07274,2026-01,Starlink,SX-106,CFO,PayablesDesk
+SX-AP-00176,Amazon Web Services,SX-VEN-002,2026-02-14,2026-03-24,214666.66,USD,in review,SX-PO-07275,2026-02,Ground Systems,SX-107,Controller,PayablesDesk
+SX-AP-00177,Honeywell Aerospace,SX-VEN-003,2026-03-15,2026-04-22,152750.0,USD,approved,,2026-03,Avionics,SX-108,VP Operations,PayablesDesk
+SX-AP-00178,L3Harris Technologies,SX-VEN-004,2026-04-16,2026-05-24,134400.0,USD,in review,SX-PO-07277,2026-04,Starlink,SX-109,Security Lead,PayablesDesk
+SX-AP-00179,Ball Aerospace,SX-VEN-005,2026-05-17,2026-06-24,196000.0,USD,approved,SX-PO-07278,2026-05,Starlink,SX-110,Revenue Ops,PayablesDesk
+SX-AP-00180,ViaSat Ground Network,SX-VEN-006,2026-06-18,2026-07-26,74166.67,USD,in review,SX-PO-07279,2026-06,Ground Systems,SX-111,CFO,PayablesDesk
+SX-AP-00181,Microsoft Azure,SX-VEN-007,2026-01-19,2026-02-26,102000.0,USD,approved,SX-PO-07280,2026-01,Ground Systems,SX-112,Controller,PayablesDesk
+SX-AP-00182,Deloitte Aerospace Advisory,SX-VEN-008,2026-02-20,2026-03-30,56333.34,USD,in review,SX-PO-07281,2026-02,Finance,SX-113,VP Operations,PayablesDesk
+SX-AP-00183,Kirkland & Ellis LLP,SX-VEN-009,2026-03-21,2026-04-28,75133.34,USD,approved,SX-PO-07282,2026-03,Finance,SX-114,Security Lead,PayablesDesk
+SX-AP-00184,Marsh Aerospace Insurance,SX-VEN-010,2026-04-22,2026-05-30,250666.67,USD,in review,SX-PO-07283,2026-04,Mission Assurance,SX-115,Revenue Ops,PayablesDesk
+SX-AP-00185,Jacobs Engineering,SX-VEN-011,2026-05-23,2026-06-30,88000.0,USD,approved,SX-PO-07284,2026-05,Launch Operations,SX-116,CFO,PayablesDesk
+SX-AP-00186,AECOM Launch Pad Services,SX-VEN-012,2026-06-24,2026-08-01,118416.66,USD,in review,SX-PO-07285,2026-06,Launch Operations,SX-117,Controller,PayablesDesk
+SX-AP-00187,Ansys Simulation,SX-VEN-013,2026-01-25,2026-03-04,35000.0,USD,approved,SX-PO-07286,2026-01,Propulsion,SX-118,VP Operations,PayablesDesk
+SX-AP-00188,Siemens PLM,SX-VEN-014,2026-02-26,2026-04-05,32300.0,USD,in review,,2026-02,Starship Program,SX-119,Security Lead,PayablesDesk
+SX-AP-00189,Salesforce Government Cloud,SX-VEN-015,2026-03-27,2026-05-04,25133.34,USD,approved,SX-PO-07288,2026-03,Government Relations,SX-120,Revenue Ops,PayablesDesk
+SX-AP-00190,Workday HCM,SX-VEN-016,2026-04-01,2026-05-09,39100.0,USD,in review,SX-PO-07289,2026-04,People Operations,SX-121,CFO,PayablesDesk
+SX-AP-00191,Okta Identity,SX-VEN-017,2026-05-02,2026-06-09,14100.0,USD,approved,SX-PO-07290,2026-05,Mission Assurance,SX-122,Controller,PayablesDesk
+SX-AP-00192,CrowdStrike Falcon,SX-VEN-018,2026-06-03,2026-07-11,19200.0,USD,in review,SX-PO-07291,2026-06,Mission Assurance,SX-123,VP Operations,PayablesDesk
+SX-AP-00193,Splunk Enterprise,SX-VEN-019,2026-01-04,2026-02-11,26133.34,USD,approved,SX-PO-07292,2026-01,Ground Systems,SX-124,Security Lead,PayablesDesk
+SX-AP-00194,Datadog Infrastructure,SX-VEN-020,2026-02-05,2026-03-15,22916.67,USD,in review,SX-PO-07293,2026-02,Starlink,SX-125,Revenue Ops,PayablesDesk
+SX-AP-00195,Flex Ltd Manufacturing,SX-VEN-021,2026-03-06,2026-04-13,476000.0,USD,approved,SX-PO-07294,2026-03,Starlink,SX-126,CFO,PayablesDesk
+SX-AP-00196,Precision Castparts,SX-VEN-022,2026-04-07,2026-05-15,268666.66,USD,in review,SX-PO-07295,2026-04,Propulsion,SX-127,Controller,PayablesDesk
+SX-AP-00197,ATI Titanium,SX-VEN-023,2026-05-08,2026-06-15,207000.0,USD,approved,SX-PO-07296,2026-05,Starship Program,SX-100,VP Operations,PayablesDesk
+SX-AP-00198,Spaceport America Ops,SX-VEN-024,2026-06-09,2026-07-17,61100.0,USD,in review,SX-PO-07297,2026-06,Launch Operations,SX-101,Security Lead,PayablesDesk
+SX-AP-00199,Cape Canaveral Support Services,SX-VEN-025,2026-01-10,2026-02-17,73600.0,USD,approved,,2026-01,Launch Operations,SX-102,Revenue Ops,PayablesDesk
+SX-AP-00200,FCC Spectrum Licensing,SX-VEN-026,2026-02-11,2026-03-21,36750.0,USD,in review,SX-PO-07299,2026-02,Starlink,SX-103,CFO,PayablesDesk
+SX-AP-00201,FAA Launch Licensing,SX-VEN-027,2026-03-12,2026-04-19,31666.67,USD,approved,SX-PO-07300,2026-03,Launch Operations,SX-104,Controller,PayablesDesk
+SX-AP-00202,LinkedIn Recruiting,SX-VEN-028,2026-04-13,2026-05-21,35700.0,USD,in review,SX-PO-07301,2026-04,People Operations,SX-105,VP Operations,PayablesDesk
+SX-AP-00203,Glassdoor Employer Brand,SX-VEN-029,2026-05-14,2026-06-21,8233.34,USD,approved,SX-PO-07302,2026-05,People Operations,SX-106,Security Lead,PayablesDesk
+SX-AP-00204,Concur Travel,SX-VEN-030,2026-06-15,2026-07-23,12266.66,USD,in review,SX-PO-07303,2026-06,Finance,SX-107,Revenue Ops,PayablesDesk
+SX-AP-00205,American Express Corporate,SX-VEN-031,2026-01-16,2026-02-23,17233.33,USD,approved,SX-PO-07304,2026-01,Finance,SX-108,CFO,PayablesDesk
+SX-AP-00206,Deloitte Tax,SX-VEN-032,2026-02-17,2026-03-27,27200.0,USD,in review,SX-PO-07305,2026-02,Finance,SX-109,Controller,PayablesDesk
+SX-AP-00207,Ernst & Young Audit,SX-VEN-033,2026-03-18,2026-04-25,72683.34,USD,approved,SX-PO-07306,2026-03,Finance,SX-110,VP Operations,PayablesDesk
+SX-AP-00208,Palantir Foundry,SX-VEN-034,2026-04-19,2026-05-27,56666.67,USD,in review,SX-PO-07307,2026-04,Starlink,SX-111,Security Lead,PayablesDesk
+SX-AP-00209,Snowflake Analytics,SX-VEN-035,2026-05-20,2026-06-27,44200.0,USD,approved,SX-PO-07308,2026-05,Starlink,SX-112,Revenue Ops,PayablesDesk
+SX-AP-00210,ServiceNow ITSM,SX-VEN-036,2026-06-21,2026-07-29,35533.34,USD,in review,,2026-06,Ground Systems,SX-113,CFO,PayablesDesk
+SX-AP-00211,Atlassian Jira,SX-VEN-037,2026-01-22,2026-03-01,14566.66,USD,approved,SX-PO-07310,2026-01,Propulsion,SX-114,Controller,PayablesDesk
+SX-AP-00212,GitHub Enterprise,SX-VEN-038,2026-02-23,2026-04-02,16450.0,USD,in review,SX-PO-07311,2026-02,Avionics,SX-115,VP Operations,PayablesDesk
+SX-AP-00213,Ansys HFSS,SX-VEN-039,2026-03-24,2026-05-01,12400.0,USD,approved,SX-PO-07312,2026-03,Avionics,SX-116,Security Lead,PayablesDesk
+SX-AP-00214,Keysight Test Equipment,SX-VEN-040,2026-04-25,2026-06-02,39200.0,USD,in review,SX-PO-07313,2026-04,Mission Assurance,SX-117,Revenue Ops,PayablesDesk
+SX-AP-00215,National Instruments,SX-VEN-041,2026-05-26,2026-07-03,30000.0,USD,approved,SX-PO-07314,2026-05,Mission Assurance,SX-118,CFO,PayablesDesk
+SX-AP-00216,Blue Origin Launch Pad Lease,SX-VEN-042,2026-06-27,2026-08-04,102000.0,USD,in review,SX-PO-07315,2026-06,Launch Operations,SX-119,Controller,PayablesDesk
+SX-AP-00217,Brownsville Port Authority,SX-VEN-043,2026-01-01,2026-02-08,20800.0,USD,approved,SX-PO-07316,2026-01,Starship Program,SX-120,VP Operations,PayablesDesk
+SX-AP-00218,Starlink Dish Logistics,SX-VEN-044,2026-02-02,2026-03-12,55200.0,USD,in review,SX-PO-07317,2026-02,Starlink,SX-121,Security Lead,PayablesDesk
+SX-AP-00219,FedEx Critical Parts,SX-VEN-045,2026-03-03,2026-04-10,29766.67,USD,approved,SX-PO-07318,2026-03,Launch Operations,SX-122,Revenue Ops,PayablesDesk
+SX-AP-00220,UPS Supply Chain,SX-VEN-046,2026-04-04,2026-05-12,23200.0,USD,in review,SX-PO-07319,2026-04,Propulsion,SX-123,CFO,PayablesDesk
+SX-AP-00221,Clean Harbors Waste,SX-VEN-047,2026-05-05,2026-06-12,14291.66,USD,approved,,2026-05,Launch Operations,SX-124,Controller,PayablesDesk
+SX-AP-00222,Aon Cyber Insurance,SX-VEN-048,2026-06-06,2026-07-14,46666.67,USD,in review,SX-PO-07321,2026-06,Mission Assurance,SX-125,VP Operations,PayablesDesk
+SX-AP-00223,Zscaler Zero Trust,SX-VEN-049,2026-01-07,2026-02-14,16575.0,USD,approved,SX-PO-07322,2026-01,Mission Assurance,SX-126,Security Lead,PayablesDesk
+SX-AP-00224,Palo Alto Networks,SX-VEN-050,2026-02-08,2026-03-18,24266.66,USD,in review,SX-PO-07323,2026-02,Ground Systems,SX-127,Revenue Ops,PayablesDesk
+SX-AP-00225,DocuSign Enterprise,SX-VEN-051,2026-03-09,2026-04-16,6516.66,USD,approved,SX-PO-07324,2026-03,Finance,SX-100,CFO,PayablesDesk
+SX-AP-00226,Iron Mountain Records,SX-VEN-052,2026-04-10,2026-05-18,9400.0,USD,in review,SX-PO-07325,2026-04,Finance,SX-101,Controller,PayablesDesk
+SX-AP-00227,Gartner Research,SX-VEN-053,2026-05-11,2026-06-18,7600.0,USD,approved,SX-PO-07326,2026-05,Finance,SX-102,VP Operations,PayablesDesk
+SX-AP-00228,Space Foundation Membership,SX-VEN-054,2026-06-12,2026-07-20,3675.0,USD,in review,SX-PO-07327,2026-06,Government Relations,SX-103,Security Lead,PayablesDesk
+SX-AP-00229,Satellite Industry Association,SX-VEN-055,2026-01-13,2026-02-20,3166.67,USD,approved,SX-PO-07328,2026-01,Government Relations,SX-104,Revenue Ops,PayablesDesk
+SX-AP-00230,Panasonic Energy Starlink,SX-VEN-056,2026-02-14,2026-03-24,348500.0,USD,in review,SX-PO-07329,2026-02,Starlink,SX-105,CFO,PayablesDesk
+SX-AP-00231,AWS GovCloud,SX-VEN-057,2026-03-15,2026-04-22,164666.66,USD,approved,SX-PO-07330,2026-03,Government Relations,SX-106,Controller,PayablesDesk
+SX-AP-00232,Microsoft Starlink Partnership,SX-VEN-058,2026-04-16,2026-05-24,103500.0,USD,in review,,2026-04,Starlink,SX-107,VP Operations,PayablesDesk
+SX-AP-00233,Panasonic Energy,SX-VEN-001,2026-05-17,2026-06-24,329000.0,USD,approved,SX-PO-07332,2026-05,Starlink,SX-108,Security Lead,PayablesDesk
+SX-AP-00234,Amazon Web Services,SX-VEN-002,2026-06-18,2026-07-26,224000.0,USD,in review,SX-PO-07333,2026-06,Ground Systems,SX-109,Revenue Ops,PayablesDesk
+SX-AP-00235,Honeywell Aerospace,SX-VEN-003,2026-01-19,2026-02-26,159250.0,USD,approved,SX-PO-07334,2026-01,Avionics,SX-110,CFO,PayablesDesk
+SX-AP-00236,L3Harris Technologies,SX-VEN-004,2026-02-20,2026-03-30,140000.0,USD,in review,SX-PO-07335,2026-02,Starlink,SX-111,Controller,PayablesDesk
+SX-AP-00237,Ball Aerospace,SX-VEN-005,2026-03-21,2026-04-28,204000.0,USD,approved,SX-PO-07336,2026-03,Starlink,SX-112,VP Operations,PayablesDesk
+SX-AP-00238,ViaSat Ground Network,SX-VEN-006,2026-04-22,2026-05-30,77133.34,USD,in review,SX-PO-07337,2026-04,Ground Systems,SX-113,Security Lead,PayablesDesk
+SX-AP-00239,Microsoft Azure,SX-VEN-007,2026-05-23,2026-06-30,92000.0,USD,approved,SX-PO-07338,2026-05,Ground Systems,SX-114,Revenue Ops,PayablesDesk
+SX-AP-00240,Deloitte Aerospace Advisory,SX-VEN-008,2026-06-24,2026-08-01,50916.67,USD,in review,SX-PO-07339,2026-06,Finance,SX-115,CFO,PayablesDesk

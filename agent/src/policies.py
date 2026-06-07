@@ -44,7 +44,28 @@ DEFAULT_POLICY_RULES: list[PolicyRule] = [
         ),
         runway_floor_months=9.0,
         requires_board_approval=True,
-        evidence_required=["Signed financing term sheet or board-approved runway exception with financing plan"],
+        approval_route=["CFO", "Board"],
+        notice_period_days=0,
+        exception_process=(
+            "Proceed only with a signed financing term sheet or a board-approved runway exception "
+            "that names the financing owner, closing date, and contingency spend cuts."
+        ),
+        audit_requirements=[
+            "Archive before/after runway model with source cash forecast.",
+            "Log board exception or financing term sheet in the governance audit stream.",
+        ],
+        obligations=[
+            {
+                "kind": "runway_recheck",
+                "owner_role": "Treasury",
+                "due_in_days": 30,
+                "evidence_required": ["Updated cash forecast", "Financing close status"],
+            },
+        ],
+        evidence_required=[
+            "Signed financing term sheet or board-approved runway exception with financing plan",
+            "Before/after runway forecast",
+        ],
         remediation="Reduce commitment, phase the spend, or secure a board-approved financing plan before proceeding.",
     ),
     PolicyRule(
@@ -55,7 +76,22 @@ DEFAULT_POLICY_RULES: list[PolicyRule] = [
         severity=Severity.MEDIUM,
         text="Any single financial commitment over $50,000 per year requires CFO approval before signing.",
         amount_threshold=50_000.0,
-        evidence_required=["CFO approval memo"],
+        approval_route=["Department Head", "Controller", "CFO"],
+        notice_period_days=0,
+        exception_process="Document a CFO-signed delegated-authority exception before signature.",
+        audit_requirements=[
+            "Retain CFO approval memo with amount, term, owner, and vendor counterparty.",
+            "Record approval timestamp and approver identity in the audit trail.",
+        ],
+        obligations=[
+            {
+                "kind": "approval_audit",
+                "owner_role": "Controller",
+                "due_in_days": 7,
+                "evidence_required": ["CFO approval memo", "Signed contract or PO"],
+            },
+        ],
+        evidence_required=["CFO approval memo", "Signed contract or purchase order"],
         remediation="Route to the Office of the CFO for sign-off.",
     ),
     PolicyRule(
@@ -71,7 +107,23 @@ DEFAULT_POLICY_RULES: list[PolicyRule] = [
         ),
         amount_threshold=150_000.0,
         requires_board_notification=True,
-        evidence_required=["Board notification memo"],
+        approval_route=["CFO", "Board"],
+        notice_period_days=7,
+        exception_process="CFO must log an urgent-signing exception and notify the board within 2 business days.",
+        data_sensitivity=["customer_data", "regulated"],
+        audit_requirements=[
+            "Retain board notification memo and delivery timestamp.",
+            "Attach runway-impact and data-sensitivity appendix when applicable.",
+        ],
+        obligations=[
+            {
+                "kind": "board_notification",
+                "owner_role": "Office of the CFO",
+                "due_in_days": 5,
+                "evidence_required": ["Board notification memo", "Delivery receipt"],
+            },
+        ],
+        evidence_required=["Board notification memo", "Runway impact summary if material"],
         remediation="Prepare and send a board notification memo before signing.",
     ),
     PolicyRule(
@@ -86,7 +138,28 @@ DEFAULT_POLICY_RULES: list[PolicyRule] = [
         ),
         burn_growth_cap=0.08,
         applies_to=["Engineering", "Sales", "Customer Success", "Marketing", "G&A"],
-        evidence_required=["Mapping of new headcount to committed revenue, compliance, or automation"],
+        approval_route=["Department Head", "People Ops", "CFO"],
+        notice_period_days=14,
+        exception_process=(
+            "CFO may approve a staged-start exception if the hiring owner documents signed revenue, "
+            "security compliance, or runway-positive automation linkage."
+        ),
+        audit_requirements=[
+            "Retain role approval status, start date, fully loaded cost, and department mapping.",
+            "Reconcile planned/open/filled roles against the operating plan monthly.",
+        ],
+        obligations=[
+            {
+                "kind": "headcount_reconciliation",
+                "owner_role": "People Ops",
+                "due_in_days": 30,
+                "evidence_required": ["Approved headcount row", "Start-date and cost reconciliation"],
+            },
+        ],
+        evidence_required=[
+            "Mapping of new headcount to committed revenue, compliance, or automation",
+            "Approved headcount plan row with start date and fully loaded cost",
+        ],
         remediation="Tie the hire to signed revenue/compliance, or stagger start dates to stay under the burn-growth cap.",
     ),
     PolicyRule(
@@ -101,6 +174,21 @@ DEFAULT_POLICY_RULES: list[PolicyRule] = [
         ),
         margin_floor=0.70,
         applies_to=["Engineering", "Infrastructure", "Data"],
+        approval_route=["FP&A", "CFO"],
+        notice_period_days=0,
+        exception_process="CFO must approve a temporary margin exception with a pricing, usage, or efficiency offset plan.",
+        audit_requirements=[
+            "Archive unit-economics model with revenue, COGS, usage, and discount assumptions.",
+            "Re-test gross margin after the first full billing cycle.",
+        ],
+        obligations=[
+            {
+                "kind": "gross_margin_retest",
+                "owner_role": "FP&A",
+                "due_in_days": 45,
+                "evidence_required": ["Actual COGS report", "Updated gross-margin model"],
+            },
+        ],
         evidence_required=["Updated unit-economics model showing gross margin at or above 70%"],
         remediation="Offset with committed-use discounts, pricing, or efficiency before adding COGS.",
     ),
@@ -116,6 +204,22 @@ DEFAULT_POLICY_RULES: list[PolicyRule] = [
         ),
         runway_priority_below_months=12.0,
         applies_to=["Sales", "Marketing"],
+        approval_route=["Risk & Audit", "CFO"],
+        notice_period_days=0,
+        exception_process="CFO and Risk & Audit must document why broad growth spend outranks the open revenue blocker.",
+        data_sensitivity=["customer_data"],
+        audit_requirements=[
+            "Trace security gap to affected ARR and opportunity stage.",
+            "Retain Risk & Audit sign-off before funding broad growth spend below 12 months runway.",
+        ],
+        obligations=[
+            {
+                "kind": "security_revenue_checkpoint",
+                "owner_role": "Risk & Audit",
+                "due_in_days": 14,
+                "evidence_required": ["Security gap remediation status", "Blocked ARR report"],
+            },
+        ],
         evidence_required=["Confirmation that open enterprise-blocking security gaps are funded first"],
         remediation="Fund the security/compliance work that unblocks enterprise revenue before broad growth spend.",
     ),
@@ -130,8 +234,52 @@ DEFAULT_POLICY_RULES: list[PolicyRule] = [
             "review and a signed data processing agreement before go-live."
         ),
         requires_security_review=True,
+        approval_route=["Security Review", "Legal"],
+        notice_period_days=0,
+        exception_process="No go-live exception is allowed for regulated data without Legal and Security Review sign-off.",
+        data_sensitivity=["customer_data", "regulated"],
+        audit_requirements=[
+            "Store security review, DPA, data-flow owner, and access grant evidence.",
+            "Reconcile vendor security evidence freshness before customer-data access.",
+        ],
+        obligations=[
+            {
+                "kind": "data_access_review",
+                "owner_role": "Security Review",
+                "due_in_days": 0,
+                "evidence_required": ["Security review sign-off", "Signed DPA"],
+            },
+        ],
         evidence_required=["Security review sign-off", "Signed data processing agreement (DPA)"],
         remediation="Complete the security review and execute a DPA before granting data access.",
+    ),
+    PolicyRule(
+        id="gov-forecast-calibration",
+        control_id="CTRL-FORECAST-CALIBRATION",
+        title="Post-decision forecast calibration",
+        category="forecast_governance",
+        severity=Severity.LOW,
+        text=(
+            "Every material council decision must compare predicted cash, ARR, margin, and control outcomes "
+            "against actuals within 60 days and feed calibration back into the decision-outcomes log."
+        ),
+        approval_route=["FP&A"],
+        notice_period_days=60,
+        exception_process="CFO must approve skipping calibration and record why actuals cannot be measured.",
+        audit_requirements=[
+            "Retain predicted-vs-actual scorecard with source provenance.",
+            "Attach replay directive when calibration misses exceed tolerance.",
+        ],
+        obligations=[
+            {
+                "kind": "forecast_calibration",
+                "owner_role": "FP&A",
+                "due_in_days": 60,
+                "evidence_required": ["Predicted vs. actual outcome with calibration score"],
+            },
+        ],
+        evidence_required=["Predicted vs. actual outcome with calibration score"],
+        remediation="Create a forecast-calibration checkpoint and feed misses into replay cases.",
     ),
 ]
 

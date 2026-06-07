@@ -1,0 +1,355 @@
+txn_id,date,account,description,amount,currency,category,vendor_id,vendor_name,source_system,department,cost_center
+SX-GL-00001,2026-01-04,4000 Revenue,SpaceX customer receipt - NASA Commercial Crew,85000000,USD,revenue,,,CloudLedger,Revenue,SX-REV
+SX-GL-00002,2026-01-07,4000 Revenue,SpaceX customer receipt - NASA Artemis HLS,89200000,USD,revenue,,,CloudLedger,Revenue,SX-REV
+SX-GL-00003,2026-01-10,4000 Revenue,SpaceX customer receipt - NASA CRS Resupply,93400000,USD,revenue,,,CloudLedger,Revenue,SX-REV
+SX-GL-00004,2026-01-13,4000 Revenue,SpaceX customer receipt - US Space Force NSSL,97600000,USD,revenue,,,CloudLedger,Revenue,SX-REV
+SX-GL-00005,2026-01-16,4000 Revenue,SpaceX customer receipt - National Reconnaissance Office,101800000,USD,revenue,,,CloudLedger,Revenue,SX-REV
+SX-GL-00006,2026-01-07,6000 Payroll,SpaceX payroll batch 1,-145000000,USD,payroll,,,CloudLedger,People,SX-PAY
+SX-GL-00007,2026-01-10,6000 Payroll,SpaceX payroll batch 2,-145000000,USD,payroll,,,CloudLedger,People,SX-PAY
+SX-GL-00008,2026-01-13,6000 Payroll,SpaceX payroll batch 3,-145000000,USD,payroll,,,CloudLedger,People,SX-PAY
+SX-GL-00009,2026-01-16,6000 Payroll,SpaceX payroll batch 4,-145000000,USD,payroll,,,CloudLedger,People,SX-PAY
+SX-GL-00010,2026-01-04,6510 Infrastructure,Panasonic Energy payment for 2026-01,-350000.0,USD,Starlink Hardware,SX-VEN-001,Panasonic Energy,CloudLedger,Starlink,SX-200
+SX-GL-00011,2026-01-05,6520 Professional Services,Amazon Web Services payment for 2026-01,-233333.33,USD,Cloud Infrastructure,SX-VEN-002,Amazon Web Services,CloudLedger,Ground Systems,SX-201
+SX-GL-00012,2026-01-06,6530 Security,Honeywell Aerospace payment for 2026-01,-162500.0,USD,Avionics Components,SX-VEN-003,Honeywell Aerospace,CloudLedger,Avionics,SX-202
+SX-GL-00013,2026-01-07,6540 Operations,L3Harris Technologies payment for 2026-01,-140000.0,USD,Communications,SX-VEN-004,L3Harris Technologies,CloudLedger,Starlink,SX-203
+SX-GL-00014,2026-01-08,6550 Software,Ball Aerospace payment for 2026-01,-200000.0,USD,Satellite Payloads,SX-VEN-005,Ball Aerospace,CloudLedger,Starlink,SX-204
+SX-GL-00015,2026-01-09,6510 Infrastructure,ViaSat Ground Network payment for 2026-01,-74166.67,USD,Ground Segment,SX-VEN-006,ViaSat Ground Network,CloudLedger,Ground Systems,SX-205
+SX-GL-00016,2026-01-10,6520 Professional Services,Microsoft Azure payment for 2026-01,-100000.0,USD,Cloud Infrastructure,SX-VEN-007,Microsoft Azure,CloudLedger,Ground Systems,SX-206
+SX-GL-00017,2026-01-11,6530 Security,Deloitte Aerospace Advisory payment for 2026-01,-54166.67,USD,Professional Services,SX-VEN-008,Deloitte Aerospace Advisory,CloudLedger,Finance,SX-207
+SX-GL-00018,2026-01-12,6540 Operations,Kirkland & Ellis LLP payment for 2026-01,-81666.67,USD,Legal,SX-VEN-009,Kirkland & Ellis LLP,CloudLedger,Finance,SX-208
+SX-GL-00019,2026-01-13,6550 Software,Marsh Aerospace Insurance payment for 2026-01,-266666.67,USD,Insurance,SX-VEN-010,Marsh Aerospace Insurance,CloudLedger,Mission Assurance,SX-209
+SX-GL-00020,2026-01-14,6510 Infrastructure,Jacobs Engineering payment for 2026-01,-91666.67,USD,Facilities,SX-VEN-011,Jacobs Engineering,CloudLedger,Launch Operations,SX-210
+SX-GL-00021,2026-01-15,6520 Professional Services,AECOM Launch Pad Services payment for 2026-01,-120833.33,USD,Facilities,SX-VEN-012,AECOM Launch Pad Services,CloudLedger,Launch Operations,SX-211
+SX-GL-00022,2026-01-16,6530 Security,Ansys Simulation payment for 2026-01,-35000.0,USD,Engineering Software,SX-VEN-013,Ansys Simulation,CloudLedger,Propulsion,SX-212
+SX-GL-00023,2026-01-17,6540 Operations,Siemens PLM payment for 2026-01,-31666.67,USD,Engineering Software,SX-VEN-014,Siemens PLM,CloudLedger,Starship Program,SX-213
+SX-GL-00024,2026-01-18,6550 Software,Salesforce Government Cloud payment for 2026-01,-24166.67,USD,CRM,SX-VEN-015,Salesforce Government Cloud,CloudLedger,Government Relations,SX-214
+SX-GL-00025,2026-01-19,6510 Infrastructure,Workday HCM payment for 2026-01,-42500.0,USD,HR Systems,SX-VEN-016,Workday HCM,CloudLedger,People Operations,SX-215
+SX-GL-00026,2026-01-20,6520 Professional Services,Okta Identity payment for 2026-01,-15000.0,USD,Identity,SX-VEN-017,Okta Identity,CloudLedger,Mission Assurance,SX-216
+SX-GL-00027,2026-01-21,6530 Security,CrowdStrike Falcon payment for 2026-01,-20000.0,USD,Security,SX-VEN-018,CrowdStrike Falcon,CloudLedger,Mission Assurance,SX-217
+SX-GL-00028,2026-01-22,6540 Operations,Splunk Enterprise payment for 2026-01,-26666.67,USD,Observability,SX-VEN-019,Splunk Enterprise,CloudLedger,Ground Systems,SX-218
+SX-GL-00029,2026-01-23,6550 Software,Datadog Infrastructure payment for 2026-01,-22916.67,USD,Observability,SX-VEN-020,Datadog Infrastructure,CloudLedger,Starlink,SX-219
+SX-GL-00030,2026-01-24,6510 Infrastructure,Flex Ltd Manufacturing payment for 2026-01,-466666.67,USD,Contract Manufacturing,SX-VEN-021,Flex Ltd Manufacturing,CloudLedger,Starlink,SX-220
+SX-GL-00031,2026-01-25,6520 Professional Services,Precision Castparts payment for 2026-01,-258333.33,USD,Materials,SX-VEN-022,Precision Castparts,CloudLedger,Propulsion,SX-221
+SX-GL-00032,2026-01-26,6530 Security,ATI Titanium payment for 2026-01,-225000.0,USD,Materials,SX-VEN-023,ATI Titanium,CloudLedger,Starship Program,SX-222
+SX-GL-00033,2026-01-27,6540 Operations,Spaceport America Ops payment for 2026-01,-65000.0,USD,Launch Range,SX-VEN-024,Spaceport America Ops,CloudLedger,Launch Operations,SX-223
+SX-GL-00034,2026-01-28,6550 Software,Cape Canaveral Support Services payment for 2026-01,-76666.67,USD,Launch Range,SX-VEN-025,Cape Canaveral Support Services,CloudLedger,Launch Operations,SX-224
+SX-GL-00035,2026-01-29,6510 Infrastructure,FCC Spectrum Licensing payment for 2026-01,-37500.0,USD,Regulatory,SX-VEN-026,FCC Spectrum Licensing,CloudLedger,Starlink,SX-225
+SX-GL-00036,2026-01-30,6520 Professional Services,FAA Launch Licensing payment for 2026-01,-31666.67,USD,Regulatory,SX-VEN-027,FAA Launch Licensing,CloudLedger,Launch Operations,SX-226
+SX-GL-00037,2026-01-04,6530 Security,LinkedIn Recruiting payment for 2026-01,-35000.0,USD,Recruiting,SX-VEN-028,LinkedIn Recruiting,CloudLedger,People Operations,SX-227
+SX-GL-00038,2026-01-05,6540 Operations,Glassdoor Employer Brand payment for 2026-01,-7916.67,USD,Recruiting,SX-VEN-029,Glassdoor Employer Brand,CloudLedger,People Operations,SX-228
+SX-GL-00039,2026-01-06,6550 Software,Concur Travel payment for 2026-01,-13333.33,USD,Travel,SX-VEN-030,Concur Travel,CloudLedger,Finance,SX-229
+SX-GL-00040,2026-01-07,6510 Infrastructure,American Express Corporate payment for 2026-01,-18333.33,USD,Travel,SX-VEN-031,American Express Corporate,CloudLedger,Finance,SX-230
+SX-GL-00041,2026-01-08,6520 Professional Services,Deloitte Tax payment for 2026-01,-28333.33,USD,Tax,SX-VEN-032,Deloitte Tax,CloudLedger,Finance,SX-231
+SX-GL-00042,2026-01-09,6530 Security,Ernst & Young Audit payment for 2026-01,-74166.67,USD,Audit,SX-VEN-033,Ernst & Young Audit,CloudLedger,Finance,SX-232
+SX-GL-00043,2026-01-10,6540 Operations,Palantir Foundry payment for 2026-01,-56666.67,USD,Data Platform,SX-VEN-034,Palantir Foundry,CloudLedger,Starlink,SX-233
+SX-GL-00044,2026-01-11,6550 Software,Snowflake Analytics payment for 2026-01,-43333.33,USD,Data Platform,SX-VEN-035,Snowflake Analytics,CloudLedger,Starlink,SX-234
+SX-GL-00045,2026-01-12,6510 Infrastructure,ServiceNow ITSM payment for 2026-01,-34166.67,USD,IT Operations,SX-VEN-036,ServiceNow ITSM,CloudLedger,Ground Systems,SX-235
+SX-GL-00046,2026-01-13,6520 Professional Services,Atlassian Jira payment for 2026-01,-15833.33,USD,Engineering Tools,SX-VEN-037,Atlassian Jira,CloudLedger,Propulsion,SX-236
+SX-GL-00047,2026-01-14,6530 Security,GitHub Enterprise payment for 2026-01,-17500.0,USD,Engineering Tools,SX-VEN-038,GitHub Enterprise,CloudLedger,Avionics,SX-237
+SX-GL-00048,2026-01-15,6540 Operations,Ansys HFSS payment for 2026-01,-12916.67,USD,Simulation,SX-VEN-039,Ansys HFSS,CloudLedger,Avionics,SX-238
+SX-GL-00049,2026-01-16,6550 Software,Keysight Test Equipment payment for 2026-01,-40000.0,USD,Test Equipment,SX-VEN-040,Keysight Test Equipment,CloudLedger,Mission Assurance,SX-239
+SX-GL-00050,2026-01-17,6510 Infrastructure,National Instruments payment for 2026-01,-30000.0,USD,Test Equipment,SX-VEN-041,National Instruments,CloudLedger,Mission Assurance,SX-240
+SX-GL-00051,2026-01-18,6520 Professional Services,Blue Origin Launch Pad Lease payment for 2026-01,-100000.0,USD,Facilities,SX-VEN-042,Blue Origin Launch Pad Lease,CloudLedger,Launch Operations,SX-241
+SX-GL-00052,2026-01-19,6530 Security,Brownsville Port Authority payment for 2026-01,-20000.0,USD,Facilities,SX-VEN-043,Brownsville Port Authority,CloudLedger,Starship Program,SX-242
+SX-GL-00053,2026-01-20,6540 Operations,Starlink Dish Logistics payment for 2026-01,-60000.0,USD,Logistics,SX-VEN-044,Starlink Dish Logistics,CloudLedger,Starlink,SX-243
+SX-GL-00054,2026-01-21,6550 Software,FedEx Critical Parts payment for 2026-01,-31666.67,USD,Logistics,SX-VEN-045,FedEx Critical Parts,CloudLedger,Launch Operations,SX-244
+SX-GL-00055,2026-01-22,6510 Infrastructure,UPS Supply Chain payment for 2026-01,-24166.67,USD,Logistics,SX-VEN-046,UPS Supply Chain,CloudLedger,Propulsion,SX-245
+SX-GL-00056,2026-01-23,6520 Professional Services,Clean Harbors Waste payment for 2026-01,-14583.33,USD,Environmental,SX-VEN-047,Clean Harbors Waste,CloudLedger,Launch Operations,SX-246
+SX-GL-00057,2026-01-24,6530 Security,Aon Cyber Insurance payment for 2026-01,-46666.67,USD,Insurance,SX-VEN-048,Aon Cyber Insurance,CloudLedger,Mission Assurance,SX-247
+SX-GL-00058,2026-01-25,6540 Operations,Zscaler Zero Trust payment for 2026-01,-16250.0,USD,Security,SX-VEN-049,Zscaler Zero Trust,CloudLedger,Mission Assurance,SX-248
+SX-GL-00059,2026-01-26,6550 Software,Palo Alto Networks payment for 2026-01,-23333.33,USD,Security,SX-VEN-050,Palo Alto Networks,CloudLedger,Ground Systems,SX-249
+SX-GL-00060,2026-02-04,4000 Revenue,SpaceX customer receipt - SES Global,106000000,USD,revenue,,,CloudLedger,Revenue,SX-REV
+SX-GL-00061,2026-02-07,4000 Revenue,SpaceX customer receipt - Eutelsat,110200000,USD,revenue,,,CloudLedger,Revenue,SX-REV
+SX-GL-00062,2026-02-10,4000 Revenue,SpaceX customer receipt - OneWeb,114400000,USD,revenue,,,CloudLedger,Revenue,SX-REV
+SX-GL-00063,2026-02-13,4000 Revenue,SpaceX customer receipt - Intuitive Machines,118600000,USD,revenue,,,CloudLedger,Revenue,SX-REV
+SX-GL-00064,2026-02-16,4000 Revenue,SpaceX customer receipt - AST SpaceMobile,122800000,USD,revenue,,,CloudLedger,Revenue,SX-REV
+SX-GL-00065,2026-02-07,6000 Payroll,SpaceX payroll batch 1,-149200000,USD,payroll,,,CloudLedger,People,SX-PAY
+SX-GL-00066,2026-02-10,6000 Payroll,SpaceX payroll batch 2,-149200000,USD,payroll,,,CloudLedger,People,SX-PAY
+SX-GL-00067,2026-02-13,6000 Payroll,SpaceX payroll batch 3,-149200000,USD,payroll,,,CloudLedger,People,SX-PAY
+SX-GL-00068,2026-02-16,6000 Payroll,SpaceX payroll batch 4,-149200000,USD,payroll,,,CloudLedger,People,SX-PAY
+SX-GL-00069,2026-02-04,6510 Infrastructure,Panasonic Energy payment for 2026-02,-336000.0,USD,Starlink Hardware,SX-VEN-001,Panasonic Energy,CloudLedger,Starlink,SX-200
+SX-GL-00070,2026-02-05,6520 Professional Services,Amazon Web Services payment for 2026-02,-224000.0,USD,Cloud Infrastructure,SX-VEN-002,Amazon Web Services,CloudLedger,Ground Systems,SX-201
+SX-GL-00071,2026-02-06,6530 Security,Honeywell Aerospace payment for 2026-02,-156000.0,USD,Avionics Components,SX-VEN-003,Honeywell Aerospace,CloudLedger,Avionics,SX-202
+SX-GL-00072,2026-02-07,6540 Operations,L3Harris Technologies payment for 2026-02,-134400.0,USD,Communications,SX-VEN-004,L3Harris Technologies,CloudLedger,Starlink,SX-203
+SX-GL-00073,2026-02-08,6550 Software,Ball Aerospace payment for 2026-02,-192000.0,USD,Satellite Payloads,SX-VEN-005,Ball Aerospace,CloudLedger,Starlink,SX-204
+SX-GL-00074,2026-02-09,6510 Infrastructure,ViaSat Ground Network payment for 2026-02,-71200.0,USD,Ground Segment,SX-VEN-006,ViaSat Ground Network,CloudLedger,Ground Systems,SX-205
+SX-GL-00075,2026-02-10,6520 Professional Services,Microsoft Azure payment for 2026-02,-96000.0,USD,Cloud Infrastructure,SX-VEN-007,Microsoft Azure,CloudLedger,Ground Systems,SX-206
+SX-GL-00076,2026-02-11,6530 Security,Deloitte Aerospace Advisory payment for 2026-02,-52000.0,USD,Professional Services,SX-VEN-008,Deloitte Aerospace Advisory,CloudLedger,Finance,SX-207
+SX-GL-00077,2026-02-12,6540 Operations,Kirkland & Ellis LLP payment for 2026-02,-78400.0,USD,Legal,SX-VEN-009,Kirkland & Ellis LLP,CloudLedger,Finance,SX-208
+SX-GL-00078,2026-02-13,6550 Software,Marsh Aerospace Insurance payment for 2026-02,-256000.0,USD,Insurance,SX-VEN-010,Marsh Aerospace Insurance,CloudLedger,Mission Assurance,SX-209
+SX-GL-00079,2026-02-14,6510 Infrastructure,Jacobs Engineering payment for 2026-02,-88000.0,USD,Facilities,SX-VEN-011,Jacobs Engineering,CloudLedger,Launch Operations,SX-210
+SX-GL-00080,2026-02-15,6520 Professional Services,AECOM Launch Pad Services payment for 2026-02,-116000.0,USD,Facilities,SX-VEN-012,AECOM Launch Pad Services,CloudLedger,Launch Operations,SX-211
+SX-GL-00081,2026-02-16,6530 Security,Ansys Simulation payment for 2026-02,-33600.0,USD,Engineering Software,SX-VEN-013,Ansys Simulation,CloudLedger,Propulsion,SX-212
+SX-GL-00082,2026-02-17,6540 Operations,Siemens PLM payment for 2026-02,-30400.0,USD,Engineering Software,SX-VEN-014,Siemens PLM,CloudLedger,Starship Program,SX-213
+SX-GL-00083,2026-02-18,6550 Software,Salesforce Government Cloud payment for 2026-02,-23200.0,USD,CRM,SX-VEN-015,Salesforce Government Cloud,CloudLedger,Government Relations,SX-214
+SX-GL-00084,2026-02-19,6510 Infrastructure,Workday HCM payment for 2026-02,-40800.0,USD,HR Systems,SX-VEN-016,Workday HCM,CloudLedger,People Operations,SX-215
+SX-GL-00085,2026-02-20,6520 Professional Services,Okta Identity payment for 2026-02,-14400.0,USD,Identity,SX-VEN-017,Okta Identity,CloudLedger,Mission Assurance,SX-216
+SX-GL-00086,2026-02-21,6530 Security,CrowdStrike Falcon payment for 2026-02,-19200.0,USD,Security,SX-VEN-018,CrowdStrike Falcon,CloudLedger,Mission Assurance,SX-217
+SX-GL-00087,2026-02-22,6540 Operations,Splunk Enterprise payment for 2026-02,-25600.0,USD,Observability,SX-VEN-019,Splunk Enterprise,CloudLedger,Ground Systems,SX-218
+SX-GL-00088,2026-02-23,6550 Software,Datadog Infrastructure payment for 2026-02,-22000.0,USD,Observability,SX-VEN-020,Datadog Infrastructure,CloudLedger,Starlink,SX-219
+SX-GL-00089,2026-02-24,6510 Infrastructure,Flex Ltd Manufacturing payment for 2026-02,-448000.0,USD,Contract Manufacturing,SX-VEN-021,Flex Ltd Manufacturing,CloudLedger,Starlink,SX-220
+SX-GL-00090,2026-02-25,6520 Professional Services,Precision Castparts payment for 2026-02,-248000.0,USD,Materials,SX-VEN-022,Precision Castparts,CloudLedger,Propulsion,SX-221
+SX-GL-00091,2026-02-26,6530 Security,ATI Titanium payment for 2026-02,-216000.0,USD,Materials,SX-VEN-023,ATI Titanium,CloudLedger,Starship Program,SX-222
+SX-GL-00092,2026-02-27,6540 Operations,Spaceport America Ops payment for 2026-02,-62400.0,USD,Launch Range,SX-VEN-024,Spaceport America Ops,CloudLedger,Launch Operations,SX-223
+SX-GL-00093,2026-02-28,6550 Software,Cape Canaveral Support Services payment for 2026-02,-73600.0,USD,Launch Range,SX-VEN-025,Cape Canaveral Support Services,CloudLedger,Launch Operations,SX-224
+SX-GL-00094,2026-03-01,6510 Infrastructure,FCC Spectrum Licensing payment for 2026-02,-36000.0,USD,Regulatory,SX-VEN-026,FCC Spectrum Licensing,CloudLedger,Starlink,SX-225
+SX-GL-00095,2026-03-02,6520 Professional Services,FAA Launch Licensing payment for 2026-02,-30400.0,USD,Regulatory,SX-VEN-027,FAA Launch Licensing,CloudLedger,Launch Operations,SX-226
+SX-GL-00096,2026-02-04,6530 Security,LinkedIn Recruiting payment for 2026-02,-33600.0,USD,Recruiting,SX-VEN-028,LinkedIn Recruiting,CloudLedger,People Operations,SX-227
+SX-GL-00097,2026-02-05,6540 Operations,Glassdoor Employer Brand payment for 2026-02,-7600.0,USD,Recruiting,SX-VEN-029,Glassdoor Employer Brand,CloudLedger,People Operations,SX-228
+SX-GL-00098,2026-02-06,6550 Software,Concur Travel payment for 2026-02,-12800.0,USD,Travel,SX-VEN-030,Concur Travel,CloudLedger,Finance,SX-229
+SX-GL-00099,2026-02-07,6510 Infrastructure,American Express Corporate payment for 2026-02,-17600.0,USD,Travel,SX-VEN-031,American Express Corporate,CloudLedger,Finance,SX-230
+SX-GL-00100,2026-02-08,6520 Professional Services,Deloitte Tax payment for 2026-02,-27200.0,USD,Tax,SX-VEN-032,Deloitte Tax,CloudLedger,Finance,SX-231
+SX-GL-00101,2026-02-09,6530 Security,Ernst & Young Audit payment for 2026-02,-71200.0,USD,Audit,SX-VEN-033,Ernst & Young Audit,CloudLedger,Finance,SX-232
+SX-GL-00102,2026-02-10,6540 Operations,Palantir Foundry payment for 2026-02,-54400.0,USD,Data Platform,SX-VEN-034,Palantir Foundry,CloudLedger,Starlink,SX-233
+SX-GL-00103,2026-02-11,6550 Software,Snowflake Analytics payment for 2026-02,-41600.0,USD,Data Platform,SX-VEN-035,Snowflake Analytics,CloudLedger,Starlink,SX-234
+SX-GL-00104,2026-02-12,6510 Infrastructure,ServiceNow ITSM payment for 2026-02,-32800.0,USD,IT Operations,SX-VEN-036,ServiceNow ITSM,CloudLedger,Ground Systems,SX-235
+SX-GL-00105,2026-02-13,6520 Professional Services,Atlassian Jira payment for 2026-02,-15200.0,USD,Engineering Tools,SX-VEN-037,Atlassian Jira,CloudLedger,Propulsion,SX-236
+SX-GL-00106,2026-02-14,6530 Security,GitHub Enterprise payment for 2026-02,-16800.0,USD,Engineering Tools,SX-VEN-038,GitHub Enterprise,CloudLedger,Avionics,SX-237
+SX-GL-00107,2026-02-15,6540 Operations,Ansys HFSS payment for 2026-02,-12400.0,USD,Simulation,SX-VEN-039,Ansys HFSS,CloudLedger,Avionics,SX-238
+SX-GL-00108,2026-02-16,6550 Software,Keysight Test Equipment payment for 2026-02,-38400.0,USD,Test Equipment,SX-VEN-040,Keysight Test Equipment,CloudLedger,Mission Assurance,SX-239
+SX-GL-00109,2026-02-17,6510 Infrastructure,National Instruments payment for 2026-02,-28800.0,USD,Test Equipment,SX-VEN-041,National Instruments,CloudLedger,Mission Assurance,SX-240
+SX-GL-00110,2026-02-18,6520 Professional Services,Blue Origin Launch Pad Lease payment for 2026-02,-96000.0,USD,Facilities,SX-VEN-042,Blue Origin Launch Pad Lease,CloudLedger,Launch Operations,SX-241
+SX-GL-00111,2026-02-19,6530 Security,Brownsville Port Authority payment for 2026-02,-19200.0,USD,Facilities,SX-VEN-043,Brownsville Port Authority,CloudLedger,Starship Program,SX-242
+SX-GL-00112,2026-02-20,6540 Operations,Starlink Dish Logistics payment for 2026-02,-57600.0,USD,Logistics,SX-VEN-044,Starlink Dish Logistics,CloudLedger,Starlink,SX-243
+SX-GL-00113,2026-02-21,6550 Software,FedEx Critical Parts payment for 2026-02,-30400.0,USD,Logistics,SX-VEN-045,FedEx Critical Parts,CloudLedger,Launch Operations,SX-244
+SX-GL-00114,2026-02-22,6510 Infrastructure,UPS Supply Chain payment for 2026-02,-23200.0,USD,Logistics,SX-VEN-046,UPS Supply Chain,CloudLedger,Propulsion,SX-245
+SX-GL-00115,2026-02-23,6520 Professional Services,Clean Harbors Waste payment for 2026-02,-14000.0,USD,Environmental,SX-VEN-047,Clean Harbors Waste,CloudLedger,Launch Operations,SX-246
+SX-GL-00116,2026-02-24,6530 Security,Aon Cyber Insurance payment for 2026-02,-44800.0,USD,Insurance,SX-VEN-048,Aon Cyber Insurance,CloudLedger,Mission Assurance,SX-247
+SX-GL-00117,2026-02-25,6540 Operations,Zscaler Zero Trust payment for 2026-02,-15600.0,USD,Security,SX-VEN-049,Zscaler Zero Trust,CloudLedger,Mission Assurance,SX-248
+SX-GL-00118,2026-02-26,6550 Software,Palo Alto Networks payment for 2026-02,-22400.0,USD,Security,SX-VEN-050,Palo Alto Networks,CloudLedger,Ground Systems,SX-249
+SX-GL-00119,2026-03-04,4000 Revenue,SpaceX customer receipt - Telesat Lightspeed,127000000,USD,revenue,,,CloudLedger,Revenue,SX-REV
+SX-GL-00120,2026-03-07,4000 Revenue,SpaceX customer receipt - EchoStar Hughes,131200000,USD,revenue,,,CloudLedger,Revenue,SX-REV
+SX-GL-00121,2026-03-10,4000 Revenue,SpaceX customer receipt - US Air Force Research Lab,135400000,USD,revenue,,,CloudLedger,Revenue,SX-REV
+SX-GL-00122,2026-03-13,4000 Revenue,SpaceX customer receipt - European Space Agency,139600000,USD,revenue,,,CloudLedger,Revenue,SX-REV
+SX-GL-00123,2026-03-16,4000 Revenue,SpaceX customer receipt - JAXA,143800000,USD,revenue,,,CloudLedger,Revenue,SX-REV
+SX-GL-00124,2026-03-07,6000 Payroll,SpaceX payroll batch 1,-153400000,USD,payroll,,,CloudLedger,People,SX-PAY
+SX-GL-00125,2026-03-10,6000 Payroll,SpaceX payroll batch 2,-153400000,USD,payroll,,,CloudLedger,People,SX-PAY
+SX-GL-00126,2026-03-13,6000 Payroll,SpaceX payroll batch 3,-153400000,USD,payroll,,,CloudLedger,People,SX-PAY
+SX-GL-00127,2026-03-16,6000 Payroll,SpaceX payroll batch 4,-153400000,USD,payroll,,,CloudLedger,People,SX-PAY
+SX-GL-00128,2026-03-04,6510 Infrastructure,Panasonic Energy payment for 2026-03,-350000.0,USD,Starlink Hardware,SX-VEN-001,Panasonic Energy,CloudLedger,Starlink,SX-200
+SX-GL-00129,2026-03-05,6520 Professional Services,Amazon Web Services payment for 2026-03,-233333.33,USD,Cloud Infrastructure,SX-VEN-002,Amazon Web Services,CloudLedger,Ground Systems,SX-201
+SX-GL-00130,2026-03-06,6530 Security,Honeywell Aerospace payment for 2026-03,-162500.0,USD,Avionics Components,SX-VEN-003,Honeywell Aerospace,CloudLedger,Avionics,SX-202
+SX-GL-00131,2026-03-07,6540 Operations,L3Harris Technologies payment for 2026-03,-140000.0,USD,Communications,SX-VEN-004,L3Harris Technologies,CloudLedger,Starlink,SX-203
+SX-GL-00132,2026-03-08,6550 Software,Ball Aerospace payment for 2026-03,-200000.0,USD,Satellite Payloads,SX-VEN-005,Ball Aerospace,CloudLedger,Starlink,SX-204
+SX-GL-00133,2026-03-09,6510 Infrastructure,ViaSat Ground Network payment for 2026-03,-74166.67,USD,Ground Segment,SX-VEN-006,ViaSat Ground Network,CloudLedger,Ground Systems,SX-205
+SX-GL-00134,2026-03-10,6520 Professional Services,Microsoft Azure payment for 2026-03,-100000.0,USD,Cloud Infrastructure,SX-VEN-007,Microsoft Azure,CloudLedger,Ground Systems,SX-206
+SX-GL-00135,2026-03-11,6530 Security,Deloitte Aerospace Advisory payment for 2026-03,-54166.67,USD,Professional Services,SX-VEN-008,Deloitte Aerospace Advisory,CloudLedger,Finance,SX-207
+SX-GL-00136,2026-03-12,6540 Operations,Kirkland & Ellis LLP payment for 2026-03,-81666.67,USD,Legal,SX-VEN-009,Kirkland & Ellis LLP,CloudLedger,Finance,SX-208
+SX-GL-00137,2026-03-13,6550 Software,Marsh Aerospace Insurance payment for 2026-03,-266666.67,USD,Insurance,SX-VEN-010,Marsh Aerospace Insurance,CloudLedger,Mission Assurance,SX-209
+SX-GL-00138,2026-03-14,6510 Infrastructure,Jacobs Engineering payment for 2026-03,-91666.67,USD,Facilities,SX-VEN-011,Jacobs Engineering,CloudLedger,Launch Operations,SX-210
+SX-GL-00139,2026-03-15,6520 Professional Services,AECOM Launch Pad Services payment for 2026-03,-120833.33,USD,Facilities,SX-VEN-012,AECOM Launch Pad Services,CloudLedger,Launch Operations,SX-211
+SX-GL-00140,2026-03-16,6530 Security,Ansys Simulation payment for 2026-03,-35000.0,USD,Engineering Software,SX-VEN-013,Ansys Simulation,CloudLedger,Propulsion,SX-212
+SX-GL-00141,2026-03-17,6540 Operations,Siemens PLM payment for 2026-03,-31666.67,USD,Engineering Software,SX-VEN-014,Siemens PLM,CloudLedger,Starship Program,SX-213
+SX-GL-00142,2026-03-18,6550 Software,Salesforce Government Cloud payment for 2026-03,-24166.67,USD,CRM,SX-VEN-015,Salesforce Government Cloud,CloudLedger,Government Relations,SX-214
+SX-GL-00143,2026-03-19,6510 Infrastructure,Workday HCM payment for 2026-03,-42500.0,USD,HR Systems,SX-VEN-016,Workday HCM,CloudLedger,People Operations,SX-215
+SX-GL-00144,2026-03-20,6520 Professional Services,Okta Identity payment for 2026-03,-15000.0,USD,Identity,SX-VEN-017,Okta Identity,CloudLedger,Mission Assurance,SX-216
+SX-GL-00145,2026-03-21,6530 Security,CrowdStrike Falcon payment for 2026-03,-20000.0,USD,Security,SX-VEN-018,CrowdStrike Falcon,CloudLedger,Mission Assurance,SX-217
+SX-GL-00146,2026-03-22,6540 Operations,Splunk Enterprise payment for 2026-03,-26666.67,USD,Observability,SX-VEN-019,Splunk Enterprise,CloudLedger,Ground Systems,SX-218
+SX-GL-00147,2026-03-23,6550 Software,Datadog Infrastructure payment for 2026-03,-22916.67,USD,Observability,SX-VEN-020,Datadog Infrastructure,CloudLedger,Starlink,SX-219
+SX-GL-00148,2026-03-24,6510 Infrastructure,Flex Ltd Manufacturing payment for 2026-03,-466666.67,USD,Contract Manufacturing,SX-VEN-021,Flex Ltd Manufacturing,CloudLedger,Starlink,SX-220
+SX-GL-00149,2026-03-25,6520 Professional Services,Precision Castparts payment for 2026-03,-258333.33,USD,Materials,SX-VEN-022,Precision Castparts,CloudLedger,Propulsion,SX-221
+SX-GL-00150,2026-03-26,6530 Security,ATI Titanium payment for 2026-03,-225000.0,USD,Materials,SX-VEN-023,ATI Titanium,CloudLedger,Starship Program,SX-222
+SX-GL-00151,2026-03-27,6540 Operations,Spaceport America Ops payment for 2026-03,-65000.0,USD,Launch Range,SX-VEN-024,Spaceport America Ops,CloudLedger,Launch Operations,SX-223
+SX-GL-00152,2026-03-28,6550 Software,Cape Canaveral Support Services payment for 2026-03,-76666.67,USD,Launch Range,SX-VEN-025,Cape Canaveral Support Services,CloudLedger,Launch Operations,SX-224
+SX-GL-00153,2026-03-29,6510 Infrastructure,FCC Spectrum Licensing payment for 2026-03,-37500.0,USD,Regulatory,SX-VEN-026,FCC Spectrum Licensing,CloudLedger,Starlink,SX-225
+SX-GL-00154,2026-03-30,6520 Professional Services,FAA Launch Licensing payment for 2026-03,-31666.67,USD,Regulatory,SX-VEN-027,FAA Launch Licensing,CloudLedger,Launch Operations,SX-226
+SX-GL-00155,2026-03-04,6530 Security,LinkedIn Recruiting payment for 2026-03,-35000.0,USD,Recruiting,SX-VEN-028,LinkedIn Recruiting,CloudLedger,People Operations,SX-227
+SX-GL-00156,2026-03-05,6540 Operations,Glassdoor Employer Brand payment for 2026-03,-7916.67,USD,Recruiting,SX-VEN-029,Glassdoor Employer Brand,CloudLedger,People Operations,SX-228
+SX-GL-00157,2026-03-06,6550 Software,Concur Travel payment for 2026-03,-13333.33,USD,Travel,SX-VEN-030,Concur Travel,CloudLedger,Finance,SX-229
+SX-GL-00158,2026-03-07,6510 Infrastructure,American Express Corporate payment for 2026-03,-18333.33,USD,Travel,SX-VEN-031,American Express Corporate,CloudLedger,Finance,SX-230
+SX-GL-00159,2026-03-08,6520 Professional Services,Deloitte Tax payment for 2026-03,-28333.33,USD,Tax,SX-VEN-032,Deloitte Tax,CloudLedger,Finance,SX-231
+SX-GL-00160,2026-03-09,6530 Security,Ernst & Young Audit payment for 2026-03,-74166.67,USD,Audit,SX-VEN-033,Ernst & Young Audit,CloudLedger,Finance,SX-232
+SX-GL-00161,2026-03-10,6540 Operations,Palantir Foundry payment for 2026-03,-56666.67,USD,Data Platform,SX-VEN-034,Palantir Foundry,CloudLedger,Starlink,SX-233
+SX-GL-00162,2026-03-11,6550 Software,Snowflake Analytics payment for 2026-03,-43333.33,USD,Data Platform,SX-VEN-035,Snowflake Analytics,CloudLedger,Starlink,SX-234
+SX-GL-00163,2026-03-12,6510 Infrastructure,ServiceNow ITSM payment for 2026-03,-34166.67,USD,IT Operations,SX-VEN-036,ServiceNow ITSM,CloudLedger,Ground Systems,SX-235
+SX-GL-00164,2026-03-13,6520 Professional Services,Atlassian Jira payment for 2026-03,-15833.33,USD,Engineering Tools,SX-VEN-037,Atlassian Jira,CloudLedger,Propulsion,SX-236
+SX-GL-00165,2026-03-14,6530 Security,GitHub Enterprise payment for 2026-03,-17500.0,USD,Engineering Tools,SX-VEN-038,GitHub Enterprise,CloudLedger,Avionics,SX-237
+SX-GL-00166,2026-03-15,6540 Operations,Ansys HFSS payment for 2026-03,-12916.67,USD,Simulation,SX-VEN-039,Ansys HFSS,CloudLedger,Avionics,SX-238
+SX-GL-00167,2026-03-16,6550 Software,Keysight Test Equipment payment for 2026-03,-40000.0,USD,Test Equipment,SX-VEN-040,Keysight Test Equipment,CloudLedger,Mission Assurance,SX-239
+SX-GL-00168,2026-03-17,6510 Infrastructure,National Instruments payment for 2026-03,-30000.0,USD,Test Equipment,SX-VEN-041,National Instruments,CloudLedger,Mission Assurance,SX-240
+SX-GL-00169,2026-03-18,6520 Professional Services,Blue Origin Launch Pad Lease payment for 2026-03,-100000.0,USD,Facilities,SX-VEN-042,Blue Origin Launch Pad Lease,CloudLedger,Launch Operations,SX-241
+SX-GL-00170,2026-03-19,6530 Security,Brownsville Port Authority payment for 2026-03,-20000.0,USD,Facilities,SX-VEN-043,Brownsville Port Authority,CloudLedger,Starship Program,SX-242
+SX-GL-00171,2026-03-20,6540 Operations,Starlink Dish Logistics payment for 2026-03,-60000.0,USD,Logistics,SX-VEN-044,Starlink Dish Logistics,CloudLedger,Starlink,SX-243
+SX-GL-00172,2026-03-21,6550 Software,FedEx Critical Parts payment for 2026-03,-31666.67,USD,Logistics,SX-VEN-045,FedEx Critical Parts,CloudLedger,Launch Operations,SX-244
+SX-GL-00173,2026-03-22,6510 Infrastructure,UPS Supply Chain payment for 2026-03,-24166.67,USD,Logistics,SX-VEN-046,UPS Supply Chain,CloudLedger,Propulsion,SX-245
+SX-GL-00174,2026-03-23,6520 Professional Services,Clean Harbors Waste payment for 2026-03,-14583.33,USD,Environmental,SX-VEN-047,Clean Harbors Waste,CloudLedger,Launch Operations,SX-246
+SX-GL-00175,2026-03-24,6530 Security,Aon Cyber Insurance payment for 2026-03,-46666.67,USD,Insurance,SX-VEN-048,Aon Cyber Insurance,CloudLedger,Mission Assurance,SX-247
+SX-GL-00176,2026-03-25,6540 Operations,Zscaler Zero Trust payment for 2026-03,-16250.0,USD,Security,SX-VEN-049,Zscaler Zero Trust,CloudLedger,Mission Assurance,SX-248
+SX-GL-00177,2026-03-26,6550 Software,Palo Alto Networks payment for 2026-03,-23333.33,USD,Security,SX-VEN-050,Palo Alto Networks,CloudLedger,Ground Systems,SX-249
+SX-GL-00178,2026-04-04,4000 Revenue,SpaceX customer receipt - Planet Labs,148000000,USD,revenue,,,CloudLedger,Revenue,SX-REV
+SX-GL-00179,2026-04-07,4000 Revenue,SpaceX customer receipt - Maxar Technologies,152200000,USD,revenue,,,CloudLedger,Revenue,SX-REV
+SX-GL-00180,2026-04-10,4000 Revenue,SpaceX customer receipt - Spire Global,156400000,USD,revenue,,,CloudLedger,Revenue,SX-REV
+SX-GL-00181,2026-04-13,4000 Revenue,SpaceX customer receipt - Capella Space,160600000,USD,revenue,,,CloudLedger,Revenue,SX-REV
+SX-GL-00182,2026-04-16,4000 Revenue,SpaceX customer receipt - BlackSky,164800000,USD,revenue,,,CloudLedger,Revenue,SX-REV
+SX-GL-00183,2026-04-07,6000 Payroll,SpaceX payroll batch 1,-157600000,USD,payroll,,,CloudLedger,People,SX-PAY
+SX-GL-00184,2026-04-10,6000 Payroll,SpaceX payroll batch 2,-157600000,USD,payroll,,,CloudLedger,People,SX-PAY
+SX-GL-00185,2026-04-13,6000 Payroll,SpaceX payroll batch 3,-157600000,USD,payroll,,,CloudLedger,People,SX-PAY
+SX-GL-00186,2026-04-16,6000 Payroll,SpaceX payroll batch 4,-157600000,USD,payroll,,,CloudLedger,People,SX-PAY
+SX-GL-00187,2026-04-04,6510 Infrastructure,Panasonic Energy payment for 2026-04,-336000.0,USD,Starlink Hardware,SX-VEN-001,Panasonic Energy,CloudLedger,Starlink,SX-200
+SX-GL-00188,2026-04-05,6520 Professional Services,Amazon Web Services payment for 2026-04,-224000.0,USD,Cloud Infrastructure,SX-VEN-002,Amazon Web Services,CloudLedger,Ground Systems,SX-201
+SX-GL-00189,2026-04-06,6530 Security,Honeywell Aerospace payment for 2026-04,-156000.0,USD,Avionics Components,SX-VEN-003,Honeywell Aerospace,CloudLedger,Avionics,SX-202
+SX-GL-00190,2026-04-07,6540 Operations,L3Harris Technologies payment for 2026-04,-134400.0,USD,Communications,SX-VEN-004,L3Harris Technologies,CloudLedger,Starlink,SX-203
+SX-GL-00191,2026-04-08,6550 Software,Ball Aerospace payment for 2026-04,-192000.0,USD,Satellite Payloads,SX-VEN-005,Ball Aerospace,CloudLedger,Starlink,SX-204
+SX-GL-00192,2026-04-09,6510 Infrastructure,ViaSat Ground Network payment for 2026-04,-71200.0,USD,Ground Segment,SX-VEN-006,ViaSat Ground Network,CloudLedger,Ground Systems,SX-205
+SX-GL-00193,2026-04-10,6520 Professional Services,Microsoft Azure payment for 2026-04,-96000.0,USD,Cloud Infrastructure,SX-VEN-007,Microsoft Azure,CloudLedger,Ground Systems,SX-206
+SX-GL-00194,2026-04-11,6530 Security,Deloitte Aerospace Advisory payment for 2026-04,-52000.0,USD,Professional Services,SX-VEN-008,Deloitte Aerospace Advisory,CloudLedger,Finance,SX-207
+SX-GL-00195,2026-04-12,6540 Operations,Kirkland & Ellis LLP payment for 2026-04,-78400.0,USD,Legal,SX-VEN-009,Kirkland & Ellis LLP,CloudLedger,Finance,SX-208
+SX-GL-00196,2026-04-13,6550 Software,Marsh Aerospace Insurance payment for 2026-04,-256000.0,USD,Insurance,SX-VEN-010,Marsh Aerospace Insurance,CloudLedger,Mission Assurance,SX-209
+SX-GL-00197,2026-04-14,6510 Infrastructure,Jacobs Engineering payment for 2026-04,-88000.0,USD,Facilities,SX-VEN-011,Jacobs Engineering,CloudLedger,Launch Operations,SX-210
+SX-GL-00198,2026-04-15,6520 Professional Services,AECOM Launch Pad Services payment for 2026-04,-116000.0,USD,Facilities,SX-VEN-012,AECOM Launch Pad Services,CloudLedger,Launch Operations,SX-211
+SX-GL-00199,2026-04-16,6530 Security,Ansys Simulation payment for 2026-04,-33600.0,USD,Engineering Software,SX-VEN-013,Ansys Simulation,CloudLedger,Propulsion,SX-212
+SX-GL-00200,2026-04-17,6540 Operations,Siemens PLM payment for 2026-04,-30400.0,USD,Engineering Software,SX-VEN-014,Siemens PLM,CloudLedger,Starship Program,SX-213
+SX-GL-00201,2026-04-18,6550 Software,Salesforce Government Cloud payment for 2026-04,-23200.0,USD,CRM,SX-VEN-015,Salesforce Government Cloud,CloudLedger,Government Relations,SX-214
+SX-GL-00202,2026-04-19,6510 Infrastructure,Workday HCM payment for 2026-04,-40800.0,USD,HR Systems,SX-VEN-016,Workday HCM,CloudLedger,People Operations,SX-215
+SX-GL-00203,2026-04-20,6520 Professional Services,Okta Identity payment for 2026-04,-14400.0,USD,Identity,SX-VEN-017,Okta Identity,CloudLedger,Mission Assurance,SX-216
+SX-GL-00204,2026-04-21,6530 Security,CrowdStrike Falcon payment for 2026-04,-19200.0,USD,Security,SX-VEN-018,CrowdStrike Falcon,CloudLedger,Mission Assurance,SX-217
+SX-GL-00205,2026-04-22,6540 Operations,Splunk Enterprise payment for 2026-04,-25600.0,USD,Observability,SX-VEN-019,Splunk Enterprise,CloudLedger,Ground Systems,SX-218
+SX-GL-00206,2026-04-23,6550 Software,Datadog Infrastructure payment for 2026-04,-22000.0,USD,Observability,SX-VEN-020,Datadog Infrastructure,CloudLedger,Starlink,SX-219
+SX-GL-00207,2026-04-24,6510 Infrastructure,Flex Ltd Manufacturing payment for 2026-04,-448000.0,USD,Contract Manufacturing,SX-VEN-021,Flex Ltd Manufacturing,CloudLedger,Starlink,SX-220
+SX-GL-00208,2026-04-25,6520 Professional Services,Precision Castparts payment for 2026-04,-248000.0,USD,Materials,SX-VEN-022,Precision Castparts,CloudLedger,Propulsion,SX-221
+SX-GL-00209,2026-04-26,6530 Security,ATI Titanium payment for 2026-04,-216000.0,USD,Materials,SX-VEN-023,ATI Titanium,CloudLedger,Starship Program,SX-222
+SX-GL-00210,2026-04-27,6540 Operations,Spaceport America Ops payment for 2026-04,-62400.0,USD,Launch Range,SX-VEN-024,Spaceport America Ops,CloudLedger,Launch Operations,SX-223
+SX-GL-00211,2026-04-28,6550 Software,Cape Canaveral Support Services payment for 2026-04,-73600.0,USD,Launch Range,SX-VEN-025,Cape Canaveral Support Services,CloudLedger,Launch Operations,SX-224
+SX-GL-00212,2026-04-29,6510 Infrastructure,FCC Spectrum Licensing payment for 2026-04,-36000.0,USD,Regulatory,SX-VEN-026,FCC Spectrum Licensing,CloudLedger,Starlink,SX-225
+SX-GL-00213,2026-04-30,6520 Professional Services,FAA Launch Licensing payment for 2026-04,-30400.0,USD,Regulatory,SX-VEN-027,FAA Launch Licensing,CloudLedger,Launch Operations,SX-226
+SX-GL-00214,2026-04-04,6530 Security,LinkedIn Recruiting payment for 2026-04,-33600.0,USD,Recruiting,SX-VEN-028,LinkedIn Recruiting,CloudLedger,People Operations,SX-227
+SX-GL-00215,2026-04-05,6540 Operations,Glassdoor Employer Brand payment for 2026-04,-7600.0,USD,Recruiting,SX-VEN-029,Glassdoor Employer Brand,CloudLedger,People Operations,SX-228
+SX-GL-00216,2026-04-06,6550 Software,Concur Travel payment for 2026-04,-12800.0,USD,Travel,SX-VEN-030,Concur Travel,CloudLedger,Finance,SX-229
+SX-GL-00217,2026-04-07,6510 Infrastructure,American Express Corporate payment for 2026-04,-17600.0,USD,Travel,SX-VEN-031,American Express Corporate,CloudLedger,Finance,SX-230
+SX-GL-00218,2026-04-08,6520 Professional Services,Deloitte Tax payment for 2026-04,-27200.0,USD,Tax,SX-VEN-032,Deloitte Tax,CloudLedger,Finance,SX-231
+SX-GL-00219,2026-04-09,6530 Security,Ernst & Young Audit payment for 2026-04,-71200.0,USD,Audit,SX-VEN-033,Ernst & Young Audit,CloudLedger,Finance,SX-232
+SX-GL-00220,2026-04-10,6540 Operations,Palantir Foundry payment for 2026-04,-54400.0,USD,Data Platform,SX-VEN-034,Palantir Foundry,CloudLedger,Starlink,SX-233
+SX-GL-00221,2026-04-11,6550 Software,Snowflake Analytics payment for 2026-04,-41600.0,USD,Data Platform,SX-VEN-035,Snowflake Analytics,CloudLedger,Starlink,SX-234
+SX-GL-00222,2026-04-12,6510 Infrastructure,ServiceNow ITSM payment for 2026-04,-32800.0,USD,IT Operations,SX-VEN-036,ServiceNow ITSM,CloudLedger,Ground Systems,SX-235
+SX-GL-00223,2026-04-13,6520 Professional Services,Atlassian Jira payment for 2026-04,-15200.0,USD,Engineering Tools,SX-VEN-037,Atlassian Jira,CloudLedger,Propulsion,SX-236
+SX-GL-00224,2026-04-14,6530 Security,GitHub Enterprise payment for 2026-04,-16800.0,USD,Engineering Tools,SX-VEN-038,GitHub Enterprise,CloudLedger,Avionics,SX-237
+SX-GL-00225,2026-04-15,6540 Operations,Ansys HFSS payment for 2026-04,-12400.0,USD,Simulation,SX-VEN-039,Ansys HFSS,CloudLedger,Avionics,SX-238
+SX-GL-00226,2026-04-16,6550 Software,Keysight Test Equipment payment for 2026-04,-38400.0,USD,Test Equipment,SX-VEN-040,Keysight Test Equipment,CloudLedger,Mission Assurance,SX-239
+SX-GL-00227,2026-04-17,6510 Infrastructure,National Instruments payment for 2026-04,-28800.0,USD,Test Equipment,SX-VEN-041,National Instruments,CloudLedger,Mission Assurance,SX-240
+SX-GL-00228,2026-04-18,6520 Professional Services,Blue Origin Launch Pad Lease payment for 2026-04,-96000.0,USD,Facilities,SX-VEN-042,Blue Origin Launch Pad Lease,CloudLedger,Launch Operations,SX-241
+SX-GL-00229,2026-04-19,6530 Security,Brownsville Port Authority payment for 2026-04,-19200.0,USD,Facilities,SX-VEN-043,Brownsville Port Authority,CloudLedger,Starship Program,SX-242
+SX-GL-00230,2026-04-20,6540 Operations,Starlink Dish Logistics payment for 2026-04,-57600.0,USD,Logistics,SX-VEN-044,Starlink Dish Logistics,CloudLedger,Starlink,SX-243
+SX-GL-00231,2026-04-21,6550 Software,FedEx Critical Parts payment for 2026-04,-30400.0,USD,Logistics,SX-VEN-045,FedEx Critical Parts,CloudLedger,Launch Operations,SX-244
+SX-GL-00232,2026-04-22,6510 Infrastructure,UPS Supply Chain payment for 2026-04,-23200.0,USD,Logistics,SX-VEN-046,UPS Supply Chain,CloudLedger,Propulsion,SX-245
+SX-GL-00233,2026-04-23,6520 Professional Services,Clean Harbors Waste payment for 2026-04,-14000.0,USD,Environmental,SX-VEN-047,Clean Harbors Waste,CloudLedger,Launch Operations,SX-246
+SX-GL-00234,2026-04-24,6530 Security,Aon Cyber Insurance payment for 2026-04,-44800.0,USD,Insurance,SX-VEN-048,Aon Cyber Insurance,CloudLedger,Mission Assurance,SX-247
+SX-GL-00235,2026-04-25,6540 Operations,Zscaler Zero Trust payment for 2026-04,-15600.0,USD,Security,SX-VEN-049,Zscaler Zero Trust,CloudLedger,Mission Assurance,SX-248
+SX-GL-00236,2026-04-26,6550 Software,Palo Alto Networks payment for 2026-04,-22400.0,USD,Security,SX-VEN-050,Palo Alto Networks,CloudLedger,Ground Systems,SX-249
+SX-GL-00237,2026-05-04,4000 Revenue,SpaceX customer receipt - US Coast Guard Starlink,169000000,USD,revenue,,,CloudLedger,Revenue,SX-REV
+SX-GL-00238,2026-05-07,4000 Revenue,SpaceX customer receipt - US Army Starlink,173200000,USD,revenue,,,CloudLedger,Revenue,SX-REV
+SX-GL-00239,2026-05-10,4000 Revenue,SpaceX customer receipt - Royal Caribbean Starlink,177400000,USD,revenue,,,CloudLedger,Revenue,SX-REV
+SX-GL-00240,2026-05-13,4000 Revenue,SpaceX customer receipt - Hawaiian Airlines Starlink,181600000,USD,revenue,,,CloudLedger,Revenue,SX-REV
+SX-GL-00241,2026-05-16,4000 Revenue,SpaceX customer receipt - Philippines DICT Starlink,185800000,USD,revenue,,,CloudLedger,Revenue,SX-REV
+SX-GL-00242,2026-05-07,6000 Payroll,SpaceX payroll batch 1,-161800000,USD,payroll,,,CloudLedger,People,SX-PAY
+SX-GL-00243,2026-05-10,6000 Payroll,SpaceX payroll batch 2,-161800000,USD,payroll,,,CloudLedger,People,SX-PAY
+SX-GL-00244,2026-05-13,6000 Payroll,SpaceX payroll batch 3,-161800000,USD,payroll,,,CloudLedger,People,SX-PAY
+SX-GL-00245,2026-05-16,6000 Payroll,SpaceX payroll batch 4,-161800000,USD,payroll,,,CloudLedger,People,SX-PAY
+SX-GL-00246,2026-05-04,6510 Infrastructure,Panasonic Energy payment for 2026-05,-350000.0,USD,Starlink Hardware,SX-VEN-001,Panasonic Energy,CloudLedger,Starlink,SX-200
+SX-GL-00247,2026-05-05,6520 Professional Services,Amazon Web Services payment for 2026-05,-233333.33,USD,Cloud Infrastructure,SX-VEN-002,Amazon Web Services,CloudLedger,Ground Systems,SX-201
+SX-GL-00248,2026-05-06,6530 Security,Honeywell Aerospace payment for 2026-05,-162500.0,USD,Avionics Components,SX-VEN-003,Honeywell Aerospace,CloudLedger,Avionics,SX-202
+SX-GL-00249,2026-05-07,6540 Operations,L3Harris Technologies payment for 2026-05,-140000.0,USD,Communications,SX-VEN-004,L3Harris Technologies,CloudLedger,Starlink,SX-203
+SX-GL-00250,2026-05-08,6550 Software,Ball Aerospace payment for 2026-05,-200000.0,USD,Satellite Payloads,SX-VEN-005,Ball Aerospace,CloudLedger,Starlink,SX-204
+SX-GL-00251,2026-05-09,6510 Infrastructure,ViaSat Ground Network payment for 2026-05,-74166.67,USD,Ground Segment,SX-VEN-006,ViaSat Ground Network,CloudLedger,Ground Systems,SX-205
+SX-GL-00252,2026-05-10,6520 Professional Services,Microsoft Azure payment for 2026-05,-100000.0,USD,Cloud Infrastructure,SX-VEN-007,Microsoft Azure,CloudLedger,Ground Systems,SX-206
+SX-GL-00253,2026-05-11,6530 Security,Deloitte Aerospace Advisory payment for 2026-05,-54166.67,USD,Professional Services,SX-VEN-008,Deloitte Aerospace Advisory,CloudLedger,Finance,SX-207
+SX-GL-00254,2026-05-12,6540 Operations,Kirkland & Ellis LLP payment for 2026-05,-81666.67,USD,Legal,SX-VEN-009,Kirkland & Ellis LLP,CloudLedger,Finance,SX-208
+SX-GL-00255,2026-05-13,6550 Software,Marsh Aerospace Insurance payment for 2026-05,-266666.67,USD,Insurance,SX-VEN-010,Marsh Aerospace Insurance,CloudLedger,Mission Assurance,SX-209
+SX-GL-00256,2026-05-14,6510 Infrastructure,Jacobs Engineering payment for 2026-05,-91666.67,USD,Facilities,SX-VEN-011,Jacobs Engineering,CloudLedger,Launch Operations,SX-210
+SX-GL-00257,2026-05-15,6520 Professional Services,AECOM Launch Pad Services payment for 2026-05,-120833.33,USD,Facilities,SX-VEN-012,AECOM Launch Pad Services,CloudLedger,Launch Operations,SX-211
+SX-GL-00258,2026-05-16,6530 Security,Ansys Simulation payment for 2026-05,-35000.0,USD,Engineering Software,SX-VEN-013,Ansys Simulation,CloudLedger,Propulsion,SX-212
+SX-GL-00259,2026-05-17,6540 Operations,Siemens PLM payment for 2026-05,-31666.67,USD,Engineering Software,SX-VEN-014,Siemens PLM,CloudLedger,Starship Program,SX-213
+SX-GL-00260,2026-05-18,6550 Software,Salesforce Government Cloud payment for 2026-05,-24166.67,USD,CRM,SX-VEN-015,Salesforce Government Cloud,CloudLedger,Government Relations,SX-214
+SX-GL-00261,2026-05-19,6510 Infrastructure,Workday HCM payment for 2026-05,-42500.0,USD,HR Systems,SX-VEN-016,Workday HCM,CloudLedger,People Operations,SX-215
+SX-GL-00262,2026-05-20,6520 Professional Services,Okta Identity payment for 2026-05,-15000.0,USD,Identity,SX-VEN-017,Okta Identity,CloudLedger,Mission Assurance,SX-216
+SX-GL-00263,2026-05-21,6530 Security,CrowdStrike Falcon payment for 2026-05,-20000.0,USD,Security,SX-VEN-018,CrowdStrike Falcon,CloudLedger,Mission Assurance,SX-217
+SX-GL-00264,2026-05-22,6540 Operations,Splunk Enterprise payment for 2026-05,-26666.67,USD,Observability,SX-VEN-019,Splunk Enterprise,CloudLedger,Ground Systems,SX-218
+SX-GL-00265,2026-05-23,6550 Software,Datadog Infrastructure payment for 2026-05,-22916.67,USD,Observability,SX-VEN-020,Datadog Infrastructure,CloudLedger,Starlink,SX-219
+SX-GL-00266,2026-05-24,6510 Infrastructure,Flex Ltd Manufacturing payment for 2026-05,-466666.67,USD,Contract Manufacturing,SX-VEN-021,Flex Ltd Manufacturing,CloudLedger,Starlink,SX-220
+SX-GL-00267,2026-05-25,6520 Professional Services,Precision Castparts payment for 2026-05,-258333.33,USD,Materials,SX-VEN-022,Precision Castparts,CloudLedger,Propulsion,SX-221
+SX-GL-00268,2026-05-26,6530 Security,ATI Titanium payment for 2026-05,-225000.0,USD,Materials,SX-VEN-023,ATI Titanium,CloudLedger,Starship Program,SX-222
+SX-GL-00269,2026-05-27,6540 Operations,Spaceport America Ops payment for 2026-05,-65000.0,USD,Launch Range,SX-VEN-024,Spaceport America Ops,CloudLedger,Launch Operations,SX-223
+SX-GL-00270,2026-05-28,6550 Software,Cape Canaveral Support Services payment for 2026-05,-76666.67,USD,Launch Range,SX-VEN-025,Cape Canaveral Support Services,CloudLedger,Launch Operations,SX-224
+SX-GL-00271,2026-05-29,6510 Infrastructure,FCC Spectrum Licensing payment for 2026-05,-37500.0,USD,Regulatory,SX-VEN-026,FCC Spectrum Licensing,CloudLedger,Starlink,SX-225
+SX-GL-00272,2026-05-30,6520 Professional Services,FAA Launch Licensing payment for 2026-05,-31666.67,USD,Regulatory,SX-VEN-027,FAA Launch Licensing,CloudLedger,Launch Operations,SX-226
+SX-GL-00273,2026-05-04,6530 Security,LinkedIn Recruiting payment for 2026-05,-35000.0,USD,Recruiting,SX-VEN-028,LinkedIn Recruiting,CloudLedger,People Operations,SX-227
+SX-GL-00274,2026-05-05,6540 Operations,Glassdoor Employer Brand payment for 2026-05,-7916.67,USD,Recruiting,SX-VEN-029,Glassdoor Employer Brand,CloudLedger,People Operations,SX-228
+SX-GL-00275,2026-05-06,6550 Software,Concur Travel payment for 2026-05,-13333.33,USD,Travel,SX-VEN-030,Concur Travel,CloudLedger,Finance,SX-229
+SX-GL-00276,2026-05-07,6510 Infrastructure,American Express Corporate payment for 2026-05,-18333.33,USD,Travel,SX-VEN-031,American Express Corporate,CloudLedger,Finance,SX-230
+SX-GL-00277,2026-05-08,6520 Professional Services,Deloitte Tax payment for 2026-05,-28333.33,USD,Tax,SX-VEN-032,Deloitte Tax,CloudLedger,Finance,SX-231
+SX-GL-00278,2026-05-09,6530 Security,Ernst & Young Audit payment for 2026-05,-74166.67,USD,Audit,SX-VEN-033,Ernst & Young Audit,CloudLedger,Finance,SX-232
+SX-GL-00279,2026-05-10,6540 Operations,Palantir Foundry payment for 2026-05,-56666.67,USD,Data Platform,SX-VEN-034,Palantir Foundry,CloudLedger,Starlink,SX-233
+SX-GL-00280,2026-05-11,6550 Software,Snowflake Analytics payment for 2026-05,-43333.33,USD,Data Platform,SX-VEN-035,Snowflake Analytics,CloudLedger,Starlink,SX-234
+SX-GL-00281,2026-05-12,6510 Infrastructure,ServiceNow ITSM payment for 2026-05,-34166.67,USD,IT Operations,SX-VEN-036,ServiceNow ITSM,CloudLedger,Ground Systems,SX-235
+SX-GL-00282,2026-05-13,6520 Professional Services,Atlassian Jira payment for 2026-05,-15833.33,USD,Engineering Tools,SX-VEN-037,Atlassian Jira,CloudLedger,Propulsion,SX-236
+SX-GL-00283,2026-05-14,6530 Security,GitHub Enterprise payment for 2026-05,-17500.0,USD,Engineering Tools,SX-VEN-038,GitHub Enterprise,CloudLedger,Avionics,SX-237
+SX-GL-00284,2026-05-15,6540 Operations,Ansys HFSS payment for 2026-05,-12916.67,USD,Simulation,SX-VEN-039,Ansys HFSS,CloudLedger,Avionics,SX-238
+SX-GL-00285,2026-05-16,6550 Software,Keysight Test Equipment payment for 2026-05,-40000.0,USD,Test Equipment,SX-VEN-040,Keysight Test Equipment,CloudLedger,Mission Assurance,SX-239
+SX-GL-00286,2026-05-17,6510 Infrastructure,National Instruments payment for 2026-05,-30000.0,USD,Test Equipment,SX-VEN-041,National Instruments,CloudLedger,Mission Assurance,SX-240
+SX-GL-00287,2026-05-18,6520 Professional Services,Blue Origin Launch Pad Lease payment for 2026-05,-100000.0,USD,Facilities,SX-VEN-042,Blue Origin Launch Pad Lease,CloudLedger,Launch Operations,SX-241
+SX-GL-00288,2026-05-19,6530 Security,Brownsville Port Authority payment for 2026-05,-20000.0,USD,Facilities,SX-VEN-043,Brownsville Port Authority,CloudLedger,Starship Program,SX-242
+SX-GL-00289,2026-05-20,6540 Operations,Starlink Dish Logistics payment for 2026-05,-60000.0,USD,Logistics,SX-VEN-044,Starlink Dish Logistics,CloudLedger,Starlink,SX-243
+SX-GL-00290,2026-05-21,6550 Software,FedEx Critical Parts payment for 2026-05,-31666.67,USD,Logistics,SX-VEN-045,FedEx Critical Parts,CloudLedger,Launch Operations,SX-244
+SX-GL-00291,2026-05-22,6510 Infrastructure,UPS Supply Chain payment for 2026-05,-24166.67,USD,Logistics,SX-VEN-046,UPS Supply Chain,CloudLedger,Propulsion,SX-245
+SX-GL-00292,2026-05-23,6520 Professional Services,Clean Harbors Waste payment for 2026-05,-14583.33,USD,Environmental,SX-VEN-047,Clean Harbors Waste,CloudLedger,Launch Operations,SX-246
+SX-GL-00293,2026-05-24,6530 Security,Aon Cyber Insurance payment for 2026-05,-46666.67,USD,Insurance,SX-VEN-048,Aon Cyber Insurance,CloudLedger,Mission Assurance,SX-247
+SX-GL-00294,2026-05-25,6540 Operations,Zscaler Zero Trust payment for 2026-05,-16250.0,USD,Security,SX-VEN-049,Zscaler Zero Trust,CloudLedger,Mission Assurance,SX-248
+SX-GL-00295,2026-05-26,6550 Software,Palo Alto Networks payment for 2026-05,-23333.33,USD,Security,SX-VEN-050,Palo Alto Networks,CloudLedger,Ground Systems,SX-249
+SX-GL-00296,2026-06-04,4000 Revenue,SpaceX customer receipt - NASA Commercial Crew,190000000,USD,revenue,,,CloudLedger,Revenue,SX-REV
+SX-GL-00297,2026-06-07,4000 Revenue,SpaceX customer receipt - NASA Artemis HLS,194200000,USD,revenue,,,CloudLedger,Revenue,SX-REV
+SX-GL-00298,2026-06-10,4000 Revenue,SpaceX customer receipt - NASA CRS Resupply,198400000,USD,revenue,,,CloudLedger,Revenue,SX-REV
+SX-GL-00299,2026-06-13,4000 Revenue,SpaceX customer receipt - US Space Force NSSL,202600000,USD,revenue,,,CloudLedger,Revenue,SX-REV
+SX-GL-00300,2026-06-16,4000 Revenue,SpaceX customer receipt - National Reconnaissance Office,206800000,USD,revenue,,,CloudLedger,Revenue,SX-REV
+SX-GL-00301,2026-06-07,6000 Payroll,SpaceX payroll batch 1,-166000000,USD,payroll,,,CloudLedger,People,SX-PAY
+SX-GL-00302,2026-06-10,6000 Payroll,SpaceX payroll batch 2,-166000000,USD,payroll,,,CloudLedger,People,SX-PAY
+SX-GL-00303,2026-06-13,6000 Payroll,SpaceX payroll batch 3,-166000000,USD,payroll,,,CloudLedger,People,SX-PAY
+SX-GL-00304,2026-06-16,6000 Payroll,SpaceX payroll batch 4,-166000000,USD,payroll,,,CloudLedger,People,SX-PAY
+SX-GL-00305,2026-06-04,6510 Infrastructure,Panasonic Energy payment for 2026-06,-336000.0,USD,Starlink Hardware,SX-VEN-001,Panasonic Energy,CloudLedger,Starlink,SX-200
+SX-GL-00306,2026-06-05,6520 Professional Services,Amazon Web Services payment for 2026-06,-224000.0,USD,Cloud Infrastructure,SX-VEN-002,Amazon Web Services,CloudLedger,Ground Systems,SX-201
+SX-GL-00307,2026-06-06,6530 Security,Honeywell Aerospace payment for 2026-06,-156000.0,USD,Avionics Components,SX-VEN-003,Honeywell Aerospace,CloudLedger,Avionics,SX-202
+SX-GL-00308,2026-06-07,6540 Operations,L3Harris Technologies payment for 2026-06,-134400.0,USD,Communications,SX-VEN-004,L3Harris Technologies,CloudLedger,Starlink,SX-203
+SX-GL-00309,2026-06-08,6550 Software,Ball Aerospace payment for 2026-06,-192000.0,USD,Satellite Payloads,SX-VEN-005,Ball Aerospace,CloudLedger,Starlink,SX-204
+SX-GL-00310,2026-06-09,6510 Infrastructure,ViaSat Ground Network payment for 2026-06,-71200.0,USD,Ground Segment,SX-VEN-006,ViaSat Ground Network,CloudLedger,Ground Systems,SX-205
+SX-GL-00311,2026-06-10,6520 Professional Services,Microsoft Azure payment for 2026-06,-96000.0,USD,Cloud Infrastructure,SX-VEN-007,Microsoft Azure,CloudLedger,Ground Systems,SX-206
+SX-GL-00312,2026-06-11,6530 Security,Deloitte Aerospace Advisory payment for 2026-06,-52000.0,USD,Professional Services,SX-VEN-008,Deloitte Aerospace Advisory,CloudLedger,Finance,SX-207
+SX-GL-00313,2026-06-12,6540 Operations,Kirkland & Ellis LLP payment for 2026-06,-78400.0,USD,Legal,SX-VEN-009,Kirkland & Ellis LLP,CloudLedger,Finance,SX-208
+SX-GL-00314,2026-06-13,6550 Software,Marsh Aerospace Insurance payment for 2026-06,-256000.0,USD,Insurance,SX-VEN-010,Marsh Aerospace Insurance,CloudLedger,Mission Assurance,SX-209
+SX-GL-00315,2026-06-14,6510 Infrastructure,Jacobs Engineering payment for 2026-06,-88000.0,USD,Facilities,SX-VEN-011,Jacobs Engineering,CloudLedger,Launch Operations,SX-210
+SX-GL-00316,2026-06-15,6520 Professional Services,AECOM Launch Pad Services payment for 2026-06,-116000.0,USD,Facilities,SX-VEN-012,AECOM Launch Pad Services,CloudLedger,Launch Operations,SX-211
+SX-GL-00317,2026-06-16,6530 Security,Ansys Simulation payment for 2026-06,-33600.0,USD,Engineering Software,SX-VEN-013,Ansys Simulation,CloudLedger,Propulsion,SX-212
+SX-GL-00318,2026-06-17,6540 Operations,Siemens PLM payment for 2026-06,-30400.0,USD,Engineering Software,SX-VEN-014,Siemens PLM,CloudLedger,Starship Program,SX-213
+SX-GL-00319,2026-06-18,6550 Software,Salesforce Government Cloud payment for 2026-06,-23200.0,USD,CRM,SX-VEN-015,Salesforce Government Cloud,CloudLedger,Government Relations,SX-214
+SX-GL-00320,2026-06-19,6510 Infrastructure,Workday HCM payment for 2026-06,-40800.0,USD,HR Systems,SX-VEN-016,Workday HCM,CloudLedger,People Operations,SX-215
+SX-GL-00321,2026-06-20,6520 Professional Services,Okta Identity payment for 2026-06,-14400.0,USD,Identity,SX-VEN-017,Okta Identity,CloudLedger,Mission Assurance,SX-216
+SX-GL-00322,2026-06-21,6530 Security,CrowdStrike Falcon payment for 2026-06,-19200.0,USD,Security,SX-VEN-018,CrowdStrike Falcon,CloudLedger,Mission Assurance,SX-217
+SX-GL-00323,2026-06-22,6540 Operations,Splunk Enterprise payment for 2026-06,-25600.0,USD,Observability,SX-VEN-019,Splunk Enterprise,CloudLedger,Ground Systems,SX-218
+SX-GL-00324,2026-06-23,6550 Software,Datadog Infrastructure payment for 2026-06,-22000.0,USD,Observability,SX-VEN-020,Datadog Infrastructure,CloudLedger,Starlink,SX-219
+SX-GL-00325,2026-06-24,6510 Infrastructure,Flex Ltd Manufacturing payment for 2026-06,-448000.0,USD,Contract Manufacturing,SX-VEN-021,Flex Ltd Manufacturing,CloudLedger,Starlink,SX-220
+SX-GL-00326,2026-06-25,6520 Professional Services,Precision Castparts payment for 2026-06,-248000.0,USD,Materials,SX-VEN-022,Precision Castparts,CloudLedger,Propulsion,SX-221
+SX-GL-00327,2026-06-26,6530 Security,ATI Titanium payment for 2026-06,-216000.0,USD,Materials,SX-VEN-023,ATI Titanium,CloudLedger,Starship Program,SX-222
+SX-GL-00328,2026-06-27,6540 Operations,Spaceport America Ops payment for 2026-06,-62400.0,USD,Launch Range,SX-VEN-024,Spaceport America Ops,CloudLedger,Launch Operations,SX-223
+SX-GL-00329,2026-06-28,6550 Software,Cape Canaveral Support Services payment for 2026-06,-73600.0,USD,Launch Range,SX-VEN-025,Cape Canaveral Support Services,CloudLedger,Launch Operations,SX-224
+SX-GL-00330,2026-06-29,6510 Infrastructure,FCC Spectrum Licensing payment for 2026-06,-36000.0,USD,Regulatory,SX-VEN-026,FCC Spectrum Licensing,CloudLedger,Starlink,SX-225
+SX-GL-00331,2026-06-30,6520 Professional Services,FAA Launch Licensing payment for 2026-06,-30400.0,USD,Regulatory,SX-VEN-027,FAA Launch Licensing,CloudLedger,Launch Operations,SX-226
+SX-GL-00332,2026-06-04,6530 Security,LinkedIn Recruiting payment for 2026-06,-33600.0,USD,Recruiting,SX-VEN-028,LinkedIn Recruiting,CloudLedger,People Operations,SX-227
+SX-GL-00333,2026-06-05,6540 Operations,Glassdoor Employer Brand payment for 2026-06,-7600.0,USD,Recruiting,SX-VEN-029,Glassdoor Employer Brand,CloudLedger,People Operations,SX-228
+SX-GL-00334,2026-06-06,6550 Software,Concur Travel payment for 2026-06,-12800.0,USD,Travel,SX-VEN-030,Concur Travel,CloudLedger,Finance,SX-229
+SX-GL-00335,2026-06-07,6510 Infrastructure,American Express Corporate payment for 2026-06,-17600.0,USD,Travel,SX-VEN-031,American Express Corporate,CloudLedger,Finance,SX-230
+SX-GL-00336,2026-06-08,6520 Professional Services,Deloitte Tax payment for 2026-06,-27200.0,USD,Tax,SX-VEN-032,Deloitte Tax,CloudLedger,Finance,SX-231
+SX-GL-00337,2026-06-09,6530 Security,Ernst & Young Audit payment for 2026-06,-71200.0,USD,Audit,SX-VEN-033,Ernst & Young Audit,CloudLedger,Finance,SX-232
+SX-GL-00338,2026-06-10,6540 Operations,Palantir Foundry payment for 2026-06,-54400.0,USD,Data Platform,SX-VEN-034,Palantir Foundry,CloudLedger,Starlink,SX-233
+SX-GL-00339,2026-06-11,6550 Software,Snowflake Analytics payment for 2026-06,-41600.0,USD,Data Platform,SX-VEN-035,Snowflake Analytics,CloudLedger,Starlink,SX-234
+SX-GL-00340,2026-06-12,6510 Infrastructure,ServiceNow ITSM payment for 2026-06,-32800.0,USD,IT Operations,SX-VEN-036,ServiceNow ITSM,CloudLedger,Ground Systems,SX-235
+SX-GL-00341,2026-06-13,6520 Professional Services,Atlassian Jira payment for 2026-06,-15200.0,USD,Engineering Tools,SX-VEN-037,Atlassian Jira,CloudLedger,Propulsion,SX-236
+SX-GL-00342,2026-06-14,6530 Security,GitHub Enterprise payment for 2026-06,-16800.0,USD,Engineering Tools,SX-VEN-038,GitHub Enterprise,CloudLedger,Avionics,SX-237
+SX-GL-00343,2026-06-15,6540 Operations,Ansys HFSS payment for 2026-06,-12400.0,USD,Simulation,SX-VEN-039,Ansys HFSS,CloudLedger,Avionics,SX-238
+SX-GL-00344,2026-06-16,6550 Software,Keysight Test Equipment payment for 2026-06,-38400.0,USD,Test Equipment,SX-VEN-040,Keysight Test Equipment,CloudLedger,Mission Assurance,SX-239
+SX-GL-00345,2026-06-17,6510 Infrastructure,National Instruments payment for 2026-06,-28800.0,USD,Test Equipment,SX-VEN-041,National Instruments,CloudLedger,Mission Assurance,SX-240
+SX-GL-00346,2026-06-18,6520 Professional Services,Blue Origin Launch Pad Lease payment for 2026-06,-96000.0,USD,Facilities,SX-VEN-042,Blue Origin Launch Pad Lease,CloudLedger,Launch Operations,SX-241
+SX-GL-00347,2026-06-19,6530 Security,Brownsville Port Authority payment for 2026-06,-19200.0,USD,Facilities,SX-VEN-043,Brownsville Port Authority,CloudLedger,Starship Program,SX-242
+SX-GL-00348,2026-06-20,6540 Operations,Starlink Dish Logistics payment for 2026-06,-57600.0,USD,Logistics,SX-VEN-044,Starlink Dish Logistics,CloudLedger,Starlink,SX-243
+SX-GL-00349,2026-06-21,6550 Software,FedEx Critical Parts payment for 2026-06,-30400.0,USD,Logistics,SX-VEN-045,FedEx Critical Parts,CloudLedger,Launch Operations,SX-244
+SX-GL-00350,2026-06-22,6510 Infrastructure,UPS Supply Chain payment for 2026-06,-23200.0,USD,Logistics,SX-VEN-046,UPS Supply Chain,CloudLedger,Propulsion,SX-245
+SX-GL-00351,2026-06-23,6520 Professional Services,Clean Harbors Waste payment for 2026-06,-14000.0,USD,Environmental,SX-VEN-047,Clean Harbors Waste,CloudLedger,Launch Operations,SX-246
+SX-GL-00352,2026-06-24,6530 Security,Aon Cyber Insurance payment for 2026-06,-44800.0,USD,Insurance,SX-VEN-048,Aon Cyber Insurance,CloudLedger,Mission Assurance,SX-247
+SX-GL-00353,2026-06-25,6540 Operations,Zscaler Zero Trust payment for 2026-06,-15600.0,USD,Security,SX-VEN-049,Zscaler Zero Trust,CloudLedger,Mission Assurance,SX-248
+SX-GL-00354,2026-06-26,6550 Software,Palo Alto Networks payment for 2026-06,-22400.0,USD,Security,SX-VEN-050,Palo Alto Networks,CloudLedger,Ground Systems,SX-249

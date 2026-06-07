@@ -142,6 +142,45 @@ def cmd_gate(args: argparse.Namespace) -> int:
     return 0
 
 
+def cmd_role_distinction(args: argparse.Namespace) -> int:
+    from src import role_distinction_eval as RD
+
+    publish = bool(args.publish)
+    if publish:
+        publish = _init_weave()
+    report = RD.run_role_distinction_eval(source="representative")
+    persisted = RD.persist_role_distinction_report(
+        report,
+        artifact_path=None if args.no_artifact else args.artifact,
+        redis=not args.no_redis,
+        publish=publish,
+    )
+    payload = report.model_dump(mode="json")
+    safe_print(
+        "role_distinction_eval",
+        {
+            "id": payload.get("id"),
+            "overall_score": payload.get("overall_score"),
+            "passed": payload.get("passed"),
+            "case_count": payload.get("case_count"),
+            "role_average_scores": payload.get("role_average_scores"),
+            "artifact_path": persisted.get("artifact_path"),
+            "event_id": persisted.get("event_id"),
+            "redis_error": persisted.get("redis_error"),
+            "weave": persisted.get("weave"),
+            "collapse_flags": [
+                {"case": case.get("id"), "flags": case.get("collapse_flags")}
+                for case in payload.get("cases", [])
+                if case.get("collapse_flags")
+            ],
+        },
+    )
+    if not report.passed:
+        safe_print("ROLE_DISTINCTION_FAILURE", "One or more roles collapsed below the distinction threshold.")
+        return 1
+    return 0
+
+
 def cmd_smoke(args: argparse.Namespace) -> int:
     """End-to-end metadata smoke check: create + list eval metadata, redacted."""
     from src import promotion_gates as PG
@@ -222,6 +261,13 @@ def main(argv: list[str] | None = None) -> int:
     p_gate.add_argument("--live", action="store_true")
     p_gate.add_argument("--max-cases", dest="max_cases", type=int, default=3)
     p_gate.set_defaults(func=cmd_gate)
+
+    p_role = sub.add_parser("role-distinction", help="run the deterministic role-persona distinction harness")
+    p_role.add_argument("--artifact", default=str(__import__("src.role_distinction_eval", fromlist=["DEFAULT_ARTIFACT"]).DEFAULT_ARTIFACT))
+    p_role.add_argument("--no-artifact", action="store_true", help="do not write a JSON artifact")
+    p_role.add_argument("--no-redis", action="store_true", help="skip Redis persistence")
+    p_role.add_argument("--publish", action="store_true", help="publish the report object to W&B Weave")
+    p_role.set_defaults(func=cmd_role_distinction)
 
     args = parser.parse_args(argv)
     if not getattr(args, "func", None):

@@ -1,5 +1,10 @@
-team,role,headcount,monthly_cost,start_month,status,funding_basis
-Engineering,Backend & Platform,6,116000,2026-08,open,SOC 2 roadmap and customer integrations
-Customer Success,Enterprise CSM,3,42000,2026-07,filled,enterprise onboarding backlog
-Sales,Account Executive,2,38000,2026-09,open,pipeline conversion above 32%
-Marketing,Growth Marketing,1,18000,2026-07,open,brand pipeline experiment
+role_id,team,mapped_team,role,headcount,monthly_cost,fully_loaded_monthly_cost,start_month,planned_start_date,current_start_date,actual_start_date,status,employment_type,role_type,backfill_for,recruiting_slippage_days,approval_status,approved_headcount,approval_id,funding_basis,owner,notes
+HC-101,Eng,Engineering,Backend & Platform Engineer,3,58000,67500,2026-09,2026-08-01,2026-09-15,,open,fte,net_new,,45,approved,3,CFO-2026-HC-ENG,SOC 2 roadmap and customer integrations,A. Patel,"Recruiting slipped after two late-stage candidates declined."
+HC-102,Engineering,Engineering,Security Engineer,2,32000,37000,2026-07,2026-07-01,2026-07-01,2026-07-08,filled,fte,net_new,,7,approved,2,CFO-2026-HC-SEC,Security compliance for enterprise deals,A. Patel,"Filled one week late; SOC 2 evidence backlog."
+HC-103,Cust Success,Customer Success,Enterprise CSM,3,42000,48000,2026-07,2026-07-01,2026-07-10,2026-07-10,filled,fte,net_new,,9,approved,3,CFO-2026-HC-CSM,Enterprise onboarding backlog,C. Malik,"Team name comes from HRIS alias."
+HC-104,Sales Ops,Sales,Account Executive,3,57000,63000,2026-10,2026-09-01,2026-10-15,,open,fte,net_new,,44,partial,2,CFO-2026-HC-AE-PARTIAL,Pipeline conversion above 32%,M. Osei,"Only two AEs approved; third was added after pipeline review."
+HC-105,Growth Marketing,Marketing,Demand Gen Manager,1,18000,22000,2026-08,2026-07-01,2026-08-20,,planned,fte,net_new,,50,pending,0,,Brand pipeline experiment,L. Brooks,"Pending CFO approval after CAC payback concern."
+HC-106,R&D Ops,,Prototype Lab Contractor,2,24000,32000,2026-06,2026-06-01,2026-06-20,,open,contractor,contractor,,19,unapproved,0,,Hardware support backlog,J. Chen,"Two contractor seats opened outside the approved plan."
+HC-107,Eng,Engineering,Platform Backfill,1,14500,17000,2026-08,2026-06-15,2026-08-15,,open,fte,backfill,Sr Platform Engineer,61,approved,1,CFO-2026-HC-BACKFILL,Backfill after attrition,A. Patel,"Backfill shifted two months later than plan."
+HC-108,G&A,General & Administrative,People Ops Contractor,1,11000,13000,2026-06,2026-06-01,2026-06-01,2026-06-01,filled,contractor,contractor,,0,partial,0,HR-2026-OPS-TEMP,Recruiting coordination backlog,N. Shah,"Temporary contractor approved by HR but not in finance plan."
+HC-109,Customer Success,Customer Success,Implementation PM Backfill,1,15500,18500,2026-09,2026-07-01,2026-09-01,,planned,fte,backfill,Implementation PM,62,partial,0,,Implementation queue coverage,C. Malik,"Backfill not yet fully approved because ARR dependency slipped."

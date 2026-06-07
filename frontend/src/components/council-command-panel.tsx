@@ -1,21 +1,28 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState, type ReactNode } from "react";
+import { AnimatePresence, motion, useReducedMotion } from "motion/react";
 import {
   Anchor,
+  AlertTriangle,
+  CheckCircle2,
+  Clock3,
   GitCompareArrows,
   Loader2,
   MessageCircleQuestion,
   Pause,
   Play,
   Pin,
+  Radio,
   Send,
   ShieldQuestion,
   Split,
+  XCircle,
 } from "lucide-react";
 import type {
   ActiveCommand,
   AgentFocus,
+  CommandType,
   CommandResult,
   CommandState,
   ExportStatus,
@@ -25,8 +32,14 @@ import type {
   RunwayImpact,
   TranscriptTurn,
 } from "@/lib/types";
-import { ROSTER } from "@/lib/agents";
-import { SectionTitle } from "@/components/ui";
+import { ROSTER, ROSTER_BY_ID } from "@/lib/agents";
+import { cx, SectionTitle } from "@/components/ui";
+import {
+  EASE_OUT_EXPO,
+  motionDuration,
+  pressTap,
+  springSnappy,
+} from "@/components/motion/variants";
 
 // The operator steering channel. Every control posts a structured command to the
 // server-side dispatcher (/api/command) via `dispatch`; nothing here computes a
@@ -61,6 +74,45 @@ const STATUS_TONE: Record<string, string> = {
   queued: "border-info/20 bg-info-bg text-info",
   rejected: "border-warning/20 bg-warning-bg text-warning",
   failed: "border-risk/20 bg-risk-bg text-risk",
+};
+
+const ROLE_COMMAND_CUES: Record<string, { title: string; cue: string; placeholder: string; rerun: string }> = {
+  cfo: {
+    title: "chair synthesis",
+    cue: "Tradeoffs, dissent, conditions, analyst influence, and board-ready ruling logic.",
+    placeholder: "Ask the CFO to clarify conditions, defend confidence, or rerun the ruling logic...",
+    rerun: "Rerun the CFO synthesis from the analyst record and resolve dissent into conditions.",
+  },
+  treasury: {
+    title: "liquidity mechanics",
+    cue: "Cash runway, cash timing, payment terms, burn sensitivity, financing delay, and late-cash downside.",
+    placeholder: "Ask about cash arriving late, payment timing, renewal cash, or runway buffer...",
+    rerun: "Rerun Treasury using cash forecast, invoices, payment terms, burn, and late-cash timing.",
+  },
+  fpna: {
+    title: "forecastability",
+    cue: "ARR movement, pipeline probability, ROI, CAC/payback, margin, sensitivity math, and plan-vs-actual.",
+    placeholder: "Ask whether the case is forecastable, which assumption breaks, or how ARR math changes...",
+    rerun: "Rerun FP&A using forecast quality, ARR, pipeline probability, ROI, margin, and sensitivity ranges.",
+  },
+  risk: {
+    title: "controls adversary",
+    cue: "Policy blockers, approvals, audit trail, source provenance, data quality, fraud/error risk, and hidden obligations.",
+    placeholder: "Ask which policy, approval, audit trail, provenance, or hidden obligation blocks support...",
+    rerun: "Rerun Risk & Audit as a controls adversary and condition the case on missing evidence.",
+  },
+  procurement: {
+    title: "vendor negotiation",
+    cue: "Supplier leverage, renewal dates, auto-renewal, benchmarks, switching cost, SLAs, termination, and discounts.",
+    placeholder: "Ask about renewal leverage, benchmark gaps, termination terms, SLAs, or commercial counters...",
+    rerun: "Rerun Procurement using vendor exports, invoices, contract metadata, terms, benchmarks, and levers.",
+  },
+  reliability: {
+    title: "evaluator scorecard",
+    cue: "Evidence grounding, calibration, policy compliance, debate value, trace quality, weaknesses, replay cases, and prompt directives.",
+    placeholder: "Ask Reliability to clarify a score, replay case, trace gap, or prompt-improvement directive...",
+    rerun: "Rerun Reliability as an evaluator scorecard only; do not re-decide the case.",
+  },
 };
 
 function latestPositionFor(agentId: string, transcript: TranscriptTurn[]): Partial<TranscriptTurn> | undefined {
@@ -103,6 +155,80 @@ function downloadMemo(status: ExportStatus) {
   URL.revokeObjectURL(url);
 }
 
+function statusLabel(status?: string) {
+  if (!status) return "Idle";
+  return status.replace(/_/g, " ");
+}
+
+function CommandDispatchBanner({
+  active,
+  localResult,
+  pending,
+  queueLength,
+  reduced,
+}: {
+  active: ActiveCommand;
+  localResult: { status: "queued" | "executed" | "rejected" | "failed" | "accepted"; label: string; message: string } | null;
+  pending: string | null;
+  queueLength: number;
+  reduced: boolean;
+}) {
+  const status = pending ? "queued" : localResult?.status ?? active.status;
+  const label = pending ?? localResult?.label ?? active.type ?? "Command channel";
+  const message =
+    pending
+      ? "Dispatching command to the role-specific AG-UI handler."
+      : localResult?.message ?? active.message ?? "Command controls are ready.";
+  const tone = STATUS_TONE[status ?? ""] ?? "border-border bg-background text-muted-foreground";
+
+  return (
+    <motion.div
+      role="status"
+      aria-live="polite"
+      data-command-dispatch-state={status ?? "idle"}
+      className={cx("command-dispatch-banner mt-3 rounded-md border px-2.5 py-2", tone)}
+      initial={reduced ? { opacity: 0 } : { opacity: 0, y: -5 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={reduced ? { duration: motionDuration.instant } : { duration: motionDuration.quick, ease: EASE_OUT_EXPO }}
+    >
+      <div className="flex items-start gap-2">
+        <span className={cx("command-dispatch-icon mt-0.5 grid h-6 w-6 shrink-0 place-items-center rounded-md border border-current/20", pending && !reduced && "command-dispatch-icon--pending")}>
+          {pending ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <CommandStatusIcon status={status} className="h-3.5 w-3.5" />}
+        </span>
+        <div className="min-w-0 flex-1">
+          <div className="flex items-center justify-between gap-2">
+            <div className="truncate text-[11px] font-semibold capitalize">{label}</div>
+            <div className="shrink-0 text-[10px] font-semibold uppercase tracking-[0.08em]">{statusLabel(status)}</div>
+          </div>
+          <p className="mt-0.5 break-words text-[11px] leading-relaxed opacity-85">{message}</p>
+        </div>
+      </div>
+      {queueLength > 0 && (
+        <div className="mt-1.5 rounded border border-current/15 bg-background/45 px-2 py-1 text-[10px] font-semibold">
+          {queueLength} pending command{queueLength === 1 ? "" : "s"} in queue
+        </div>
+      )}
+    </motion.div>
+  );
+}
+
+function CommandStatusIcon({ status, className = "" }: { status?: string; className?: string }) {
+  switch (status) {
+    case "executed":
+      return <CheckCircle2 className={className} strokeWidth={2.25} />;
+    case "rejected":
+      return <AlertTriangle className={className} strokeWidth={2.25} />;
+    case "failed":
+      return <XCircle className={className} strokeWidth={2.25} />;
+    case "accepted":
+      return <Radio className={className} strokeWidth={2.25} />;
+    case "queued":
+      return <Clock3 className={className} strokeWidth={2.25} />;
+    default:
+      return <Radio className={className} strokeWidth={2.25} />;
+  }
+}
+
 export function CouncilCommandPanel({
   healthReady,
   running,
@@ -112,6 +238,8 @@ export function CouncilCommandPanel({
   commandState,
   dispatch,
 }: CouncilCommandPanelProps) {
+  const prefersReducedMotion = useReducedMotion();
+  const reduced = Boolean(prefersReducedMotion);
   const [agent, setAgent] = useState("treasury");
   const [ask, setAsk] = useState("");
   const [pinKind, setPinKind] = useState<PinKind>("policy");
@@ -119,6 +247,11 @@ export function CouncilCommandPanel({
   const [optionA, setOptionA] = useState<ScenarioForm>(EMPTY_A);
   const [optionB, setOptionB] = useState<ScenarioForm>(EMPTY_B);
   const [pending, setPending] = useState<string | null>(null);
+  const [localResult, setLocalResult] = useState<{
+    status: "queued" | "executed" | "rejected" | "failed" | "accepted";
+    label: string;
+    message: string;
+  } | null>(null);
 
   const disabled = !healthReady;
   // All command sub-states default to an empty object (every field is optional),
@@ -129,35 +262,72 @@ export function CouncilCommandPanel({
   const exportStatus: ExportStatus = commandState.export_status ?? {};
   const pins = commandState.pinned_evidence ?? [];
   const audit = commandState.command_audit_log ?? [];
+  const queue = commandState.command_queue ?? [];
   const paused = commandState.phase_controls?.paused ?? false;
   const canExport = Boolean(recommendation?.decision) || Boolean(exportStatus.ready);
+  const selectedMember = ROSTER_BY_ID[agent] ?? ROSTER[0];
+  const selectedCue = ROLE_COMMAND_CUES[agent] ?? ROLE_COMMAND_CUES.treasury;
 
   async function run(key: string, command: OperatorCommand) {
     if (disabled || pending) return;
     setPending(key);
+    setLocalResult({ status: "queued", label: command.type, message: "Command queued for AG-UI dispatch." });
     try {
-      await dispatch(command);
+      const result = await dispatch(command);
+      if (result) {
+        setLocalResult({
+          status: result.status,
+          label: result.command?.type ?? command.type,
+          message: result.message ?? result.reason ?? "Command completed.",
+        });
+      } else {
+        setLocalResult({ status: "failed", label: command.type, message: "Command dispatch returned no result." });
+      }
+    } catch (err) {
+      setLocalResult({
+        status: "failed",
+        label: command.type,
+        message: err instanceof Error ? err.message : "Command dispatch failed.",
+      });
     } finally {
       setPending(null);
     }
   }
 
+  useEffect(() => {
+    if (!localResult || localResult.status === "queued") return;
+    const timeout = window.setTimeout(() => setLocalResult(null), 4200);
+    return () => window.clearTimeout(timeout);
+  }, [localResult]);
+
   const directContext = () => ({ decision: decision ?? "", position: latestPositionFor(agent, transcript) });
 
-  const askAgent = (type: "clarify" | "route_question" | "challenge_claim") => {
+  const askAgent = (type: Extract<CommandType, "clarify" | "route_question" | "challenge_claim" | "defend_position" | "rerun_role">) => {
     const text = ask.trim();
-    if (!text) return;
+    const optionalText = type === "defend_position" || type === "rerun_role";
+    if (!text && !optionalText) return;
     const payload =
       type === "challenge_claim"
         ? { point: text, context: directContext() }
-        : { question: text, context: directContext() };
+        : type === "defend_position"
+          ? { point: text || `Defend the ${selectedCue.title} position.`, context: directContext() }
+          : type === "rerun_role"
+            ? { reason: text || selectedCue.rerun, context: directContext() }
+            : { question: text, context: directContext() };
     run(type, { type, agent, payload, source: "panel" });
   };
 
   const busy = (key: string) => pending === key;
 
   return (
-    <section className="rounded-lg border border-border bg-surface p-3 shadow-sm">
+    <motion.section
+      id="agui-command-panel"
+      data-command-panel-state={pending ? "pending" : active.status ?? localResult?.status ?? "idle"}
+      className="operator-command-panel shrink-0 rounded-lg border border-border bg-surface p-3 shadow-sm"
+      initial={reduced ? { opacity: 0 } : { opacity: 0, y: 8 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={reduced ? { duration: motionDuration.instant } : springSnappy}
+    >
       <div className="flex items-center justify-between gap-3">
         <div>
           <SectionTitle>Operator Command</SectionTitle>
@@ -174,11 +344,19 @@ export function CouncilCommandPanel({
               healthReady ? "border-positive/20 bg-positive-bg text-positive" : "border-risk/20 bg-risk-bg text-risk"
             }`}
           >
-            <span className={`h-1.5 w-1.5 rounded-full bg-current ${running ? "animate-pulse" : ""}`} />
+            <span className={`h-1.5 w-1.5 rounded-full bg-current ${running && !reduced ? "animate-pulse" : ""}`} />
             {healthReady ? (running ? "Streaming" : "Live") : "Locked"}
           </span>
         </div>
       </div>
+
+      <CommandDispatchBanner
+        active={active}
+        localResult={localResult}
+        pending={pending}
+        queueLength={queue.length}
+        reduced={reduced}
+      />
 
       {!healthReady && (
         <p className="mt-2 rounded-md border border-dashed border-border bg-background px-3 py-2 text-[11px] leading-relaxed text-muted-foreground">
@@ -187,11 +365,11 @@ export function CouncilCommandPanel({
         </p>
       )}
 
-      {/* Direct an agent: clarify / route / challenge */}
+      {/* Direct an agent: clarify / route / challenge / defend / rerun */}
       <div className="mt-3 rounded-md border border-border bg-background p-2.5">
         <div className="flex items-center gap-2">
           <label className="text-[11px] font-semibold text-muted-foreground" htmlFor="cmd-agent">
-            Direct
+            Target role
           </label>
           <select
             id="cmd-agent"
@@ -207,18 +385,25 @@ export function CouncilCommandPanel({
             ))}
           </select>
         </div>
+        <div className="mt-2 rounded border border-info/20 bg-info-bg/20 px-2 py-1.5">
+          <div className="text-[10px] font-semibold uppercase tracking-[0.06em] text-info">
+            Targeting {selectedMember.label} - {selectedCue.title}
+          </div>
+          <p className="mt-0.5 text-[11px] leading-relaxed text-muted-foreground">{selectedCue.cue}</p>
+        </div>
         <textarea
           value={ask}
           onChange={(event) => setAsk(event.target.value)}
           disabled={disabled}
           rows={2}
-          placeholder="Ask to clarify, route a question, or challenge a claim…"
+          placeholder={selectedCue.placeholder}
           className="mt-2 min-h-[48px] w-full resize-none rounded-md border border-border bg-surface px-2.5 py-2 text-[12px] leading-relaxed outline-none placeholder:text-subtle-foreground focus:border-border-strong disabled:opacity-50"
         />
-        <div className="mt-2 grid grid-cols-3 gap-2">
+        <div className="mt-2 grid grid-cols-2 gap-2 sm:grid-cols-5">
           <CommandButton
             icon={<MessageCircleQuestion className="h-3.5 w-3.5" />}
             label="Clarify"
+            title={`Clarify via ${selectedMember.label}: ${selectedCue.title}`}
             busy={busy("clarify")}
             disabled={disabled || !ask.trim()}
             onClick={() => askAgent("clarify")}
@@ -226,6 +411,7 @@ export function CouncilCommandPanel({
           <CommandButton
             icon={<Send className="h-3.5 w-3.5" />}
             label="Route"
+            title={`Route to ${selectedMember.label}: ${selectedCue.title}`}
             busy={busy("route_question")}
             disabled={disabled || !ask.trim()}
             onClick={() => askAgent("route_question")}
@@ -233,9 +419,26 @@ export function CouncilCommandPanel({
           <CommandButton
             icon={<ShieldQuestion className="h-3.5 w-3.5" />}
             label="Challenge"
+            title={`Challenge ${selectedMember.label}: ${selectedCue.title}`}
             busy={busy("challenge_claim")}
             disabled={disabled || !ask.trim()}
             onClick={() => askAgent("challenge_claim")}
+          />
+          <CommandButton
+            icon={<ShieldQuestion className="h-3.5 w-3.5" />}
+            label="Defend"
+            title={`Ask ${selectedMember.label} to defend through ${selectedCue.title}`}
+            busy={busy("defend_position")}
+            disabled={disabled}
+            onClick={() => askAgent("defend_position")}
+          />
+          <CommandButton
+            icon={<Send className="h-3.5 w-3.5" />}
+            label="Rerun"
+            title={`Rerun ${selectedMember.label} with ${selectedCue.title}`}
+            busy={busy("rerun_role")}
+            disabled={disabled}
+            onClick={() => askAgent("rerun_role")}
           />
         </div>
       </div>
@@ -244,7 +447,7 @@ export function CouncilCommandPanel({
       <div className="mt-2 rounded-md border border-border bg-background p-2.5">
         <div className="flex items-center justify-between">
           <span className="text-[11px] font-semibold text-muted-foreground">Scenario fork & compare</span>
-          <span className="text-[10px] text-subtle-foreground">Δ vs. live runway</span>
+          <span className="text-[10px] text-subtle-foreground">Delta vs. live runway</span>
         </div>
         <ScenarioRow form={optionA} onChange={setOptionA} disabled={disabled} />
         <ScenarioRow form={optionB} onChange={setOptionB} disabled={disabled} />
@@ -294,7 +497,7 @@ export function CouncilCommandPanel({
             value={pinText}
             onChange={(event) => setPinText(event.target.value)}
             disabled={disabled}
-            placeholder={pinKind === "custom" ? "Note to pin…" : pinKind === "financial" ? "field e.g. runway_months" : `Search ${pinKind}…`}
+            placeholder={pinKind === "custom" ? "Note to pin..." : pinKind === "financial" ? "field e.g. runway_months" : `Search ${pinKind}...`}
             className="min-w-0 flex-1 rounded-md border border-border bg-surface px-2.5 py-1.5 text-[12px] outline-none placeholder:text-subtle-foreground focus:border-border-strong disabled:opacity-50"
           />
           <CommandButton
@@ -341,30 +544,78 @@ export function CouncilCommandPanel({
       </div>
 
       {/* Live result strip */}
-      {active.type && (
-        <div className={`mt-3 rounded-md border px-3 py-2 text-[12px] leading-relaxed ${STATUS_TONE[active.status ?? ""] ?? "border-border bg-background text-muted-foreground"}`}>
-          <div className="flex items-center justify-between gap-2">
-            <span className="font-semibold">
-              {active.type}
-              {active.agent ? ` · ${active.agent}` : ""}
-            </span>
-            <span className="text-[10px] uppercase tracking-wide">{active.status}</span>
-          </div>
-          {active.message && <p className="mt-1">{active.message}</p>}
-        </div>
-      )}
+      <AnimatePresence initial={false}>
+        {active.type && (
+          <motion.div
+            key={`${active.type}-${active.status}-${active.at}`}
+            role="status"
+            aria-live="polite"
+            data-command-result-state={active.status ?? "unknown"}
+            className={`command-result-card mt-3 rounded-md border px-3 py-2 text-[12px] leading-relaxed ${STATUS_TONE[active.status ?? ""] ?? "border-border bg-background text-muted-foreground"}`}
+            initial={reduced ? { opacity: 0 } : { opacity: 0, y: 6 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={reduced ? { opacity: 0 } : { opacity: 0, y: -4 }}
+            transition={reduced ? { duration: motionDuration.instant } : springSnappy}
+          >
+            <div className="flex items-center justify-between gap-2">
+              <span className="font-semibold">
+                {active.type}
+                {active.agent ? ` - ${active.agent}` : ""}
+              </span>
+              <span className="inline-flex items-center gap-1 text-[10px] font-semibold uppercase tracking-wide">
+                <CommandStatusIcon status={active.status} className="h-3 w-3" />
+                {active.status}
+              </span>
+            </div>
+            {active.message && <p className="mt-1">{active.message}</p>}
+            {active.role_lens && (
+              <p className="mt-1 text-[11px] font-medium text-muted-foreground">
+                Lens: {active.role_lens}
+              </p>
+            )}
+          </motion.div>
+        )}
+      </AnimatePresence>
 
-      {/* Agent focus reply (clarify / route / challenge) */}
-      {focus.response && (
-        <div className="mt-2 rounded-md border border-info/20 bg-info-bg/40 px-3 py-2">
-          <div className="text-[11px] font-semibold text-info">
-            {focus.label ?? focus.agent} · {focus.mode}
-            {focus.revised_stance && focus.revised_stance !== "unchanged" ? ` → ${focus.revised_stance}` : ""}
-          </div>
-          {focus.headline && <div className="mt-0.5 text-[12px] font-semibold">{focus.headline}</div>}
-          <p className="mt-1 text-[12px] leading-relaxed text-foreground">{focus.response}</p>
-        </div>
-      )}
+      {/* Agent focus reply (clarify / route / challenge / defend / rerun) */}
+      <AnimatePresence initial={false}>
+        {focus.response && (
+          <motion.div
+            key={`${focus.agent}-${focus.mode}-${focus.at ?? focus.response}`}
+            className="command-focus-card mt-2 rounded-md border border-info/20 bg-info-bg/40 px-3 py-2"
+            initial={reduced ? { opacity: 0 } : { opacity: 0, y: 6 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={reduced ? { opacity: 0 } : { opacity: 0, y: -4 }}
+            transition={reduced ? { duration: motionDuration.instant } : springSnappy}
+          >
+            <div className="text-[11px] font-semibold text-info">
+              {focus.label ?? focus.agent} - {focus.mode}
+              {focus.revised_stance && focus.revised_stance !== "unchanged" ? ` -> ${focus.revised_stance}` : ""}
+            </div>
+            {focus.role_lens && (
+              <div className="mt-0.5 text-[10.5px] font-semibold text-muted-foreground">
+                {focus.role_lens}
+              </div>
+            )}
+            {focus.headline && <div className="mt-0.5 text-[12px] font-semibold">{focus.headline}</div>}
+            <p className="mt-1 text-[12px] leading-relaxed text-foreground">{focus.response}</p>
+            {focus.key_points && focus.key_points.length > 0 && (
+              <div className="mt-1.5 flex flex-wrap gap-1">
+                {focus.key_points.slice(0, 3).map((point) => (
+                  <span key={point} className="rounded border border-info/20 bg-background px-1.5 py-0.5 text-[10px] font-medium text-muted-foreground">
+                    {point}
+                  </span>
+                ))}
+              </div>
+            )}
+            {focus.role_instruction && (
+              <p className="mt-1.5 border-t border-info/15 pt-1.5 text-[10.5px] leading-relaxed text-muted-foreground">
+                Command mandate: {focus.role_instruction}
+              </p>
+            )}
+          </motion.div>
+        )}
+      </AnimatePresence>
 
       {/* Requested scenario / comparison */}
       {scenario.mode === "single" && scenario.impact && (
@@ -378,7 +629,7 @@ export function CouncilCommandPanel({
               <div key={`${option.label}-${index}`} className="flex items-center justify-between gap-2 text-[12px]">
                 <span className="truncate font-semibold">{option.label}</span>
                 <span className="tabular-nums text-muted-foreground">
-                  {formatRunway(option.impact?.scenario_runway_months)} ·{" "}
+                  {formatRunway(option.impact?.scenario_runway_months)} -{" "}
                   <span className={deltaTone(option.impact?.delta_months)}>{formatDelta(option.impact?.delta_months)}</span>
                 </span>
               </div>
@@ -426,8 +677,8 @@ export function CouncilCommandPanel({
             {audit.slice(-4).reverse().map((entry) => (
               <li key={entry.id} className="flex items-center justify-between gap-2 text-[11px]">
                 <span className="truncate text-muted-foreground">
-                  {entry.at} · {entry.type}
-                  {entry.agent ? ` · ${entry.agent}` : ""}
+                  {entry.at} - {entry.type}
+                  {entry.agent ? ` - ${entry.agent}` : ""}
                 </span>
                 <span className={`shrink-0 font-semibold ${entry.status === "executed" ? "text-positive" : entry.status === "rejected" ? "text-warning" : entry.status === "failed" ? "text-risk" : "text-info"}`}>
                   {entry.status}
@@ -437,33 +688,45 @@ export function CouncilCommandPanel({
           </ul>
         </div>
       )}
-    </section>
+      </motion.section>
   );
 }
 
 function CommandButton({
   icon,
   label,
+  title,
   busy,
   disabled,
   onClick,
 }: {
-  icon: React.ReactNode;
+  icon: ReactNode;
   label: string;
+  title?: string;
   busy: boolean;
   disabled: boolean;
   onClick: () => void;
 }) {
+  const prefersReducedMotion = useReducedMotion();
+  const reduced = Boolean(prefersReducedMotion);
   return (
-    <button
+    <motion.button
       type="button"
       onClick={onClick}
+      title={title}
+      aria-label={title ?? label}
+      aria-busy={busy}
       disabled={disabled || busy}
-      className="inline-flex h-8 items-center justify-center gap-1.5 rounded-md border border-border bg-surface px-2 text-[12px] font-semibold text-foreground transition-colors hover:border-border-strong disabled:opacity-40"
+      data-command-button-state={busy ? "pending" : disabled ? "disabled" : "ready"}
+      whileTap={reduced || disabled || busy ? undefined : pressTap}
+      className={cx(
+        "command-panel-button inline-flex h-8 items-center justify-center gap-1.5 rounded-md border border-border bg-surface px-2 text-[12px] font-semibold text-foreground transition-colors hover:border-border-strong disabled:opacity-40",
+        busy && "command-panel-button--pending border-info/25 bg-info-bg text-info",
+      )}
     >
       {busy ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : icon}
       <span className="truncate">{label}</span>
-    </button>
+    </motion.button>
   );
 }
 
@@ -485,7 +748,7 @@ function ScenarioRow({
         className="min-w-0 rounded-md border border-border bg-surface px-2 py-1 text-[11px] outline-none focus:border-border-strong disabled:opacity-50"
       />
       <NumberInput value={form.extra_monthly_spend} placeholder="+spend" onChange={(value) => onChange({ ...form, extra_monthly_spend: value })} disabled={disabled} />
-      <NumberInput value={form.one_time_cost} placeholder="1×cost" onChange={(value) => onChange({ ...form, one_time_cost: value })} disabled={disabled} />
+      <NumberInput value={form.one_time_cost} placeholder="1x cost" onChange={(value) => onChange({ ...form, one_time_cost: value })} disabled={disabled} />
       <NumberInput value={form.added_monthly_revenue} placeholder="+rev" onChange={(value) => onChange({ ...form, added_monthly_revenue: value })} disabled={disabled} />
     </div>
   );
@@ -520,7 +783,9 @@ function ScenarioImpact({ label, impact }: { label?: string; impact: RunwayImpac
       <div className="flex items-center justify-between text-[12px]">
         <span className="truncate font-semibold">{label ?? "Scenario"}</span>
         <span className="tabular-nums text-muted-foreground">
-          {formatRunway(impact.current_runway_months)} → {formatRunway(impact.scenario_runway_months)} ·{" "}
+          {formatRunway(impact.current_runway_months)}
+          {" -> "}
+          {formatRunway(impact.scenario_runway_months)} -{" "}
           <span className={deltaTone(impact.delta_months)}>{formatDelta(impact.delta_months)}</span>
         </span>
       </div>
@@ -534,7 +799,7 @@ function formatRunway(value?: number | null) {
 }
 
 function formatDelta(value?: number | null) {
-  if (typeof value !== "number") return "—";
+  if (typeof value !== "number") return "n/a";
   const sign = value > 0 ? "+" : "";
   return `${sign}${value}m`;
 }

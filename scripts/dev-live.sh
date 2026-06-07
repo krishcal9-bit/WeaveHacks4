@@ -46,4 +46,5 @@ AGENT_PID=$!
 
 echo "FastAPI agent started on ${AGENT_URL}."
 echo "Next.js dev server starting on http://localhost:${FRONTEND_PORT}."
-PORT="${FRONTEND_PORT}" npm --prefix "${REPO_ROOT}/frontend" run dev:ui
+# Next.js only — dev:ui runs concurrently with dev:agent and would bind 8123 again.
+PORT="${FRONTEND_PORT}" npm --prefix "${REPO_ROOT}/frontend" exec -- next dev

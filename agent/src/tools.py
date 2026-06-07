@@ -74,12 +74,16 @@ def compute_runway(
 @tool
 def list_vendors() -> str:
     """List Acme Corp's vendor & SaaS contracts: name, category, annual cost,
-    renewal date, status, renewal obligations, switching cost, and notes.
+    renewal date, billing terms, contract clauses, switching cost, and notes.
     Useful for procurement and cost decisions."""
     vendors = R.search_vendors("*", 50)
     keys = [
         "name", "category", "annual_cost", "monthly_cost", "renewal_date", "status",
-        "owner", "termination_notice_days", "switching_cost", "data_sensitivity", "notes",
+        "owner", "owner_history", "contract_aliases", "billing_frequency", "billing_terms",
+        "tiered_pricing", "termination_notice_days", "notice_window_days", "termination_penalty",
+        "auto_renew", "board_approved", "board_approval_id", "sla_uptime_pct", "sla_credits",
+        "security_clause", "data_processing_addendum", "switching_cost", "data_sensitivity",
+        "clauses", "notes",
     ]
     return json.dumps([{k: v.get(k) for k in keys} for v in vendors])
 
@@ -87,11 +91,52 @@ def list_vendors() -> str:
 @tool
 def search_finance_policies(query: str) -> str:
     """Semantic search over Acme Corp's finance policies and past board
-    decisions. Use this to ground recommendations in company policy and precedent."""
+    decisions. Use this to ground recommendations in company policy and precedent.
+    Returns stable policy_id/source_id values so Risk and CFO can cite concrete
+    board-policy references, not generic policy language."""
     hits = R.search_policies(query, k=4)
     return json.dumps([
-        {"title": h["title"], "kind": h["kind"], "text": h["text"]} for h in hits
+        {
+            "policy_id": h.get("policy_id") or h.get("source_id"),
+            "source_id": h.get("source_id") or h.get("policy_id"),
+            "title": h["title"],
+            "kind": h["kind"],
+            "text": h["text"],
+            "score": h.get("score"),
+        }
+        for h in hits
     ])
+
+
+@tool
+def search_uploaded_documents(
+    query: str,
+    source_categories: str = "",
+    kinds: str = "",
+    connector_id: str = "",
+    vendor: str = "",
+    min_confidence: float = 0.5,
+    max_freshness_days: int = 120,
+    k: int = 6,
+) -> str:
+    """Semantic search over uploaded document chunks with source-aware filters.
+
+    source_categories and kinds are comma-separated filter lists. Returns capped,
+    ranked excerpts — never the full document corpus.
+    """
+    from src.documents.models import DocumentRetrievalFilter
+    from src.documents.store import search_document_chunks
+
+    filters = DocumentRetrievalFilter(
+        source_categories=[item.strip() for item in source_categories.split(",") if item.strip()],
+        kinds=[item.strip() for item in kinds.split(",") if item.strip()],
+        connector_id=connector_id or None,
+        vendor=vendor or None,
+        min_confidence=min_confidence,
+        max_freshness_days=max_freshness_days,
+    )
+    hits = search_document_chunks(query, filters=filters, k=min(max(k, 1), 8))
+    return json.dumps(hits)
 
 
 # --------------------------------------------------------------------------- #
@@ -164,7 +209,7 @@ def required_approvals(
         "resulting_status": req.status.value,
         "human_approval_required": req.human_approvals_pending(),
         "approval_route": [
-            {"sequence": s.sequence, "approver": s.approver_role, "reason": s.reason}
+            {"sequence": s.sequence, "approver": s.approver_role, "reason": s.reason, "policy_refs": s.policy_refs}
             for s in req.route
         ],
         "note": "Preview only — no approval request is created and nothing is approved.",
@@ -196,6 +241,7 @@ def check_controls(
             "message": v.message,
             "blocking": v.blocking,
             "requires_exception": v.requires_exception,
+            "evidence_required": v.evidence_required,
             "remediation": v.remediation,
         }
         for v in req.violations
@@ -244,7 +290,14 @@ def obligations_if_approved(
     req = _govern_preview(decision, estimated_monthly_cost, estimated_one_time_cost, added_monthly_revenue, department, data_sensitivity)
     return json.dumps({
         "obligations": [
-            {"kind": o.kind, "title": o.title, "owner_role": o.owner_role, "due_date": o.due_date, "evidence_required": o.evidence_required}
+            {
+                "kind": o.kind,
+                "title": o.title,
+                "owner_role": o.owner_role,
+                "due_date": o.due_date,
+                "source_policy": o.source_policy,
+                "evidence_required": o.evidence_required,
+            }
             for o in req.obligations
         ],
         "monitoring_triggers": [
@@ -264,8 +317,12 @@ def obligations_if_approved(
 def list_operations_sources() -> str:
     """Inventory of imported finance-operations feeds (ledgers, invoices, vendor
     exports, CRM pipeline, headcount, security evidence, board policy) with their
-    provenance: origin, record counts, source freshness, and import status. Use
-    this to know which real operating data is available and how trustworthy it is."""
+    provenance: origin, record counts, source freshness, import status, and
+    parser-derived quality signals such as ledger normalization, invoice
+    messiness, CRM pipeline quality, or headcount-plan quality. Each source also
+    carries confidence_score, confidence_reasons, freshness_days, and missing
+    required facts. Use this to know which real operating data is available and
+    how trustworthy it is."""
     from src.integrations import service as OPS
 
     statuses = OPS.connector_statuses()
@@ -279,7 +336,20 @@ def list_operations_sources() -> str:
                 "records": s.get("record_count"),
                 "status": s.get("status"),
                 "source_timestamp": s.get("source_timestamp"),
+                "workbook_name": s.get("workbook_name"),
+                "workbook_sheet": s.get("workbook_sheet"),
+                "header_row_number": s.get("header_row_number"),
+                "hidden_column_count": s.get("hidden_column_count", 0),
+                "extra_column_count": s.get("extra_column_count", 0),
+                "freshness_days": s.get("freshness_days"),
                 "reconciliation_status": s.get("reconciliation_status"),
+                "confidence_score": s.get("confidence_score"),
+                "confidence_reasons": s.get("confidence_reasons") or [],
+                "required_facts_missing": s.get("required_facts_missing") or [],
+                "normalization_summary": s.get("normalization_summary") or {},
+                "messiness_summary": s.get("messiness_summary") or {},
+                "pipeline_quality_summary": s.get("pipeline_quality_summary") or {},
+                "headcount_quality_summary": s.get("headcount_quality_summary") or {},
             }
             for s in imported
         ],
@@ -315,7 +385,8 @@ def get_reconciliation_summary() -> str:
 @tool
 def list_open_discrepancies(severity: str = "") -> str:
     """Outstanding reconciliation mismatches (e.g. contract overspend, unmatched
-    invoices, headcount drift, board-constraint violations, revenue-blocking
+    invoices, contract-vs-invoice mismatch, renewal urgency, missing board
+    approvals, headcount drift, board-constraint violations, revenue-blocking
     security gaps). Optionally filter by severity: info|low|medium|high|critical.
     Each item is explainable with expected vs observed values and a recommended action."""
     from src.integrations import service as OPS
@@ -340,8 +411,10 @@ def list_open_discrepancies(severity: str = "") -> str:
 @tool
 def get_operations_data_confidence() -> str:
     """Confidence in the imported operations picture: connector coverage, row
-    validation pass-rate, source freshness, and an overall 0-100 score. Use this
-    to weight how much to rely on reconciled operations facts."""
+    validation failures, duplicate keys, source freshness/age, reconciliation
+    discrepancies, missing required facts, source-level scores, and an overall
+    0-100 score. Use this to weight how much to rely on reconciled operations facts
+    and explicitly mention confidence/freshness when the data is imperfect."""
     from src.integrations import service as OPS
 
     return json.dumps(OPS.import_confidence().model_dump(mode="json"), default=str)
@@ -490,6 +563,7 @@ FINANCE_TOOLS = [
     compute_runway,
     list_vendors,
     search_finance_policies,
+    search_uploaded_documents,
 ]
 
 # Strategic-planning digital-twin tools (deterministic; persisted with provenance).

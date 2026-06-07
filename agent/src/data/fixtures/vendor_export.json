@@ -1,44 +1,216 @@
-[
-  {
-    "vendor_id": "acme-analytics",
-    "name": "Acme Analytics Platform",
-    "category": "data",
-    "annual_cost": 250000,
-    "monthly_cost": 20833,
-    "renewal_date": "2027-06-01",
-    "status": "active",
-    "owner": "Data",
-    "termination_notice_days": 90,
-    "auto_renew": true,
-    "board_approved": false,
-    "notes": "New analytics platform; vendor requesting annual prepay."
-  },
-  {
-    "vendor_id": "datadog",
-    "name": "Datadog",
-    "category": "observability",
-    "annual_cost": 180000,
-    "monthly_cost": 15000,
-    "renewal_date": "2026-07-25",
-    "status": "up_for_renewal",
-    "owner": "Engineering",
-    "termination_notice_days": 45,
-    "auto_renew": true,
-    "board_approved": true,
-    "notes": "Usage-based; trending over committed tier ahead of renewal."
-  },
-  {
-    "vendor_id": "salesforce",
-    "name": "Salesforce",
-    "category": "crm",
-    "annual_cost": 74400,
-    "monthly_cost": 6200,
-    "renewal_date": "2026-09-30",
-    "status": "active",
-    "owner": "Revenue",
-    "termination_notice_days": 30,
-    "auto_renew": false,
-    "board_approved": true,
-    "notes": "32 seats; ~9 underused."
-  }
-]
+{
+  "records": [
+    {
+      "vendor_id": "acme-analytics",
+      "name": "Acme Analytics Platform",
+      "category": "data",
+      "annual_cost": "$250,000",
+      "monthly_cost": "20833",
+      "renewal_date": "06/01/2027",
+      "status": "active",
+      "owner": "Data Ops",
+      "owner_history": [
+        {
+          "owner": "Analytics",
+          "from": "2025-10-01",
+          "to": "2026-04-15"
+        },
+        {
+          "owner": "Data Ops",
+          "from": "2026-04-16",
+          "reason": "New data-platform owner after reorg; no owner attestation attached."
+        }
+      ],
+      "contract_aliases": [
+        "Acme Analytics",
+        "Acme Data Platform",
+        "ACME-ANL"
+      ],
+      "billing_frequency": "annual",
+      "billing_terms": "annual prepay due at signature; usage overages billed monthly in arrears",
+      "tiered_pricing": [
+        {
+          "tier": "base",
+          "minimum_events": 0,
+          "maximum_events": 50000000,
+          "annual_price": 250000
+        },
+        {
+          "tier": "overage",
+          "unit": "events",
+          "price_per_million": 1400
+        }
+      ],
+      "notice_window_days": 90,
+      "termination_notice_days": 90,
+      "termination_penalty": "$62,500",
+      "auto_renew": true,
+      "board_approved": false,
+      "board_approval_id": null,
+      "sla_uptime_pct": "99.5%",
+      "sla_credits": "Service credits capped at one month of fees; no termination right for repeated misses.",
+      "security_clause": "DPA unsigned; subprocessors list supplied by email only.",
+      "data_processing_addendum": false,
+      "notes": "New analytics platform; vendor requesting annual prepay without board packet attached."
+    },
+    {
+      "vendor_id": "datadog",
+      "name": "Data Dog, Inc.",
+      "category": "observability",
+      "annual_cost": 180000,
+      "monthly_cost": 15000,
+      "renewal_date": "25-Jul-2026",
+      "status": "up_for_renewal",
+      "owner": "Eng",
+      "owner_history": [
+        {
+          "owner": "Engineering",
+          "from": "2024-08-01",
+          "to": "2026-05-10"
+        },
+        {
+          "owner": "Platform Ops",
+          "from": "2026-05-11",
+          "reason": "Observability budget moved to Platform Ops; procurement owner not updated in AP."
+        }
+      ],
+      "contract_aliases": [
+        "Datadog",
+        "DataDog Inc",
+        "Data Dog",
+        "DDOG Observability"
+      ],
+      "billing_frequency": "annual",
+      "billing_terms": "annual committed tier with monthly overage true-up invoices",
+      "tiered_pricing": [
+        {
+          "tier": "committed hosts",
+          "minimum_hosts": 0,
+          "maximum_hosts": 300,
+          "annual_price": 180000
+        },
+        {
+          "tier": "burst hosts",
+          "minimum_hosts": 301,
+          "unit": "host_month",
+          "price": 74
+        }
+      ],
+      "notice_window_days": 45,
+      "termination_notice_days": 45,
+      "termination_penalty": 30000,
+      "auto_renew": "yes",
+      "board_approved": true,
+      "board_approval_id": "BRD-2025-11-DDOG",
+      "sla_uptime_pct": 99.8,
+      "sla_credits": "Credits require 30-day claim and are capped at 10% of monthly service fees.",
+      "security_clause": "SOC 2 Type II current; production telemetry allowed, customer PII prohibited.",
+      "data_processing_addendum": true,
+      "notes": "Usage-based; currently over committed tier ahead of renewal."
+    },
+    {
+      "vendor_id": "aws",
+      "name": "Amazon Web Svcs",
+      "category": "infrastructure",
+      "annual_cost": 336000,
+      "monthly_cost": 28000,
+      "renewal_date": "2026/12/01",
+      "status": "active",
+      "owner": "Engineering / Platform",
+      "owner_history": [
+        {
+          "owner": "Infrastructure",
+          "from": "2023-01-01",
+          "to": "2026-02-28"
+        },
+        {
+          "owner": "Engineering / Platform",
+          "from": "2026-03-01",
+          "reason": "Platform team owns reserved-capacity commitments."
+        }
+      ],
+      "contract_aliases": [
+        "AWS",
+        "Amazon AWS",
+        "Amazon Web Services",
+        "Amazon Web Svcs"
+      ],
+      "billing_frequency": "monthly",
+      "billing_terms": "monthly in arrears against reserved-capacity commitment plus overage accruals",
+      "tiered_pricing": [
+        {
+          "tier": "reserved compute",
+          "annual_commit": 336000,
+          "discount_pct": 22
+        },
+        {
+          "tier": "on-demand overage",
+          "price_multiplier": 1.0
+        }
+      ],
+      "notice_window_days": 90,
+      "termination_notice_days": 90,
+      "termination_penalty": 84000,
+      "auto_renew": true,
+      "board_approved": true,
+      "board_approval_id": "BRD-2026-01-AWS",
+      "sla_uptime_pct": 99.9,
+      "sla_credits": "Service credits vary by service and require AWS support case within claim window.",
+      "security_clause": "Enterprise agreement includes DPA, encryption, and subprocessor notification.",
+      "data_processing_addendum": true,
+      "notes": "Reserved capacity plus overage accruals."
+    },
+    {
+      "vendor_id": "salesforce",
+      "name": "Sales Force",
+      "category": "crm",
+      "annual_cost": 74400,
+      "monthly_cost": 6200,
+      "renewal_date": "Sep 30 2026",
+      "status": "active",
+      "owner": "RevOps",
+      "owner_history": [
+        {
+          "owner": "Revenue",
+          "from": "2022-06-01",
+          "to": "2026-05-01"
+        },
+        {
+          "owner": "RevOps",
+          "from": "2026-05-02",
+          "reason": "CRM owner changed during sales-ops reorg."
+        }
+      ],
+      "contract_aliases": [
+        "Salesforce",
+        "Sales Force",
+        "SFCI Sales Cloud"
+      ],
+      "billing_frequency": "annual",
+      "billing_terms": "annual prepaid seat bundle; AP export shows monthly allocation rows",
+      "tiered_pricing": [
+        {
+          "tier": "sales cloud seats",
+          "seats": 32,
+          "annual_price": 74400
+        },
+        {
+          "tier": "incremental seats",
+          "unit": "seat_year",
+          "price": 2400
+        }
+      ],
+      "notice_window_days": 30,
+      "termination_notice_days": 30,
+      "termination_penalty": 18600,
+      "auto_renew": false,
+      "board_approved": true,
+      "board_approval_id": "CFO-2025-09-SFDC",
+      "sla_uptime_pct": 99.9,
+      "sla_credits": "Standard service credits; credits do not offset unused seats.",
+      "security_clause": "DPA signed; customer contact data permitted, opportunity notes excluded from sandbox refresh.",
+      "data_processing_addendum": true,
+      "notes": "32 seats; 9 underused; naming differs from AP export."
+    }
+  ]
+}
