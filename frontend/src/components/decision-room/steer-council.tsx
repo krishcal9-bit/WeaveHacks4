@@ -37,7 +37,6 @@ export function SteerCouncil({
   return (
     <Panel
       title="Steer the council"
-      eyebrow="Council case"
       icon={Compass}
       className="shrink-0"
       bodyClassName="space-y-2.5"

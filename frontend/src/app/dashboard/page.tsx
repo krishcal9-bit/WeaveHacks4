@@ -630,9 +630,6 @@ export default function DataRoomPage() {
           <AtlasIcon name="upload" size="lg" className="mt-1 hidden sm:inline-grid" />
           <div className="min-w-0">
             <h1 className="font-display text-[28px] font-medium tracking-tight">Add the company files</h1>
-            <p className="mt-2 max-w-2xl text-[14px] leading-relaxed text-muted-foreground">
-              Choose the seven files from your company data folder, or one workbook with named sheets. Atlas Finance loads them, checks them, and then you can run the council.
-            </p>
           </div>
         </div>
         <div className="flex flex-wrap gap-2 lg:justify-end">
@@ -731,9 +728,6 @@ export default function DataRoomPage() {
                   transition={springSnappy}
                 >
                   Drop files to match connectors
-                  <div className="mt-1 text-[12px] font-normal text-muted-foreground">
-                    Multiple CSV and JSON files can be reconciled in one pass.
-                  </div>
                 </motion.div>
               </motion.div>
             )}
@@ -743,7 +737,6 @@ export default function DataRoomPage() {
               <AtlasIcon name="upload" size="sm" className="atlas-icon-badge--quiet" />
               <div className="min-w-0">
                 <h2 className="text-[15px] font-semibold">Files to load</h2>
-                <p className="mt-0.5 text-[12px] text-muted-foreground">The file names are matched automatically.</p>
               </div>
             </div>
             <TonePill tone={readyToRun ? "positive" : loaded ? "warning" : "neutral"}>
@@ -839,7 +832,6 @@ function DocumentEvidenceUpload() {
         <AtlasIcon name="evidence" size="sm" className="atlas-icon-badge--quiet" />
         <div>
           <h2 className="text-[15px] font-semibold">Council documents</h2>
-          <p className="mt-0.5 text-[12px] text-muted-foreground">PDF, DOCX, CSV, JSON, or text for source-aware RAG.</p>
         </div>
       </div>
       <div className="mt-3 flex flex-wrap items-center gap-2">

@@ -7,7 +7,6 @@ import {
   agentStanceTone,
   agentStatusTone,
   findLatestTurnForMember,
-  getAgentSnippet,
   getAgentStanceLabel,
   getAgentStatus,
   isAgentActive,
@@ -58,9 +57,7 @@ export function AgentMatrix({
           <StatusBadge tone="info" pulse>
             Live council
           </StatusBadge>
-        ) : (
-          <span className="hidden text-[10px] text-subtle-foreground sm:block">All seats visible</span>
-        )
+        ) : null
       }
     >
       <div className="grid grid-cols-1 gap-2 sm:grid-cols-2 xl:grid-cols-3">
@@ -117,7 +114,6 @@ function AgentCard({
   const active = isAgentActive({ agentStatus, healthReady, memberId: member.id, nodeName, running });
   const status = getAgentStatus({ active, agentStatus, healthReady, latestSpeaker, latestTurn, member, nodeName, started });
   const statusTone = agentStatusTone(status);
-  const snippet = getAgentSnippet({ agentStatus, member, turn: latestTurn, recommendation, healthReady, started });
   const stanceLabel = getAgentStanceLabel(member, latestTurn, recommendation);
   const stanceTone = agentStanceTone(member, latestTurn, recommendation);
   const scoreValue = resolveReliabilityValue(agentStatus, reliabilityScore);
@@ -152,9 +148,7 @@ function AgentCard({
           </div>
         </div>
       </div>
-      <p className="mt-2 line-clamp-2 min-h-[32px] break-words text-[11px] italic leading-relaxed text-muted-foreground">
-        {snippet}
-      </p>
+
     </button>
   );
 }

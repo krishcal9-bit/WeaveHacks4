@@ -34,7 +34,6 @@ export function InfluencePanel({
       id="council-influence"
       icon={Scale}
       visualIcon="council"
-      eyebrow="Self-improving council"
       title="Deliberation influence"
       action={
         leader ? (

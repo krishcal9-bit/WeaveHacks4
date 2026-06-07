@@ -43,7 +43,6 @@ export function SelfImprovementPanel({
     <Panel
       id="self-improvement"
       visualIcon="memory"
-      eyebrow="W&B agent selection"
       title="Weave-driven council evolution"
       action={
         hasHistory ? (
