@@ -10,14 +10,23 @@ export type WebNodeLayout = {
   y: number;
 };
 
-/** Canvas coordinates (viewBox 1000 × 620) — CFO hub, analysts on the ring. */
+export const WEB_SHORT_LABEL: Record<WebNodeId, string> = {
+  cfo: "CFO",
+  treasury: "Treasury",
+  fpna: "FP&A",
+  risk: "Risk",
+  procurement: "Procurement",
+  reliability: "Reliability",
+};
+
+/** Canvas coordinates (viewBox 1000 × 640) — hub + ring, spaced for compact orbs. */
 export const WEB_NODE_LAYOUT: WebNodeLayout[] = [
-  { id: "cfo", x: 500, y: 300 },
-  { id: "treasury", x: 200, y: 130 },
-  { id: "fpna", x: 800, y: 130 },
-  { id: "risk", x: 200, y: 470 },
-  { id: "procurement", x: 800, y: 470 },
-  { id: "reliability", x: 500, y: 540 },
+  { id: "cfo", x: 500, y: 290 },
+  { id: "treasury", x: 220, y: 120 },
+  { id: "fpna", x: 780, y: 120 },
+  { id: "risk", x: 220, y: 460 },
+  { id: "procurement", x: 780, y: 460 },
+  { id: "reliability", x: 500, y: 560 },
 ];
 
 export const WEB_NODE_BY_ID = Object.fromEntries(WEB_NODE_LAYOUT.map((node) => [node.id, node])) as Record<
@@ -42,7 +51,6 @@ export type CouncilWebEdge = {
   to: WebNodeId;
   kind: WebEdgeKind;
   active: boolean;
-  label?: string;
 };
 
 function isWorking(status?: AgentStatus): boolean {
@@ -70,10 +78,31 @@ export function webBezierPath(from: WebNodeLayout, to: WebNodeLayout): string {
   const my = (from.y + to.y) / 2;
   const dx = to.x - from.x;
   const dy = to.y - from.y;
-  const bend = from.id === "cfo" || to.id === "cfo" ? 0.08 : 0.18;
+  const bend = from.id === "cfo" || to.id === "cfo" ? 0.06 : 0.14;
   const cx = mx - dy * bend;
   const cy = my + dx * bend;
   return `M ${from.x} ${from.y} Q ${cx} ${cy} ${to.x} ${to.y}`;
+}
+
+export function webNodeStatusLine(args: {
+  agentStatus?: AgentStatus;
+  active: boolean;
+  running: boolean;
+  started: boolean;
+}): string {
+  const { agentStatus, active, running, started } = args;
+  const backend = String(agentStatus?.status ?? "").toLowerCase();
+
+  if (active && running) {
+    if (backend === "speaking") return "Speaking";
+    if (backend === "thinking" || backend === "running") return "In session";
+    return "Live";
+  }
+  if (backend === "done" || backend === "complete") return "Ready";
+  if (backend === "error") return "Retry";
+  if (started && running) return "Queued";
+  if (started) return "Standing by";
+  return "Idle";
 }
 
 export function buildCouncilWebEdges(args: {
@@ -93,26 +122,16 @@ export function buildCouncilWebEdges(args: {
       edgeMap.set(key, edge);
       return;
     }
-    edgeMap.set(key, {
-      ...existing,
-      active: existing.active || edge.active,
-      label: edge.label ?? existing.label,
-    });
+    edgeMap.set(key, { ...existing, active: existing.active || edge.active });
   };
 
   for (const target of HUB_TARGETS) {
-    upsert({
-      id: `hub-cfo-${target}`,
-      from: "cfo",
-      to: target,
-      kind: "hub",
-      active: false,
-    });
+    upsert({ id: `hub-cfo-${target}`, from: "cfo", to: target, kind: "hub", active: false });
+    upsert({ id: `hub-${target}-cfo`, from: target, to: "cfo", kind: "hub", active: false });
   }
 
   for (const [a, b] of PEER_RING) {
     upsert({ id: `peer-${a}-${b}`, from: a, to: b, kind: "peer", active: false });
-    upsert({ id: `peer-${b}-${a}`, from: b, to: a, kind: "peer", active: false });
   }
 
   const analystsWorking = COUNCIL_ANALYST_IDS.filter((id) => isWorking(byId[id]));
@@ -120,109 +139,35 @@ export function buildCouncilWebEdges(args: {
 
   if (parallelSession) {
     for (const [a, b] of PEER_RING) {
-      upsert({ id: `peer-${a}-${b}`, from: a, to: b, kind: "peer", active: true, label: "In session" });
-      upsert({ id: `peer-${b}-${a}`, from: b, to: a, kind: "peer", active: true, label: "In session" });
+      upsert({ id: `peer-${a}-${b}`, from: a, to: b, kind: "peer", active: true });
     }
   }
 
   for (const target of HUB_TARGETS) {
     if (isWorking(byId[target])) {
-      upsert({
-        id: `hub-cfo-${target}`,
-        from: target,
-        to: "cfo",
-        kind: "hub",
-        active: true,
-        label: byId[target]?.detail ?? "Reporting in",
-      });
-      upsert({
-        id: `hub-active-cfo-${target}`,
-        from: "cfo",
-        to: target,
-        kind: "hub",
-        active: true,
-        label: "Chair listening",
-      });
+      upsert({ id: `hub-${target}-cfo`, from: target as WebNodeId, to: "cfo", kind: "hub", active: true });
+      upsert({ id: `hub-cfo-${target}`, from: "cfo", to: target, kind: "hub", active: true });
     }
   }
 
-  if (running && isWorking(byId.cfo)) {
-    for (const target of COUNCIL_ANALYST_IDS) {
-      upsert({
-        id: `hub-cfo-broadcast-${target}`,
-        from: "cfo",
-        to: target as WebNodeId,
-        kind: "hub",
-        active: true,
-        label: "Chair directing",
-      });
-    }
-  }
-
-  const recent = transcript.slice(-12);
+  const recent = transcript.slice(-6);
   for (const turn of recent) {
     if (turn.type === "thinking") {
       const agent = resolveWebAgent(turn);
       if (!agent || agent === "cfo") continue;
-      upsert({
-        id: `think-${agent}-cfo`,
-        from: agent,
-        to: "cfo",
-        kind: "message",
-        active: true,
-        label: turn.argument?.slice(0, 48) ?? "Thinking",
-      });
-      for (const peer of COUNCIL_ANALYST_IDS) {
-        if (peer === agent) continue;
-        if (!isWorking(byId[peer]) && !parallelSession) continue;
-        upsert({
-          id: `think-${agent}-${peer}`,
-          from: agent,
-          to: peer as WebNodeId,
-          kind: "message",
-          active: true,
-          label: "Syncing",
-        });
-      }
+      upsert({ id: `msg-${agent}-cfo-think`, from: agent, to: "cfo", kind: "message", active: running });
       continue;
     }
-
     if (turn.type === "position") {
       const agent = resolveWebAgent(turn);
       if (!agent || agent === "cfo") continue;
-      upsert({
-        id: `pos-${agent}-cfo-${turn.headline ?? ""}`,
-        from: agent,
-        to: "cfo",
-        kind: "message",
-        active: true,
-        label: turn.headline ?? "Position",
-      });
-      for (const peer of COUNCIL_ANALYST_IDS) {
-        if (peer === agent) continue;
-        upsert({
-          id: `pos-${agent}-${peer}-${turn.headline ?? ""}`,
-          from: agent,
-          to: peer as WebNodeId,
-          kind: "message",
-          active: Boolean(parallelSession),
-          label: turn.stance ?? "Position",
-        });
-      }
+      upsert({ id: `msg-${agent}-cfo-pos`, from: agent, to: "cfo", kind: "message", active: true });
       continue;
     }
-
     if (turn.type === "rebuttal") {
       const { from, to } = resolveRebuttalEnds(turn);
       if (!from || !to) continue;
-      upsert({
-        id: `reb-${from}-${to}-${turn.point ?? ""}`,
-        from,
-        to,
-        kind: "message",
-        active: true,
-        label: turn.point?.slice(0, 40) ?? "Challenge",
-      });
+      upsert({ id: `msg-${from}-${to}-reb`, from, to, kind: "message", active: true });
     }
   }
 

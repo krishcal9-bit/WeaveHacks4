@@ -42,37 +42,37 @@ const FILES: Record<string, { label: string; expected: string; aliases: string[]
   ledger: {
     label: "Ledger",
     expected: "CSV",
-    aliases: ["ledger", "general-ledger", "gl", "cash"],
+    aliases: ["ledger", "general-ledger", "cloudledger", "gl-detail", "gl", "cash", "close-detail"],
   },
   invoices: {
     label: "Invoices",
     expected: "CSV",
-    aliases: ["invoice", "invoices", "ap"],
+    aliases: ["invoice", "invoices", "payablesdesk", "ap-aging", "ap", "bills", "payables"],
   },
   vendor_export: {
     label: "Vendors",
     expected: "JSON",
-    aliases: ["vendor", "procurement", "contract"],
+    aliases: ["vendor", "procurement", "contractvault", "contract", "supplier", "vendor-register"],
   },
   crm_opportunities: {
     label: "Sales pipeline",
     expected: "CSV",
-    aliases: ["crm", "opportunity", "opportunities", "pipeline"],
+    aliases: ["crm", "opportunity", "opportunities", "pipelinehub", "pipeline", "forecast", "sales"],
   },
   headcount_plan: {
     label: "Hiring plan",
     expected: "CSV",
-    aliases: ["headcount", "workforce", "hris"],
+    aliases: ["headcount", "peopleroster", "workforce", "hris", "people", "hiring"],
   },
   security_evidence: {
     label: "Security notes",
     expected: "JSON",
-    aliases: ["security", "soc", "soc2", "control", "evidence"],
+    aliases: ["security", "trustvault", "grc", "soc", "soc2", "control", "evidence", "risk"],
   },
   board_policy: {
     label: "Board rules",
     expected: "JSON",
-    aliases: ["board-policy", "board_policy", "policy", "policies"],
+    aliases: ["board-policy", "board_policy", "boardportal", "policy", "policies", "rules", "governance"],
   },
 };
 

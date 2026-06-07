@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import Script from "next/script";
-import { Fraunces, IBM_Plex_Mono, Outfit } from "next/font/google";
+import { Archivo, Fraunces, IBM_Plex_Mono, Newsreader } from "next/font/google";
 import { CopilotKit } from "@copilotkit/react-core";
 import { AppShell } from "@/components/app-shell";
 import { ThemeProvider } from "@/components/theme-provider";
@@ -8,14 +8,24 @@ import { THEME_STORAGE_KEY } from "@/lib/theme";
 import "@copilotkit/react-ui/styles.css";
 import "./globals.css";
 
-const outfit = Outfit({
-  variable: "--font-outfit",
+// Grotesque for dense UI / data — sharper, more editorial than a neutral sans.
+const archivo = Archivo({
+  variable: "--font-archivo",
   subsets: ["latin"],
 });
 
+// High-contrast display serif for mastheads and headlines (kept, leaned into).
 const fraunces = Fraunces({
   variable: "--font-fraunces",
   subsets: ["latin"],
+  style: ["normal", "italic"],
+});
+
+// Editorial reading serif for ledes, memo prose, and transcript bodies.
+const newsreader = Newsreader({
+  variable: "--font-newsreader",
+  subsets: ["latin"],
+  style: ["normal", "italic"],
 });
 
 const plexMono = IBM_Plex_Mono({
@@ -51,7 +61,7 @@ export default function RootLayout({
     <html
       lang="en"
       suppressHydrationWarning
-      className={`${outfit.variable} ${fraunces.variable} ${plexMono.variable} h-full`}
+      className={`${archivo.variable} ${fraunces.variable} ${newsreader.variable} ${plexMono.variable} h-full`}
     >
       <body className="h-full antialiased" suppressHydrationWarning>
         <Script id="atlas-theme-init" strategy="beforeInteractive">

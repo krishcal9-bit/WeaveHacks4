@@ -1,0 +1,13 @@
+entity,export_id,planning_cycle,approved_by,team,role,headcount,monthly_cost,start_month,status,funding_basis,recruiter,req_id
+Northwind Robotics,NR-PEOPLEROSTER-H2-2026,H2 operating plan,Pending finance review,Engineering,Platform Engineer,1,14000,2026-07,open,signed expansion,internal,NR-REQ-0500
+Northwind Robotics,NR-PEOPLEROSTER-H2-2026,H2 operating plan,Finance Committee,Customer Success,Implementation Manager,2,23500,2026-08,planned,security evidence remediation,retained search,NR-REQ-0501
+Northwind Robotics,NR-PEOPLEROSTER-H2-2026,H2 operating plan,Finance Committee,Sales,Account Executive,3,33000,2026-09,filled,pipeline conversion,agency,NR-REQ-0502
+Northwind Robotics,NR-PEOPLEROSTER-H2-2026,H2 operating plan,Finance Committee,Marketing,Growth Manager,4,35000,2026-10,open,customer onboarding,internal,NR-REQ-0503
+Northwind Robotics,NR-PEOPLEROSTER-H2-2026,H2 operating plan,Pending finance review,Security,Security Analyst,1,44500,2026-11,open,automation savings,retained search,NR-REQ-0504
+Northwind Robotics,NR-PEOPLEROSTER-H2-2026,H2 operating plan,Finance Committee,Operations,Ops Lead,2,54000,2026-07,planned,signed expansion,agency,NR-REQ-0505
+Northwind Robotics,NR-PEOPLEROSTER-H2-2026,H2 operating plan,Finance Committee,Data,Data Engineer,3,14000,2026-08,filled,security evidence remediation,internal,NR-REQ-0506
+Northwind Robotics,NR-PEOPLEROSTER-H2-2026,H2 operating plan,Finance Committee,Quality,QA Specialist,4,23500,2026-09,open,pipeline conversion,retained search,NR-REQ-0507
+Northwind Robotics,NR-PEOPLEROSTER-H2-2026,H2 operating plan,Pending finance review,Finance Ops,Finance Systems Analyst,1,33000,2026-10,open,customer onboarding,agency,NR-REQ-0508
+Northwind Robotics,NR-PEOPLEROSTER-H2-2026,H2 operating plan,Finance Committee,Field Operations,Field Technician,2,35000,2026-11,planned,automation savings,internal,NR-REQ-0509
+Northwind Robotics,NR-PEOPLEROSTER-H2-2026,H2 operating plan,Finance Committee,Hardware,Hardware Engineer,3,44500,2026-07,filled,signed expansion,retained search,NR-REQ-0510
+Northwind Robotics,NR-PEOPLEROSTER-H2-2026,H2 operating plan,Finance Committee,Risk,Risk Analyst,4,54000,2026-08,open,security evidence remediation,agency,NR-REQ-0511

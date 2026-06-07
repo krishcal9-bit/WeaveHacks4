@@ -2,7 +2,6 @@
 
 import { useEffect, useMemo, useRef } from "react";
 import { CornerDownRight, Loader2, MessagesSquare, Sparkles } from "lucide-react";
-import { motion, AnimatePresence } from "motion/react";
 import { cx } from "@/components/ui";
 import { AGENT_TONE, resolveMember, ROSTER_BY_ID } from "@/lib/agents";
 import {
@@ -99,11 +98,9 @@ export function TranscriptStream({
           )
         ) : (
           <ol className="space-y-2.5">
-            <AnimatePresence initial={false}>
-              {thinkingTurns.map((turn, index) => (
-                <ThinkingRow key={turn.id ?? `thinking-${turn.agent}-${index}`} turn={turn} />
-              ))}
-            </AnimatePresence>
+            {thinkingTurns.map((turn, index) => (
+              <ThinkingRow key={turn.id ?? `thinking-${turn.agent}-${index}`} turn={turn} />
+            ))}
             {spokenTurns.map((turn, index) => (
               <TurnRow
                 key={turn.id ?? `${turn.type}-${turn.agent ?? turn.from_role}-${index}`}
@@ -142,11 +139,8 @@ function LiveCouncilBar({
       )}
       <div className="grid gap-1.5 sm:grid-cols-2">
         {workers.map((worker) => (
-          <motion.div
+          <div
             key={worker.id}
-            layout
-            initial={{ opacity: 0, y: 6 }}
-            animate={{ opacity: 1, y: 0 }}
             className="flex min-w-0 items-start gap-2 rounded-md border border-info/20 bg-background/90 px-2.5 py-2"
           >
             <span className="mt-0.5 grid h-5 w-5 shrink-0 place-items-center rounded-md border border-info/20 bg-info-bg text-info">
@@ -158,7 +152,7 @@ function LiveCouncilBar({
                 {worker.detail ?? "Working…"}
               </div>
             </div>
-          </motion.div>
+          </div>
         ))}
       </div>
     </div>
@@ -171,11 +165,7 @@ function ThinkingRow({ turn }: { turn: TranscriptTurn }) {
   const accent = toneClasses(AGENT_TONE[seatId] ?? "info");
 
   return (
-    <motion.li
-      layout
-      initial={{ opacity: 0, y: 8 }}
-      animate={{ opacity: 1, y: 0 }}
-      exit={{ opacity: 0, y: -4 }}
+    <li
       className={cx(
         "min-w-0 rounded-md border border-dashed bg-background p-2.5",
         accent.border,
@@ -197,7 +187,7 @@ function ThinkingRow({ turn }: { turn: TranscriptTurn }) {
       {turn.argument && (
         <p className="mt-2 break-words text-[12px] leading-relaxed text-muted-foreground">{turn.argument}</p>
       )}
-    </motion.li>
+    </li>
   );
 }
 
@@ -213,12 +203,7 @@ function TurnRow({ turn, recommendation }: { turn: TranscriptTurn; recommendatio
   const evidence = Array.isArray(turn.evidence) ? turn.evidence : [];
 
   return (
-    <motion.li
-      layout
-      initial={{ opacity: 0, y: 10 }}
-      animate={{ opacity: 1, y: 0 }}
-      className={cx("min-w-0 rounded-md border border-border bg-background p-2.5", "border-l-2", accent.ring)}
-    >
+    <li className={cx("min-w-0 rounded-md border border-border bg-background p-2.5", "border-l-2", accent.ring)}>
       <div className="flex min-w-0 items-center justify-between gap-2">
         <div className="flex min-w-0 items-center gap-2">
           <span className={cx("grid h-6 w-6 shrink-0 place-items-center rounded-md border border-border bg-surface", accent.text)}>
@@ -270,7 +255,7 @@ function TurnRow({ turn, recommendation }: { turn: TranscriptTurn; recommendatio
       )}
 
       {evidence.length > 0 && <EvidenceChips evidence={evidence} />}
-    </motion.li>
+    </li>
   );
 }
 

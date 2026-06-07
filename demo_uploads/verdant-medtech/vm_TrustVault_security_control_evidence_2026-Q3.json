@@ -1,0 +1,155 @@
+{
+  "metadata": {
+    "entity": "Verdant MedTech Labs",
+    "export_id": "VM-TRUSTVAULT-Q3-2026",
+    "source_system": "TrustVault security evidence export",
+    "prepared_by": "Security Operations",
+    "classification": "Synthetic demo artifact"
+  },
+  "records": [
+    {
+      "control_id": "VM-SEC-01",
+      "framework": "Customer Trust Controls",
+      "title": "Access review",
+      "status": "gap",
+      "owner": "Security",
+      "evidence_date": "2026-06-01",
+      "blocks_revenue": true,
+      "blocked_arr": 90000,
+      "summary": "Access review export row from TrustVault; customer evidence request attached.",
+      "customer_request_id": "VM-TRUST-0300"
+    },
+    {
+      "control_id": "VM-SEC-02",
+      "framework": "Customer Trust Controls",
+      "title": "Privileged access evidence",
+      "status": "satisfied",
+      "owner": "IT",
+      "evidence_date": "2026-06-02",
+      "blocks_revenue": false,
+      "blocked_arr": null,
+      "summary": "Privileged access evidence export row from TrustVault; internal evidence review.",
+      "customer_request_id": "VM-TRUST-0301"
+    },
+    {
+      "control_id": "VM-SEC-03",
+      "framework": "Customer Trust Controls",
+      "title": "Vendor risk attestation",
+      "status": "satisfied",
+      "owner": "Data Governance",
+      "evidence_date": "2026-06-03",
+      "blocks_revenue": false,
+      "blocked_arr": null,
+      "summary": "Vendor risk attestation export row from TrustVault; customer evidence request attached.",
+      "customer_request_id": "VM-TRUST-0302"
+    },
+    {
+      "control_id": "VM-SEC-04",
+      "framework": "Customer Trust Controls",
+      "title": "Encryption evidence",
+      "status": "in_progress",
+      "owner": "Platform",
+      "evidence_date": "2026-06-04",
+      "blocks_revenue": true,
+      "blocked_arr": 246000,
+      "summary": "Encryption evidence export row from TrustVault; internal evidence review.",
+      "customer_request_id": "VM-TRUST-0303"
+    },
+    {
+      "control_id": "VM-SEC-05",
+      "framework": "Customer Trust Controls",
+      "title": "Incident response tabletop",
+      "status": "not_started",
+      "owner": "Risk",
+      "evidence_date": "2026-06-05",
+      "blocks_revenue": false,
+      "blocked_arr": null,
+      "summary": "Incident response tabletop export row from TrustVault; customer evidence request attached.",
+      "customer_request_id": "VM-TRUST-0304"
+    },
+    {
+      "control_id": "VM-SEC-06",
+      "framework": "Customer Trust Controls",
+      "title": "Data retention evidence",
+      "status": "gap",
+      "owner": "Security",
+      "evidence_date": "2026-06-06",
+      "blocks_revenue": true,
+      "blocked_arr": 350000,
+      "summary": "Data retention evidence export row from TrustVault; internal evidence review.",
+      "customer_request_id": "VM-TRUST-0305"
+    },
+    {
+      "control_id": "VM-SEC-07",
+      "framework": "Customer Trust Controls",
+      "title": "Device certificate rotation",
+      "status": "in_progress",
+      "owner": "IT",
+      "evidence_date": "2026-06-07",
+      "blocks_revenue": true,
+      "blocked_arr": 402000,
+      "summary": "Device certificate rotation export row from TrustVault; customer evidence request attached.",
+      "customer_request_id": "VM-TRUST-0306"
+    },
+    {
+      "control_id": "VM-SEC-08",
+      "framework": "Customer Trust Controls",
+      "title": "Audit log retention",
+      "status": "satisfied",
+      "owner": "Data Governance",
+      "evidence_date": "2026-06-08",
+      "blocks_revenue": false,
+      "blocked_arr": null,
+      "summary": "Audit log retention export row from TrustVault; internal evidence review.",
+      "customer_request_id": "VM-TRUST-0307"
+    },
+    {
+      "control_id": "VM-SEC-09",
+      "framework": "Customer Trust Controls",
+      "title": "Customer data deletion",
+      "status": "not_started",
+      "owner": "Platform",
+      "evidence_date": "2026-06-09",
+      "blocks_revenue": false,
+      "blocked_arr": null,
+      "summary": "Customer data deletion export row from TrustVault; customer evidence request attached.",
+      "customer_request_id": "VM-TRUST-0308"
+    },
+    {
+      "control_id": "VM-SEC-10",
+      "framework": "Customer Trust Controls",
+      "title": "Change management evidence",
+      "status": "in_progress",
+      "owner": "Risk",
+      "evidence_date": "2026-06-10",
+      "blocks_revenue": true,
+      "blocked_arr": 558000,
+      "summary": "Change management evidence export row from TrustVault; internal evidence review.",
+      "customer_request_id": "VM-TRUST-0309"
+    },
+    {
+      "control_id": "VM-SEC-11",
+      "framework": "Customer Trust Controls",
+      "title": "Endpoint inventory",
+      "status": "gap",
+      "owner": "Security",
+      "evidence_date": "2026-06-11",
+      "blocks_revenue": true,
+      "blocked_arr": 610000,
+      "summary": "Endpoint inventory export row from TrustVault; customer evidence request attached.",
+      "customer_request_id": "VM-TRUST-0310"
+    },
+    {
+      "control_id": "VM-SEC-12",
+      "framework": "Customer Trust Controls",
+      "title": "Backup restoration test",
+      "status": "satisfied",
+      "owner": "IT",
+      "evidence_date": "2026-06-12",
+      "blocks_revenue": false,
+      "blocked_arr": null,
+      "summary": "Backup restoration test export row from TrustVault; internal evidence review.",
+      "customer_request_id": "VM-TRUST-0311"
+    }
+  ]
+}

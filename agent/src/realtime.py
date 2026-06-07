@@ -23,7 +23,7 @@ import os
 import time
 from typing import Any
 
-from openai import AsyncOpenAI
+import httpx
 
 from src.env import is_configured, provider_api_key_name, redact_secrets
 
@@ -55,7 +55,7 @@ def realtime_config() -> dict[str, Any]:
             "eagerness": os.getenv("OPENAI_REALTIME_EAGERNESS", "medium"),
             "interrupt_response": True,
         },
-        "output_modalities": ["audio", "text"],
+        "output_modalities": ["audio"],
         "endpoint": "v1/realtime",
         "transport": "webrtc",
         "workflow_name": "atlas_realtime_council",
@@ -117,7 +117,7 @@ def realtime_health() -> dict[str, Any]:
         "transport": config["transport"],
         "ttl_seconds": config["ttl_seconds"],
         "api_key_configured": api_key_ready,
-        "capabilities": ["webrtc_session_secret", "semantic_vad", "audio+text", "ephemeral_secret_ttl"],
+        "capabilities": ["webrtc_session_secret", "semantic_vad", "audio", "ephemeral_secret_ttl"],
         "policy": session_policy(),
         "checks": checks,
     }
@@ -129,6 +129,42 @@ def _get_attr(value: Any, name: str) -> Any:
     return getattr(value, name, None)
 
 
+def _session_payload(config: dict[str, Any]) -> dict[str, Any]:
+    return {
+        "expires_after": {"anchor": "created_at", "seconds": config["ttl_seconds"]},
+        "session": {
+            "type": "realtime",
+            "model": config["model"],
+            "instructions": INSTRUCTIONS,
+            "audio": {
+                "input": {
+                    "turn_detection": config["turn_detection"],
+                    "transcription": {"model": "whisper-1"},
+                },
+                "output": {"voice": config["voice"]},
+            },
+            "tracing": {"workflow_name": config["workflow_name"]},
+        },
+    }
+
+
+async def _mint_session_http(config: dict[str, Any]) -> dict[str, Any]:
+    api_key_name = provider_api_key_name()
+    api_key = os.getenv(api_key_name)
+    if not api_key:
+        raise RuntimeError(f"{api_key_name} is not configured")
+
+    async with httpx.AsyncClient(timeout=15) as http:
+        response = await http.post(
+            "https://api.openai.com/v1/realtime/client_secrets",
+            headers={"Authorization": f"Bearer {api_key}", "Content-Type": "application/json"},
+            json=_session_payload(config),
+        )
+    if response.status_code >= 400:
+        raise RuntimeError(response.text)
+    return response.json()
+
+
 async def mint_session() -> dict[str, Any]:
     """Mint a live, short-TTL OpenAI Realtime client secret with TTL reporting.
 
@@ -137,23 +173,9 @@ async def mint_session() -> dict[str, Any]:
     """
     config = realtime_config()
     issued_at = int(time.time())
-    client = AsyncOpenAI()
 
     try:
-        secret = await client.realtime.client_secrets.create(
-            expires_after={"anchor": "created_at", "seconds": config["ttl_seconds"]},
-            session={
-                "type": "realtime",
-                "model": config["model"],
-                "instructions": INSTRUCTIONS,
-                "output_modalities": config["output_modalities"],
-                "audio": {
-                    "input": {"turn_detection": config["turn_detection"]},
-                    "output": {"voice": config["voice"]},
-                },
-                "tracing": {"workflow_name": config["workflow_name"]},
-            },
-        )
+        secret = await _mint_session_http(config)
     except Exception as exc:  # live failure — surface a redacted reason
         raise RuntimeError(redact_secrets(exc)) from exc
 

@@ -1,0 +1,110 @@
+{
+  "metadata": {
+    "entity": "Cobalt Harbor Finance",
+    "export_id": "CH-BOARDPORTAL-2026",
+    "source_system": "BoardPortal policy register export",
+    "prepared_by": "Office of the CFO",
+    "classification": "Synthetic demo artifact"
+  },
+  "records": [
+    {
+      "policy_id": "CH-BP-01",
+      "title": "New vendor commitment notification",
+      "category": "governance",
+      "text": "Any new vendor commitment at or above the threshold requires board notification before signature.",
+      "rule": "vendor_commitment_board_notification",
+      "threshold": 150000,
+      "unit": "usd_per_year",
+      "source_section": "BoardPortal policy register 01",
+      "owner": "CFO"
+    },
+    {
+      "policy_id": "CH-BP-02",
+      "title": "High-value renewal review",
+      "category": "procurement",
+      "text": "Vendor commitments above the threshold require competitive review before renewal.",
+      "rule": "vendor_competitive_review_value",
+      "threshold": 100000,
+      "unit": "usd_per_year",
+      "source_section": "BoardPortal policy register 02",
+      "owner": "Controller"
+    },
+    {
+      "policy_id": "CH-BP-03",
+      "title": "Renewal review lead time",
+      "category": "procurement",
+      "text": "High-value renewals require review before the renewal date.",
+      "rule": "vendor_competitive_review_days",
+      "threshold": 45,
+      "unit": "days",
+      "source_section": "BoardPortal policy register 03",
+      "owner": "Security"
+    },
+    {
+      "policy_id": "CH-BP-04",
+      "title": "Revenue-blocking controls first",
+      "category": "security",
+      "text": "Controls blocking contracted or late-stage revenue take priority over discretionary hiring.",
+      "rule": "security_revenue_priority",
+      "threshold": 150000,
+      "unit": "blocked_arr",
+      "source_section": "BoardPortal policy register 04",
+      "owner": "Board"
+    },
+    {
+      "policy_id": "CH-BP-05",
+      "title": "Hiring funding basis",
+      "category": "people",
+      "text": "New roles require a funding basis tied to signed revenue, customer commitments, security remediation, or automation savings.",
+      "rule": "headcount_funding_basis",
+      "threshold": 1,
+      "unit": "required",
+      "source_section": "BoardPortal policy register 05",
+      "owner": "CFO"
+    },
+    {
+      "policy_id": "CH-BP-06",
+      "title": "Unmatched vendor review",
+      "category": "finance",
+      "text": "AP spend without a vendor record requires controller review before payment.",
+      "rule": "unmatched_vendor_review",
+      "threshold": 1,
+      "unit": "required",
+      "source_section": "BoardPortal policy register 06",
+      "owner": "Controller"
+    },
+    {
+      "policy_id": "CH-BP-07",
+      "title": "Usage true-up review",
+      "category": "finance",
+      "text": "Vendor usage true-ups above 20 percent of monthly plan require budget owner attestation.",
+      "rule": "usage_true_up_review",
+      "threshold": 0.2,
+      "unit": "ratio",
+      "source_section": "BoardPortal policy register 07",
+      "owner": "Security"
+    },
+    {
+      "policy_id": "CH-BP-08",
+      "title": "Customer evidence SLA",
+      "category": "security",
+      "text": "Customer security evidence requests blocking revenue require an owner and dated remediation plan.",
+      "rule": "customer_evidence_sla",
+      "threshold": 14,
+      "unit": "days",
+      "source_section": "BoardPortal policy register 08",
+      "owner": "Board"
+    },
+    {
+      "policy_id": "CH-BP-09",
+      "title": "Pipeline forecast refresh",
+      "category": "revenue",
+      "text": "Forecast assumptions should be refreshed when live weighted pipeline differs materially from plan.",
+      "rule": "pipeline_forecast_refresh",
+      "threshold": 0.1,
+      "unit": "ratio",
+      "source_section": "BoardPortal policy register 09",
+      "owner": "CFO"
+    }
+  ]
+}

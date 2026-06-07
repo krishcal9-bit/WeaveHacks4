@@ -10,3 +10,9 @@ export function useMounted() {
     () => false,
   );
 }
+
+/** Avoid SSR/client text mismatches when live health resolves before hydration. */
+export function useDeferredHealthReady(healthReady: boolean) {
+  const mounted = useMounted();
+  return mounted && healthReady;
+}

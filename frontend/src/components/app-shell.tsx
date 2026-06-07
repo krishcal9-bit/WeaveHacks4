@@ -3,21 +3,19 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { motion } from "motion/react";
-import { Database, LayoutGrid, Scale, Settings } from "lucide-react";
+import { LayoutGrid } from "lucide-react";
 import type { ReactNode } from "react";
 import { cx } from "@/components/ui";
+import { useAppNavShortcuts } from "@/hooks/use-app-nav-shortcuts";
 import { PageTransition } from "@/components/motion/page-transition";
 import { ThemeToggle } from "@/components/theme-toggle";
-
-const NAV = [
-  { href: "/dashboard", label: "Data", icon: Database },
-  { href: "/decisions", label: "Run", icon: Scale },
-  { href: "/settings", label: "Settings", icon: Settings },
-];
+import { APP_NAV } from "@/lib/app-nav";
 
 export function AppShell({ children }: { children: ReactNode }) {
   const pathname = usePathname();
   const isLanding = pathname === "/";
+
+  useAppNavShortcuts();
 
   if (isLanding) {
     return <PageTransition pathname={pathname}>{children}</PageTransition>;
@@ -38,7 +36,7 @@ export function AppShell({ children }: { children: ReactNode }) {
           </motion.div>
 
           <nav className="ml-auto flex max-w-full gap-1 overflow-x-auto rounded-full border border-border bg-background p-1">
-            {NAV.map((item) => {
+            {APP_NAV.map((item) => {
               const active =
                 pathname === item.href || (item.href === "/dashboard" && pathname.startsWith("/dashboard"));
               const Icon = item.icon;

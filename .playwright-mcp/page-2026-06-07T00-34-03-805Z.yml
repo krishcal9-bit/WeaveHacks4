@@ -1,0 +1,156 @@
+- generic [active] [ref=e1]:
+  - generic [ref=e2]:
+    - banner [ref=e3]:
+      - generic [ref=e4]:
+        - link "Atlas finance os" [ref=e6] [cursor=pointer]:
+          - /url: /
+          - img [ref=e7]
+          - generic [ref=e9]:
+            - generic [ref=e10]: Atlas
+            - generic [ref=e11]: finance os
+        - navigation [ref=e12]:
+          - link "Data" [ref=e13] [cursor=pointer]:
+            - /url: /dashboard
+            - img [ref=e15]
+            - generic [ref=e19]: Data
+          - link "Run" [ref=e20] [cursor=pointer]:
+            - /url: /decisions
+            - img [ref=e21]
+            - generic [ref=e25]: Run
+          - link "Settings" [ref=e26] [cursor=pointer]:
+            - /url: /settings
+            - img [ref=e27]
+            - generic [ref=e30]: Settings
+        - button "Switch to dark mode" [ref=e31]:
+          - img [ref=e33]
+        - link "Home" [ref=e36] [cursor=pointer]:
+          - /url: /
+          - img [ref=e37]
+          - text: Home
+    - main [ref=e42]:
+      - main [ref=e44]:
+        - generic [ref=e45]:
+          - generic [ref=e46]:
+            - generic [ref=e47]:
+              - heading "Add the demo files" [level=1] [ref=e48]
+              - paragraph [ref=e49]: Choose the seven files from any demo folder. Atlas loads them, checks them, and then you can run the council.
+            - generic [ref=e50]:
+              - generic [ref=e51] [cursor=pointer]:
+                - img [ref=e52]
+                - text: Choose files
+              - link "Run council" [ref=e56] [cursor=pointer]:
+                - /url: /decisions
+                - img [ref=e57]
+                - text: Run council
+              - button "Refresh" [ref=e59]:
+                - img [ref=e61]
+                - text: Refresh
+              - button "Choose files" [ref=e66]
+          - generic [ref=e69]:
+            - generic [ref=e70]:
+              - generic [ref=e71]: 0/7 files loaded
+              - generic [ref=e72]: Upload the full folder for the cleanest demo.
+            - generic [ref=e73]: 0%
+          - generic [ref=e75]:
+            - generic [ref=e76]:
+              - generic [ref=e77]:
+                - generic [ref=e78]:
+                  - heading "Files to load" [level=2] [ref=e79]
+                  - paragraph [ref=e80]: The file names are matched automatically.
+                - generic [ref=e81]: 0/7 loaded
+              - generic [ref=e82]:
+                - generic [ref=e83]:
+                  - generic [ref=e84]:
+                    - generic [ref=e85]:
+                      - generic [ref=e88]: Ledger
+                      - generic [ref=e90]: Need file
+                    - generic [ref=e91]: CSV file
+                  - generic [ref=e92]: CSV
+                  - button "Choose" [ref=e93]
+                  - generic [ref=e94] [cursor=pointer]:
+                    - img [ref=e96]
+                    - text: Choose
+                - generic [ref=e99]:
+                  - generic [ref=e100]:
+                    - generic [ref=e101]:
+                      - generic [ref=e104]: Invoices
+                      - generic [ref=e106]: Need file
+                    - generic [ref=e107]: CSV file
+                  - generic [ref=e108]: CSV
+                  - button "Choose" [ref=e109]
+                  - generic [ref=e110] [cursor=pointer]:
+                    - img [ref=e112]
+                    - text: Choose
+                - generic [ref=e115]:
+                  - generic [ref=e116]:
+                    - generic [ref=e117]:
+                      - generic [ref=e120]: Vendors
+                      - generic [ref=e122]: Need file
+                    - generic [ref=e123]: JSON file
+                  - generic [ref=e124]: JSON
+                  - button "Choose" [ref=e125]
+                  - generic [ref=e126] [cursor=pointer]:
+                    - img [ref=e128]
+                    - text: Choose
+                - generic [ref=e131]:
+                  - generic [ref=e132]:
+                    - generic [ref=e133]:
+                      - generic [ref=e136]: Sales pipeline
+                      - generic [ref=e138]: Need file
+                    - generic [ref=e139]: CSV file
+                  - generic [ref=e140]: CSV
+                  - button "Choose" [ref=e141]
+                  - generic [ref=e142] [cursor=pointer]:
+                    - img [ref=e144]
+                    - text: Choose
+                - generic [ref=e147]:
+                  - generic [ref=e148]:
+                    - generic [ref=e149]:
+                      - generic [ref=e152]: Hiring plan
+                      - generic [ref=e154]: Need file
+                    - generic [ref=e155]: CSV file
+                  - generic [ref=e156]: CSV
+                  - button "Choose" [ref=e157]
+                  - generic [ref=e158] [cursor=pointer]:
+                    - img [ref=e160]
+                    - text: Choose
+                - generic [ref=e163]:
+                  - generic [ref=e164]:
+                    - generic [ref=e165]:
+                      - generic [ref=e168]: Security notes
+                      - generic [ref=e170]: Need file
+                    - generic [ref=e171]: JSON file
+                  - generic [ref=e172]: JSON
+                  - button "Choose" [ref=e173]
+                  - generic [ref=e174] [cursor=pointer]:
+                    - img [ref=e176]
+                    - text: Choose
+                - generic [ref=e179]:
+                  - generic [ref=e180]:
+                    - generic [ref=e181]:
+                      - generic [ref=e184]: Board rules
+                      - generic [ref=e186]: Need file
+                    - generic [ref=e187]: JSON file
+                  - generic [ref=e188]: JSON
+                  - button "Choose" [ref=e189]
+                  - generic [ref=e190] [cursor=pointer]:
+                    - img [ref=e192]
+                    - text: Choose
+            - complementary [ref=e195]:
+              - heading "What happened" [level=2] [ref=e196]
+              - generic [ref=e199]:
+                - img [ref=e200]
+                - generic [ref=e202]:
+                  - generic [ref=e203]: Waiting for files
+                  - generic [ref=e204]: Choose the demo files to begin.
+              - generic [ref=e206]: Notes from the file check will appear here.
+              - generic [ref=e207]:
+                - generic [ref=e208]:
+                  - generic [ref=e209]: File check
+                  - generic [ref=e210]: Not started
+                - generic [ref=e211]:
+                  - img [ref=e212]
+                  - text: Run council
+  - button "Open Next.js Dev Tools" [ref=e219] [cursor=pointer]:
+    - img [ref=e220]
+  - alert [ref=e223]

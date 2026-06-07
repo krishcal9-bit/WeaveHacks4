@@ -1,5 +1,0 @@
-entity,export_id,planning_cycle,approved_by,team,role,headcount,monthly_cost,start_month,status,funding_basis
-Northwind Robotics,NR-HRIS-H2-2026,H2 operating plan,Finance Committee,Engineering,Backend & Platform,6,116000,2026-08,open,SOC 2 roadmap and customer integrations
-Northwind Robotics,NR-HRIS-H2-2026,H2 operating plan,Finance Committee,Customer Success,Enterprise CSM,3,42000,2026-07,filled,enterprise onboarding backlog
-Northwind Robotics,NR-HRIS-H2-2026,H2 operating plan,Finance Committee,Sales,Account Executive,2,38000,2026-09,open,pipeline conversion above 32%
-Northwind Robotics,NR-HRIS-H2-2026,H2 operating plan,Finance Committee,Marketing,Growth Marketing,1,18000,2026-07,open,brand pipeline experiment

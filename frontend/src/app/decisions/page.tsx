@@ -19,7 +19,6 @@ import type {
   CommandResult,
   DebateState,
   OperatorCommand,
-  RealtimeSession,
 } from "@/lib/types";
 import { CouncilWeb } from "@/components/decision-room/council-web";
 import { BoardMemo, ScenarioImpactCard } from "@/components/decision-room/board-memo";
@@ -28,8 +27,8 @@ import { CouncilHeader, CouncilStatusBar, PreflightPanel } from "@/components/de
 import { TranscriptStream } from "@/components/decision-room/transcript-stream";
 
 import { agentBase } from "@/lib/agent-base";
-
-const AGENT_BASE = agentBase();
+import { connectRealtimeVoice, type RealtimeVoiceHandle } from "@/lib/realtime-voice";
+import { useDeferredHealthReady, useMounted } from "@/lib/use-mounted";
 
 export default function DecisionsPage() {
   const [input, setInput] = useState("");
@@ -38,10 +37,8 @@ export default function DecisionsPage() {
   const [nowLabel, setNowLabel] = useState("");
   const [realtime, setRealtime] = useState<RealtimeView>({ status: "idle", detail: "Realtime 2 voice idle" });
 
-  const realtimePeerRef = useRef<RTCPeerConnection | null>(null);
-  const realtimeStreamRef = useRef<MediaStream | null>(null);
   const realtimeAudioRef = useRef<HTMLAudioElement | null>(null);
-  const realtimeDataRef = useRef<RTCDataChannel | null>(null);
+  const realtimeVoiceRef = useRef<RealtimeVoiceHandle | null>(null);
 
   const { state, setState, running, nodeName } = useCoAgent<DebateState>({ name: "finance_department" });
   const { appendMessage } = useCopilotChat();
@@ -56,30 +53,40 @@ export default function DecisionsPage() {
   const decision = state?.decision;
   const companyName = state?.context?.financials?.name ?? "the company";
 
+  const mounted = useMounted();
   const started = transcript.length > 0 || running;
   const healthReady = health.status === "ready" && health.data?.ready === true;
+  const displayHealthReady = useDeferredHealthReady(healthReady);
+  const displayTranscript = useMemo(() => (mounted ? transcript : []), [mounted, transcript]);
+  const displayRunning = mounted && running;
+  const displayNodeName = mounted ? nodeName : undefined;
+  const displayAgentStatuses = mounted ? agentStatuses : [];
+  const displayRecommendation = mounted ? recommendation : undefined;
+  const displayDecision = mounted ? decision : undefined;
+  const displayStarted = mounted && started;
+  const displayPhase = mounted ? state?.phase : undefined;
 
   const currentPhase = getCurrentPhaseLabel({
     health,
-    healthReady,
-    nodeName,
-    phase: state?.phase,
-    recommendation,
-    running,
+    healthReady: displayHealthReady,
+    nodeName: displayNodeName,
+    phase: displayPhase,
+    recommendation: displayRecommendation,
+    running: displayRunning,
   });
 
   const timeline = useMemo(
     () =>
       buildTimeline({
         health,
-        healthReady,
-        nodeName,
-        phase: state?.phase,
-        recommendation,
-        running,
-        transcript,
+        healthReady: displayHealthReady,
+        nodeName: displayNodeName,
+        phase: displayPhase,
+        recommendation: displayRecommendation,
+        running: displayRunning,
+        transcript: displayTranscript,
       }),
-    [health, healthReady, nodeName, state?.phase, recommendation, running, transcript],
+    [health, displayHealthReady, displayNodeName, displayPhase, displayRecommendation, displayRunning, displayTranscript],
   );
 
   const sponsorRows = useMemo(() => getSponsorRows(health), [health]);
@@ -94,6 +101,7 @@ export default function DecisionsPage() {
   // Health polling (every 15s) — locks submissions until strict-live green.
   // ----------------------------------------------------------------------- //
   const loadHealth = useCallback(async () => {
+    const agentBaseUrl = agentBase();
     setHealth((prev) => ({
       ...prev,
       status: prev.data || prev.error ? prev.status : "loading",
@@ -101,7 +109,7 @@ export default function DecisionsPage() {
     }));
 
     try {
-      const res = await fetch(`${AGENT_BASE}/api/health`, { cache: "no-store" });
+      const res = await fetch(`${agentBaseUrl}/api/health`, { cache: "no-store" });
       const data = (await res.json().catch(() => null)) as HealthPayload | null;
       if (!data) throw new Error(`/api/health -> ${res.status}`);
       setHealth({ status: data.ready ? "ready" : "blocked", data, refreshing: false });
@@ -114,7 +122,7 @@ export default function DecisionsPage() {
         data: {
           ready: false,
           mode: "strict-live",
-          blockers: [`Health endpoint unavailable at ${AGENT_BASE}/api/health`, message],
+          blockers: [`Health endpoint unavailable at ${agentBaseUrl}/api/health`, message],
         },
       });
     }
@@ -149,122 +157,50 @@ export default function DecisionsPage() {
   // OpenAI Realtime 2 voice (WebRTC) — gated behind strict-live preflight.
   // ----------------------------------------------------------------------- //
   const stopRealtime = useCallback(() => {
-    realtimeDataRef.current?.close();
-    realtimePeerRef.current?.close();
-    realtimeStreamRef.current?.getTracks().forEach((track) => track.stop());
+    realtimeVoiceRef.current?.stop();
+    realtimeVoiceRef.current = null;
     if (realtimeAudioRef.current) realtimeAudioRef.current.srcObject = null;
-    realtimeDataRef.current = null;
-    realtimePeerRef.current = null;
-    realtimeStreamRef.current = null;
     setRealtime((prev) => ({
       status: "idle",
-      detail: prev.status === "connected" ? "Realtime 2 voice disconnected" : prev.detail,
+      detail: prev.status === "connected" ? "Realtime voice disconnected" : prev.detail,
       model: prev.model,
       voice: prev.voice,
     }));
   }, []);
 
-  useEffect(() => stopRealtime, [stopRealtime]);
+  useEffect(() => () => stopRealtime(), [stopRealtime]);
 
   const startRealtime = useCallback(async () => {
     if (!healthReady) {
       setRealtime({ status: "blocked", detail: "Strict live preflight must pass before voice starts." });
       return;
     }
-    if (typeof navigator === "undefined" || !navigator.mediaDevices?.getUserMedia) {
-      setRealtime({ status: "blocked", detail: "This browser does not expose microphone capture." });
+    const audioEl = realtimeAudioRef.current;
+    if (!audioEl) {
+      setRealtime({ status: "blocked", detail: "Voice audio element not ready — refresh and try again." });
       return;
     }
 
     stopRealtime();
-    setRealtime({ status: "connecting", detail: "Minting OpenAI Realtime 2 session..." });
 
     try {
-      const sessionRes = await fetch(`${AGENT_BASE}/api/realtime/session`, { method: "POST", cache: "no-store" });
-      const session = (await sessionRes.json().catch(() => null)) as RealtimeSession | null;
-      if (!sessionRes.ok || !session?.client_secret) {
-        throw new Error(`Realtime session failed: ${sessionRes.status}`);
-      }
-
-      setRealtime({
-        status: "connecting",
-        detail: `Connecting microphone to ${session.model}...`,
-        model: session.model,
-        voice: session.voice,
+      realtimeVoiceRef.current = await connectRealtimeVoice({
+        agentBase: agentBase(),
+        audioEl,
+        callbacks: {
+          onStatus: setRealtime,
+          onSubmitDecision: async (decision) => {
+            if (running || !healthReady) return;
+            setInput(decision);
+            await appendMessage(new TextMessage({ role: MessageRole.User, content: decision }));
+          },
+        },
       });
-
-      const peer = new RTCPeerConnection();
-      const audio = new Audio();
-      audio.autoplay = true;
-      audio.setAttribute("data-atlas-realtime", "true");
-      realtimeAudioRef.current = audio;
-
-      peer.ontrack = (event) => {
-        const [stream] = event.streams;
-        if (stream) {
-          audio.srcObject = stream;
-          void audio.play().catch(() => undefined);
-        }
-      };
-      peer.onconnectionstatechange = () => {
-        if (peer.connectionState === "connected") {
-          setRealtime({
-            status: "connected",
-            detail: `Realtime voice live on ${session.model}`,
-            model: session.model,
-            voice: session.voice,
-          });
-        }
-        if (["failed", "disconnected", "closed"].includes(peer.connectionState)) {
-          setRealtime((prev) =>
-            prev.status === "connected" ? { ...prev, status: "idle", detail: "Realtime voice disconnected" } : prev,
-          );
-        }
-      };
-
-      const media = await navigator.mediaDevices.getUserMedia({ audio: true });
-      media.getTracks().forEach((track) => peer.addTrack(track, media));
-      realtimeStreamRef.current = media;
-
-      const dataChannel = peer.createDataChannel("oai-events");
-      dataChannel.onopen = () => {
-        dataChannel.send(
-          JSON.stringify({
-            type: "response.create",
-            response: {
-              modalities: ["audio", "text"],
-              instructions: "Greet the operator and ask which council agent they want to inspect or question.",
-            },
-          }),
-        );
-      };
-      dataChannel.onmessage = (event) => {
-        try {
-          const payload = JSON.parse(String(event.data)) as { type?: string; transcript?: string; text?: string };
-          if (payload.type?.includes("transcript") && (payload.transcript || payload.text)) {
-            setRealtime((prev) => ({ ...prev, detail: payload.transcript || payload.text || prev.detail }));
-          }
-        } catch {
-          // Ignore non-JSON realtime control frames.
-        }
-      };
-      realtimeDataRef.current = dataChannel;
-
-      const offer = await peer.createOffer();
-      await peer.setLocalDescription(offer);
-      const sdpRes = await fetch(`https://api.openai.com/v1/realtime?model=${encodeURIComponent(session.model)}`, {
-        method: "POST",
-        body: offer.sdp ?? "",
-        headers: { Authorization: `Bearer ${session.client_secret}`, "Content-Type": "application/sdp" },
-      });
-      if (!sdpRes.ok) throw new Error(`Realtime SDP exchange failed: ${sdpRes.status}`);
-      await peer.setRemoteDescription({ type: "answer", sdp: await sdpRes.text() });
-      realtimePeerRef.current = peer;
     } catch (err) {
       stopRealtime();
       setRealtime({ status: "blocked", detail: err instanceof Error ? err.message : String(err) });
     }
-  }, [healthReady, stopRealtime]);
+  }, [appendMessage, healthReady, running, stopRealtime]);
 
   // ----------------------------------------------------------------------- //
   // Submission — strict-gated, streams via CopilotKit / AG-UI.
@@ -427,58 +363,58 @@ export default function DecisionsPage() {
   return (
     <main className="flex min-h-full flex-col bg-background">
       <CouncilStatusBar
-        healthReady={healthReady}
-        learningReport={learningReport}
+        healthReady={displayHealthReady}
+        learningReport={mounted ? learningReport : undefined}
         nowLabel={nowLabel}
-        reliabilityScores={reliabilityScores}
+        reliabilityScores={mounted ? reliabilityScores : []}
         sponsorRows={sponsorRows}
       />
 
       <CouncilHeader
         currentPhase={currentPhase}
-        decision={decision}
-        healthReady={healthReady}
-        running={running}
+        decision={displayDecision}
+        healthReady={displayHealthReady}
+        running={displayRunning}
         steps={timeline}
       />
 
       <div className="flex flex-1 flex-col gap-2 p-2 lg:p-3">
-        {!healthReady && <PreflightPanel health={health} onRefresh={loadHealth} />}
+        {!displayHealthReady && <PreflightPanel health={health} onRefresh={loadHealth} />}
 
         <div className="grid min-h-0 flex-1 gap-2 xl:grid-cols-[minmax(0,1fr)_minmax(280px,340px)]">
           <div className="flex min-w-0 flex-col gap-2">
             <CouncilWeb
-              agentStatuses={agentStatuses}
-              healthReady={healthReady}
-              nodeName={nodeName}
+              agentStatuses={displayAgentStatuses}
+              healthReady={displayHealthReady}
+              nodeName={displayNodeName}
               onSelectAgent={setSelectedAgentId}
-              recommendation={recommendation}
-              running={running}
+              recommendation={displayRecommendation}
+              running={displayRunning}
               selectedAgentId={selectedMember.id}
-              started={started}
-              transcript={transcript}
+              started={displayStarted}
+              transcript={displayTranscript}
             />
 
             <TranscriptStream
-              transcript={transcript}
-              recommendation={recommendation}
-              running={running}
-              nodeName={nodeName}
-              healthReady={healthReady}
-              started={started}
-              agentStatuses={agentStatuses}
+              transcript={displayTranscript}
+              recommendation={displayRecommendation}
+              running={displayRunning}
+              nodeName={displayNodeName}
+              healthReady={displayHealthReady}
+              started={displayStarted}
+              agentStatuses={displayAgentStatuses}
             />
 
             <BoardMemo
-              recommendation={recommendation}
-              decision={decision}
+              recommendation={displayRecommendation}
+              decision={displayDecision}
               companyName={companyName}
               reliabilityScores={reliabilityScores}
-              running={running}
-              healthReady={healthReady}
-              started={started}
+              running={displayRunning}
+              healthReady={displayHealthReady}
+              started={displayStarted}
             />
-            <ScenarioImpactCard impact={recommendation?.impact} />
+            <ScenarioImpactCard impact={displayRecommendation?.impact} />
           </div>
 
           <aside className="min-w-0 xl:sticky xl:top-2 xl:self-start">
@@ -487,13 +423,14 @@ export default function DecisionsPage() {
               input={input}
               onInput={setInput}
               onSubmit={submit}
-              running={running}
-              healthReady={healthReady}
-              started={started}
+              running={displayRunning}
+              healthReady={displayHealthReady}
+              started={displayStarted}
               realtime={realtime}
               onStartRealtime={startRealtime}
               onStopRealtime={stopRealtime}
               commands={commands}
+              audioRef={realtimeAudioRef}
             />
           </aside>
         </div>

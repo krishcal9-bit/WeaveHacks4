@@ -1,5 +1,6 @@
 "use client";
 
+import type { RefObject } from "react";
 import { ArrowUp, Loader2, Mic, MicOff, Sparkles, Terminal } from "lucide-react";
 import { cx } from "@/components/ui";
 import type { RealtimeView } from "@/lib/council";
@@ -18,6 +19,7 @@ export function CommandConsole({
   onStopRealtime,
   commands,
   className,
+  audioRef,
 }: {
   input: string;
   onInput: (value: string) => void;
@@ -30,6 +32,7 @@ export function CommandConsole({
   onStopRealtime: () => void;
   commands?: CouncilCommand[];
   className?: string;
+  audioRef?: RefObject<HTMLAudioElement | null>;
 }) {
   const sendDisabled = running || !healthReady || !input.trim();
   const realtimeTone =
@@ -118,6 +121,12 @@ export function CommandConsole({
           </button>
         </div>
       </form>
+
+      <audio ref={audioRef} autoPlay playsInline className="sr-only" aria-hidden />
+
+      {realtime.detail && realtime.status !== "idle" && (
+        <p className="mt-2 text-[11px] leading-relaxed text-muted-foreground">{realtime.detail}</p>
+      )}
 
       {quickCommands.length > 0 && (
         <div className="mt-3 border-t border-border pt-2.5">

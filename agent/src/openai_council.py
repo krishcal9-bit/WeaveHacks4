@@ -66,6 +66,8 @@ LLM_MODEL = os.getenv("LLM_MODEL", "gpt-5.5")
 LLM_REASONING_EFFORT = os.getenv("LLM_REASONING_EFFORT", "xhigh")
 LLM_ANALYST_REASONING_EFFORT = os.getenv("LLM_ANALYST_REASONING_EFFORT", "low")
 LLM_DEBATE_REASONING_EFFORT = os.getenv("LLM_DEBATE_REASONING_EFFORT", "low")
+LLM_PLANNER_REASONING_EFFORT = os.getenv("LLM_PLANNER_REASONING_EFFORT", "low")
+LLM_SYNTHESIS_REASONING_EFFORT = os.getenv("LLM_SYNTHESIS_REASONING_EFFORT", "low")
 LLM_TEXT_VERBOSITY = os.getenv("LLM_TEXT_VERBOSITY", "low")
 
 # Cost is only reported when real per-token pricing is configured in the
@@ -594,6 +596,7 @@ async def classify_and_plan(
         human=human,
         config=config,
         temperature=0.2,
+        reasoning_effort=LLM_PLANNER_REASONING_EFFORT,
     )
 
 
@@ -850,6 +853,7 @@ async def cfo_recommendation(
         human=human,
         config=config,
         temperature=0.3,
+        reasoning_effort=LLM_SYNTHESIS_REASONING_EFFORT,
     )
 
 

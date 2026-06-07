@@ -1,0 +1,13 @@
+entity,export_id,planning_cycle,approved_by,team,role,headcount,monthly_cost,start_month,status,funding_basis,recruiter,req_id
+Verdant MedTech Labs,VM-PEOPLEROSTER-H2-2026,H2 operating plan,Pending finance review,Engineering,Platform Engineer,1,14000,2026-07,open,signed expansion,internal,VM-REQ-0500
+Verdant MedTech Labs,VM-PEOPLEROSTER-H2-2026,H2 operating plan,Finance Committee,Customer Success,Implementation Manager,2,23500,2026-08,planned,security evidence remediation,retained search,VM-REQ-0501
+Verdant MedTech Labs,VM-PEOPLEROSTER-H2-2026,H2 operating plan,Finance Committee,Sales,Account Executive,3,33000,2026-09,filled,pipeline conversion,agency,VM-REQ-0502
+Verdant MedTech Labs,VM-PEOPLEROSTER-H2-2026,H2 operating plan,Finance Committee,Marketing,Growth Manager,4,35000,2026-10,open,customer onboarding,internal,VM-REQ-0503
+Verdant MedTech Labs,VM-PEOPLEROSTER-H2-2026,H2 operating plan,Pending finance review,Security,Security Analyst,1,44500,2026-11,open,automation savings,retained search,VM-REQ-0504
+Verdant MedTech Labs,VM-PEOPLEROSTER-H2-2026,H2 operating plan,Finance Committee,Operations,Ops Lead,2,54000,2026-07,planned,signed expansion,agency,VM-REQ-0505
+Verdant MedTech Labs,VM-PEOPLEROSTER-H2-2026,H2 operating plan,Finance Committee,Data,Data Engineer,3,14000,2026-08,filled,security evidence remediation,internal,VM-REQ-0506
+Verdant MedTech Labs,VM-PEOPLEROSTER-H2-2026,H2 operating plan,Finance Committee,Quality,QA Specialist,4,23500,2026-09,open,pipeline conversion,retained search,VM-REQ-0507
+Verdant MedTech Labs,VM-PEOPLEROSTER-H2-2026,H2 operating plan,Pending finance review,Finance Ops,Finance Systems Analyst,1,33000,2026-10,open,customer onboarding,agency,VM-REQ-0508
+Verdant MedTech Labs,VM-PEOPLEROSTER-H2-2026,H2 operating plan,Finance Committee,Field Operations,Field Technician,2,35000,2026-11,planned,automation savings,internal,VM-REQ-0509
+Verdant MedTech Labs,VM-PEOPLEROSTER-H2-2026,H2 operating plan,Finance Committee,Hardware,Hardware Engineer,3,44500,2026-07,filled,signed expansion,retained search,VM-REQ-0510
+Verdant MedTech Labs,VM-PEOPLEROSTER-H2-2026,H2 operating plan,Finance Committee,Risk,Risk Analyst,4,54000,2026-08,open,security evidence remediation,agency,VM-REQ-0511

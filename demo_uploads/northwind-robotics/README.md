@@ -1,22 +1,13 @@
 # Northwind Robotics Demo Upload Pack
 
-These files are synthetic internal operating exports for the Atlas demo. They are
-fictional, upload-ready CSV/JSON artifacts designed to exercise the live connector
-and reconciliation pipeline.
+Synthetic and fictional internal exports for the Atlas demo. This folder is intentionally shaped like a CFO data-room bundle assembled from separate system exports, not one perfect source file. Upload all seven files together from the Atlas upload screen.
 
-Suggested demo sequence:
-
-1. Open the Atlas Data page.
-2. Upload all seven files in this folder.
-3. Confirm the files load and review notes populate.
-4. Run the council on the Datadog renewal, headcount, security, or vendor-commitment decision.
-
-| File | Connector |
-| --- | --- |
-| `northwind_ledger_2026-05-close.csv` | `ledger` |
-| `northwind_invoices_2026-05-ap-aging.csv` | `invoices` |
-| `northwind_vendor_export_2026-06-procurement.json` | `vendor_export` |
-| `northwind_crm_opportunities_2026-q3-pipeline.csv` | `crm_opportunities` |
-| `northwind_headcount_plan_2026-h2.csv` | `headcount_plan` |
-| `northwind_security_evidence_soc2-q2.json` | `security_evidence` |
-| `northwind_board_policy_controls_2026.json` | `board_policy` |
+| File | Upload slot | Approx. records |
+| --- | --- | ---: |
+| `nr_CloudLedger_GL_Detail_2026-06-30.csv` | Ledger | 66 |
+| `nr_PayablesDesk_AP_Aging_Detail_2026-06-30.csv` | Invoices | 57 |
+| `nr_ContractVault_vendor_register_2026-07.json` | Vendors | 20 |
+| `nr_PipelineHub_opportunity_pipeline_2026-Q3.csv` | Sales pipeline | 36 |
+| `nr_PeopleRoster_headcount_plan_2026-H2.csv` | Hiring plan | 12 |
+| `nr_TrustVault_security_control_evidence_2026-Q3.json` | Security notes | 12 |
+| `nr_BoardPortal_board_policy_register_2026.json` | Board rules | 9 |
