@@ -433,3 +433,39 @@ def orch_overview() -> dict:
         "indices": _index_info(),
         "key_map": ns.key_map(),
     }
+
+
+def orch_analytics(limit: int = 200) -> dict:
+    """Aggregate analytics over persisted orchestration runs (Redis reads only —
+    no model calls): cost, latency, tokens, convergence rate, decision/stop mix,
+    red-team robustness, and per-topology usage. Powers /api/orchestration/observability."""
+    from collections import Counter
+
+    traces = list_traces(limit)
+    n = len(traces)
+    if not n:
+        return {"runs": 0}
+    cost = sum(float(t.get("cost_usd") or 0) for t in traces)
+    latency = [int(t.get("latency_ms") or 0) for t in traces]
+    rounds = [len(t.get("rounds") or []) for t in traces]
+    converged = sum(1 for t in traces if (t.get("convergence") or {}).get("converged"))
+    with_rt = [t for t in traces if t.get("red_team")]
+    rt_satisfied = sum(1 for t in with_rt if (t.get("red_team") or {}).get("satisfied"))
+    return {
+        "runs": n,
+        "cost_usd": {"total": round(cost, 4), "avg": round(cost / n, 4)},
+        "latency_ms": {"avg": round(sum(latency) / n), "max": max(latency)},
+        "tokens": {
+            "input": sum(int(t.get("input_tokens") or 0) for t in traces),
+            "output": sum(int(t.get("output_tokens") or 0) for t in traces),
+        },
+        "rounds": {"avg": round(sum(rounds) / n, 2), "max": max(rounds)},
+        "convergence_rate": round(converged / n, 3),
+        "red_team": {
+            "runs_with_red_team": len(with_rt),
+            "satisfied_rate": round(rt_satisfied / len(with_rt), 3) if with_rt else None,
+        },
+        "decision_mix": dict(Counter((t.get("recommendation") or {}).get("decision") or "?" for t in traces)),
+        "stop_reason_mix": dict(Counter(t.get("stop_reason") or "?" for t in traces)),
+        "by_topology": dict(Counter(t.get("topology_name") or "?" for t in traces)),
+    }

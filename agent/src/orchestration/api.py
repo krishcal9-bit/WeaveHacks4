@@ -150,3 +150,12 @@ def set_control(thread_id: str, body: dict = Body(...)):
         )
     except Exception as exc:
         raise _fail(exc)
+
+
+@orchestration_router.get("/orchestration/observability")
+def observability():
+    """Aggregate analytics over real persisted runs (cost/latency/convergence/mix)."""
+    try:
+        return STORE.orch_analytics()
+    except Exception as exc:
+        raise _fail(exc)

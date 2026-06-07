@@ -106,6 +106,10 @@ the strict live-only contract and without clobbering the sibling editing
   Also: the debate node now returns final positions/transcript for a rich end-state snapshot.
 - **Regression guard**: `selftest.py` — 23 offline pure-logic checks (models, topology compile, convergence,
   weighted tally, eval scoring + gate, seat control); zero model/Redis cost. `python -m src.orchestration.selftest` → 23/23.
+- **M11 done**: `store.orch_analytics()` + GET `/api/orchestration/observability` (cost/latency/tokens/convergence-rate/
+  decision+stop mix/red-team rate/by-topology over real persisted runs — Redis reads only) + `eval_run.py` CLI
+  (A/B seeded topologies → leaderboard; `--promote/--judge/--dry-run`). Verified: analytics live, 12 orch routes (flag on),
+  `--dry-run` lists candidates. Frontend `eslint` exit 0 (types.ts edit valid).
 
 ## Status: every explicit goal bullet delivered + live-verified; demo green with the flag off.
 All 11 modules (namespace, models, store, conductor, registry, debate, llm_io, eval, graph, api, control, seed)
