@@ -64,7 +64,7 @@ export function PhaseTimeline({ steps }: { steps: TimelineStep[] }) {
         </button>
       </div>
       <LayoutGroup id="phase-timeline">
-        <ol ref={railRef} className="room-scroll mt-2 flex items-center overflow-x-auto overflow-y-visible px-0.5 pb-2 pt-1">
+        <ol ref={railRef} className="room-scroll mt-3 flex items-stretch overflow-x-auto overflow-y-visible px-0.5 pb-1 pt-1">
           {phases.map((phase, index) => (
             <PhaseNode
               key={phase.id}
@@ -100,7 +100,7 @@ function PhaseNode({
   const isBlocked = step.status === "blocked";
 
   return (
-    <li className="flex shrink-0 items-center" data-phase-item={step.id}>
+    <li className={cx("flex min-w-[188px] items-center", last ? "flex-1" : "flex-[1.15_1_0]")} data-phase-item={step.id}>
       <motion.button
         layout
         type="button"
@@ -110,7 +110,7 @@ function PhaseNode({
         data-phase-status={step.status}
         aria-current={isActive ? "step" : undefined}
         className={cx(
-          "group relative flex h-[58px] w-[112px] shrink-0 items-center gap-2 rounded-lg border px-2 text-left transition-colors sm:w-[118px]",
+          "group relative flex h-[74px] min-w-[174px] flex-1 items-center gap-3 rounded-xl border px-3 text-left transition-colors",
           isActive
             ? "border-info/35 bg-info-bg/70 text-info shadow-sm"
             : isComplete
@@ -139,7 +139,7 @@ function PhaseNode({
         <motion.span
           layout
           className={cx(
-            "relative z-10 grid h-7 w-7 shrink-0 place-items-center rounded-full border text-[11px] font-bold tabular-nums",
+            "relative z-10 grid h-9 w-9 shrink-0 place-items-center rounded-full border text-[12px] font-bold tabular-nums",
             isComplete
               ? "border-positive bg-positive text-white"
               : isActive
@@ -165,15 +165,15 @@ function PhaseNode({
               transition={springSnappy}
             >
               {isComplete ? (
-                <Check className="h-3.5 w-3.5" strokeWidth={3} />
+                <Check className="h-4 w-4" strokeWidth={3} />
               ) : isActive ? (
                 <motion.span
-                  className="h-2 w-2 rounded-full bg-info"
+                  className="h-2.5 w-2.5 rounded-full bg-info"
                   animate={reduced ? undefined : { scale: [1, 1.32, 1], opacity: [1, 0.58, 1] }}
                   transition={{ duration: 1.35, repeat: Infinity, ease: "easeInOut" }}
                 />
               ) : isBlocked ? (
-                <XCircle className="h-3.5 w-3.5" strokeWidth={2.5} />
+                <XCircle className="h-4 w-4" strokeWidth={2.5} />
               ) : (
                 index + 1
               )}
@@ -183,17 +183,17 @@ function PhaseNode({
         <span className="relative z-10 min-w-0">
           <span
             className={cx(
-              "block whitespace-nowrap text-[12px] font-semibold leading-tight",
+              "block whitespace-nowrap text-[13px] font-semibold leading-tight",
               step.status === "pending" ? "text-muted-foreground" : "text-foreground",
             )}
           >
             {step.label}
           </span>
-          <span className="relative block h-[14px] overflow-visible">
+          <span className="relative mt-1 block h-[16px] overflow-visible">
             <AnimatePresence mode="wait" initial={false}>
               <motion.span
                 key={step.status}
-                className={cx("absolute inset-x-0 top-0 whitespace-nowrap text-[10px] leading-[14px]", tone.text)}
+                className={cx("absolute inset-x-0 top-0 whitespace-nowrap text-[11px] leading-[16px]", tone.text)}
                 initial={reduced ? false : { opacity: 0, y: 4 }}
                 animate={{ opacity: 1, y: 0 }}
                 exit={reduced ? undefined : { opacity: 0, y: -4 }}
@@ -225,7 +225,7 @@ function PhaseConnector({ status, reduced }: { status: PhaseStep["status"]; redu
     <span
       aria-hidden="true"
       data-phase-connector-status={status}
-      className="relative mx-1 h-[3px] w-8 shrink-0 overflow-hidden rounded-full bg-border sm:w-10"
+      className="relative mx-2 h-[4px] w-12 shrink-0 overflow-hidden rounded-full bg-border sm:w-16 lg:w-20"
     >
       <motion.span
         className={cx("absolute inset-y-0 left-0 rounded-full", fillClass)}

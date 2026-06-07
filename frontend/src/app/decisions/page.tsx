@@ -9,7 +9,6 @@ import { ROSTER_BY_ID } from "@/lib/agents";
 import {
   buildTimeline,
   getCurrentPhaseLabel,
-  getSponsorRows,
   latestSpeakerId,
   NODE_TO_AGENT,
   type HealthPayload,
@@ -28,7 +27,7 @@ import { CouncilWeb } from "@/components/decision-room/council-web";
 import { BoardMemo, ScenarioImpactCard } from "@/components/decision-room/board-memo";
 import { CommandConsole } from "@/components/decision-room/command-console";
 import { CouncilCommandPanel } from "@/components/council-command-panel";
-import { CouncilHeader, CouncilStatusBar, PreflightPanel } from "@/components/decision-room/council-chrome";
+import { CouncilHeader, PreflightPanel } from "@/components/decision-room/council-chrome";
 import { InfluencePanel } from "@/components/decision-room/influence-panel";
 import { SelfImprovementPanel } from "@/components/decision-room/self-improvement-panel";
 import { TranscriptStream } from "@/components/decision-room/transcript-stream";
@@ -73,7 +72,6 @@ export default function DecisionsPage() {
   const [input, setInput] = useState("");
   const [health, setHealth] = useState<HealthView>({ status: "loading", refreshing: true });
   const [selectedAgentId, setSelectedAgentId] = useState<string | null>(null);
-  const [nowLabel, setNowLabel] = useState("");
   const [realtime, setRealtime] = useState<RealtimeView>({ status: "idle", detail: "Realtime 2 voice idle" });
   const [voiceTranscript, setVoiceTranscript] = useState<VoiceTranscriptEntry[]>([]);
   const [activityPulseActive, setActivityPulseActive] = useState(false);
@@ -116,7 +114,6 @@ export default function DecisionsPage() {
   const recommendation = state?.recommendation;
   const reliabilityScores = state?.reliability_scores ?? [];
   const councilInfluence = state?.council_influence;
-  const learningReport = state?.learning_report;
   const agentImprovements = state?.agent_improvements;
   const commands = state?.commands;
   const decision = state?.decision;
@@ -215,8 +212,6 @@ export default function DecisionsPage() {
     [health, displayHealthReady, displayNodeName, displayPhase, displayRecommendation, displayRunning, displayTranscript],
   );
 
-  const sponsorRows = useMemo(() => getSponsorRows(health), [health]);
-
   // Resolve the inspected seat: explicit selection -> active roster seat -> last speaker -> CFO.
   const activeAgentId = NODE_TO_AGENT[nodeName ?? ""];
   const activeRosterId = activeAgentId && ROSTER_BY_ID[activeAgentId] ? activeAgentId : undefined;
@@ -277,22 +272,6 @@ export default function DecisionsPage() {
     const timeout = window.setTimeout(() => void loadScenarios(), 0);
     return () => window.clearTimeout(timeout);
   }, [loadScenarios]);
-
-  useEffect(() => {
-    const update = () => {
-      setNowLabel(
-        new Intl.DateTimeFormat("en-US", {
-          hour: "numeric",
-          minute: "2-digit",
-          second: "2-digit",
-          timeZoneName: "short",
-        }).format(new Date()),
-      );
-    };
-    update();
-    const interval = window.setInterval(update, 1000);
-    return () => window.clearInterval(interval);
-  }, []);
 
   useEffect(() => {
     if (!mounted) return;
@@ -582,15 +561,6 @@ export default function DecisionsPage() {
 
   return (
     <main className="flex min-h-full flex-col bg-background">
-      <CouncilStatusBar
-        councilInfluence={mounted ? councilInfluence : undefined}
-        healthReady={displayHealthReady}
-        learningReport={mounted ? learningReport : undefined}
-        nowLabel={nowLabel}
-        reliabilityScores={mounted ? reliabilityScores : []}
-        sponsorRows={sponsorRows}
-      />
-
       <CouncilHeader
         currentPhase={currentPhase}
         decision={displayDecision}

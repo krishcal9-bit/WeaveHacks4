@@ -5,7 +5,6 @@ import { AnimatePresence, motion, useReducedMotion } from "motion/react";
 import { AtlasIcon } from "@/components/atlas-icon";
 import { cx } from "@/components/ui";
 import {
-  averageReliability,
   sponsorStatusTone,
   toneClasses,
   type HealthView,
@@ -13,7 +12,7 @@ import {
   type TimelineStep,
 } from "@/lib/council";
 import { ROSTER_BY_ID } from "@/lib/agents";
-import type { CouncilInfluenceReport, LearningReport, ReliabilityScore } from "@/lib/types";
+import type { CouncilInfluenceReport, LearningReport } from "@/lib/types";
 import { PhaseTimeline } from "./phase-timeline";
 import { StatusBadge } from "./primitives";
 
@@ -25,18 +24,15 @@ export function CouncilStatusBar({
   healthReady,
   learningReport,
   nowLabel,
-  reliabilityScores,
   sponsorRows,
 }: {
   councilInfluence?: CouncilInfluenceReport;
   healthReady: boolean;
   learningReport?: LearningReport;
   nowLabel: string;
-  reliabilityScores: ReliabilityScore[];
   sponsorRows: SponsorView[];
 }) {
   const reduced = useReducedMotion();
-  const avgReliability = averageReliability(reliabilityScores);
   const leader = councilInfluence?.leader;
   const weave = sponsorRows.find((row) => row.id === "weave");
   const redis = sponsorRows.find((row) => row.id === "redis");
@@ -75,9 +71,6 @@ export function CouncilStatusBar({
           </motion.span>
         )}
       </AnimatePresence>
-      <StatusBadge tone={avgReliability ? "positive" : "warning"} className="shrink-0">
-        Reliability {avgReliability ? `${avgReliability}%` : "pending"}
-      </StatusBadge>
       <span className="ml-auto hidden shrink-0 tabular-nums text-[11px] text-muted-foreground md:block">{nowLabel}</span>
     </header>
   );
@@ -119,8 +112,8 @@ export function CouncilHeader({
   const liveLabel = running ? "Streaming" : healthReady ? "Live" : "Locked";
 
   return (
-    <section className="border-b border-border bg-surface px-4 py-3 lg:px-5">
-      <div className="grid gap-3 lg:grid-cols-[minmax(0,1fr)_minmax(300px,440px)] lg:items-center">
+    <section className="border-b border-border bg-surface px-4 py-4 lg:px-5">
+      <div className="flex flex-col gap-4">
         <div className="min-w-0">
           <div className="flex items-center gap-2.5">
             <AtlasIcon name={running ? "council" : healthReady ? "health" : "risk"} size="sm" className="atlas-icon-badge--quiet" />
@@ -137,7 +130,7 @@ export function CouncilHeader({
           </div>
         </div>
 
-        <div className="min-w-0 lg:border-l lg:border-border lg:pl-4">
+        <div className="min-w-0 rounded-xl border border-border bg-background/45 px-3 py-3 shadow-sm">
           <PhaseTimeline steps={steps} />
         </div>
       </div>
