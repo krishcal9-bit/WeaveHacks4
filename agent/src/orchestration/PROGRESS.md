@@ -50,7 +50,7 @@ the strict live-only contract and without clobbering the sibling editing
 - [x] Infra+verify — Redis Stack up + seeded; flag-on graph E2E live OK; preflight green (flag off); committed (324a386)
 - [x] M10 — operator HITL control: inject/retire seats, force rounds, override threshold (live-verified)
 - [x] M11 — analytics endpoint (/api/orchestration/observability) + eval CLI (eval_run) + selftest (26/26)
-- [~] M12 — hierarchical/parallel sub-debates (bus-coordinated): decompose → concurrent committees → aggregate   (verifying)
+- [x] M12 — hierarchical/parallel sub-debates (bus-coordinated): decompose → concurrent committees → aggregate (live-verified)
 
 ## Log
 - **M0 done**: `__init__.py`, `namespace.py` (atlas:orch:* key map, pure/offline-safe), PROGRESS.md.
@@ -112,6 +112,12 @@ the strict live-only contract and without clobbering the sibling editing
   decision+stop mix/red-team rate/by-topology over real persisted runs — Redis reads only) + `eval_run.py` CLI
   (A/B seeded topologies → leaderboard; `--promote/--judge/--dry-run`). Verified: analytics live, 12 orch routes (flag on),
   `--dry-run` lists candidates. Frontend `eslint` exit 0 (types.ts edit valid).
+- **M12 done**: `subdebate.py` — hierarchical/parallel sub-debates: decompose → concurrent sub-committees
+  (bus-coordinated) → aggregate. New `Decomposition`/`HierarchicalTrace` models, `atlas:orch:hrun:*`,
+  GET/POST `/api/orchestration/hierarchical`, `@weave.op` orch_hierarchical/decompose/aggregate. Selftest 26/26.
+  LIVE: "Open a Berlin sales office?" → 4 sub-decisions (affordability/runway, ROI/CAC, operating-model,
+  tax+compliance) → 4 concurrent committees [REJECT,REJECT,CONDITIONAL,CONDITIONAL] → CFO aggregate REJECT@90,
+  grounded in $4.2M cash / $310k burn; 4 sub-traces + 1 hrun persisted; $0.28. Package `README.md` added.
 
 ## Status: every explicit goal bullet delivered + live-verified; demo green with the flag off.
 All 11 modules (namespace, models, store, conductor, registry, debate, llm_io, eval, graph, api, control, seed)
