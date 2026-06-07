@@ -394,17 +394,49 @@ def delete_key(key: str) -> int:
     return int(client().delete(key))
 
 
-def delete_keys_matching(pattern: str) -> int:
-    """Delete every key matching a SCAN pattern (counted, best-effort)."""
+def unlink_keys(keys: list[str], *, batch: int = 512) -> int:
+    """UNLINK (non-blocking delete) an explicit key list in batched round-trips.
+
+    Batching collapses N per-key deletes into ceil(N/batch) commands, which is
+    what makes bulk teardown (e.g. the demo reset) fast.
+    """
+    if not keys:
+        return 0
+    c = client()
     deleted = 0
-    for key in client().scan_iter(match=pattern, count=500):
-        deleted += int(client().delete(key))
+    for i in range(0, len(keys), batch):
+        deleted += int(c.unlink(*keys[i : i + batch]))
+    return deleted
+
+
+def delete_keys_matching(pattern: str) -> int:
+    """Delete every key matching a SCAN pattern (counted, batched UNLINK)."""
+    c = client()
+    deleted = 0
+    chunk: list[str] = []
+    for key in c.scan_iter(match=pattern, count=1000):
+        chunk.append(key)
+        if len(chunk) >= 512:
+            deleted += int(c.unlink(*chunk))
+            chunk.clear()
+    if chunk:
+        deleted += int(c.unlink(*chunk))
     return deleted
 
 
 def clear_stream(stream: str) -> int:
     """Delete an append-only stream key so it can be reseeded from scratch."""
-    return int(client().delete(f"{NS}:stream:{stream}"))
+    return int(client().unlink(f"{NS}:stream:{stream}"))
+
+
+def clear_streams(streams: list[str]) -> dict[str, int]:
+    """Delete many stream keys in one pipelined round-trip (per-stream counts)."""
+    if not streams:
+        return {}
+    pipe = client().pipeline(transaction=False)
+    for stream in streams:
+        pipe.unlink(f"{NS}:stream:{stream}")
+    return {stream: int(res) for stream, res in zip(streams, pipe.execute())}
 
 
 # --------------------------------------------------------------------------- #

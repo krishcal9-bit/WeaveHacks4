@@ -68,8 +68,9 @@ def clear_runtime_state() -> dict[str, int]:
     """Delete ephemeral demo/runtime Redis keys (streams + scratch namespaces)."""
     deleted: dict[str, int] = {}
 
-    for stream in RUNTIME_STREAMS:
-        deleted[f"stream:{stream}"] = R.clear_stream(stream)
+    # All runtime streams drop in a single pipelined round-trip.
+    for stream, count in R.clear_streams(list(RUNTIME_STREAMS)).items():
+        deleted[f"stream:{stream}"] = count
 
     for pattern in RUNTIME_KEY_PATTERNS:
         deleted[pattern] = R.delete_keys_matching(pattern)

@@ -360,11 +360,9 @@ def cache_delete(key: str) -> int:
 
 
 def cache_invalidate(pattern: str = "*") -> int:
-    """Delete cached keys matching ``atlas:cache:<pattern>``."""
-    deleted = 0
-    for full_key in R.client().scan_iter(match=f"{M.CACHE_PREFIX}{pattern}", count=500):
-        deleted += int(R.client().delete(full_key))
-    return deleted
+    """Delete cached keys matching ``atlas:cache:<pattern>`` (batched UNLINK)."""
+    keys = list(R.client().scan_iter(match=f"{M.CACHE_PREFIX}{pattern}", count=1000))
+    return R.unlink_keys(keys)
 
 
 def cached(key: str, producer: Callable[[], Any], ttl: int = 300) -> Any:
