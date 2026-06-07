@@ -382,6 +382,21 @@ def seed(verbose: bool = True) -> dict:
 
         print(f"[seed] financial-OS seeding warning: {redact_secrets(exc)}")
 
+    # 8) Seed the orchestration namespace (atlas:orch:*) ONLY when the engine is
+    #    enabled, so the core demo seed stays unchanged with ATLAS_ORCHESTRATOR off.
+    orchestration: dict = {}
+    import os as _os
+
+    if _os.getenv("ATLAS_ORCHESTRATOR", "").strip().lower() in ("1", "true", "yes", "on"):
+        try:
+            from src.orchestration.seed import seed_orchestration
+
+            orchestration = seed_orchestration()
+        except Exception as exc:
+            from src.env import redact_secrets
+
+            print(f"[seed] orchestration seeding warning: {redact_secrets(exc)}")
+
     summary = {
         "company": COMPANY["name"],
         "vendors": len(VENDORS),
@@ -390,6 +405,7 @@ def seed(verbose: bool = True) -> dict:
         "evaluation": evaluation,
         "governance": governance,
         "financial_os": financial_os,
+        "orchestration": orchestration,
     }
     if verbose:
         print("[seed] loaded:", summary)

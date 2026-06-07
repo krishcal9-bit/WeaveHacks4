@@ -1,0 +1,241 @@
+- generic [active] [ref=e1]:
+  - generic [ref=e2]:
+    - complementary [ref=e3]:
+      - generic [ref=e4]:
+        - link "OmniPitch dashboard" [ref=e5] [cursor=pointer]:
+          - /url: /
+          - img [ref=e7]
+          - generic [ref=e13]:
+            - generic [ref=e14]: OmniPitch
+            - generic [ref=e15]: Match ops
+        - navigation "Primary navigation" [ref=e16]:
+          - link "Dashboard" [ref=e17] [cursor=pointer]:
+            - /url: /
+            - img [ref=e18]
+            - generic [ref=e21]: Dashboard
+          - link "World model" [ref=e22] [cursor=pointer]:
+            - /url: /world-model
+            - img [ref=e23]
+            - generic [ref=e27]: World model
+          - link "Matches" [ref=e28] [cursor=pointer]:
+            - /url: /matches
+            - img [ref=e29]
+            - generic [ref=e31]: Matches
+          - link "Clubs" [ref=e32] [cursor=pointer]:
+            - /url: /clubs
+            - img [ref=e33]
+            - generic [ref=e35]: Clubs
+          - link "Players" [ref=e36] [cursor=pointer]:
+            - /url: /players
+            - img [ref=e37]
+            - generic [ref=e42]: Players
+          - link "Standings" [ref=e43] [cursor=pointer]:
+            - /url: /standings
+            - img [ref=e44]
+            - generic [ref=e46]: Standings
+          - link "Scout" [ref=e47] [cursor=pointer]:
+            - /url: /scout
+            - img [ref=e48]
+            - generic [ref=e51]: Scout
+          - link "Admin" [ref=e52] [cursor=pointer]:
+            - /url: /admin
+            - img [ref=e53]
+            - generic [ref=e56]: Admin
+          - link "Settings" [ref=e57] [cursor=pointer]:
+            - /url: /settings
+            - img [ref=e58]
+            - generic [ref=e61]: Settings
+          - button "Open command palette" [ref=e62]:
+            - img [ref=e63]
+            - generic [ref=e66]: Command
+        - region "Workspace switcher" [ref=e67]:
+          - generic [ref=e68]:
+            - img [ref=e69]
+            - text: Workspace switcher
+          - paragraph [ref=e81]: Bay United first-team intelligence
+          - generic [ref=e82]:
+            - generic [ref=e83]: Club intelligence admin
+            - generic [ref=e84]: assign
+          - generic [ref=e85]:
+            - button "Academy Analyst scout · Bay United academy scouting" [ref=e87]:
+              - generic [ref=e88]: Academy Analyst
+              - generic [ref=e89]: scout · Bay United academy scouting
+            - button "Academy Director admin · Bay United academy scouting" [ref=e91]:
+              - generic [ref=e92]: Academy Director
+              - generic [ref=e93]: admin · Bay United academy scouting
+            - button "Local Operator admin · Bay United first-team intelligence" [disabled] [ref=e95]:
+              - generic [ref=e96]: Local Operator
+              - generic [ref=e97]: admin · Bay United first-team intelligence
+            - button "Recruitment Desk scout · Bay United first-team intelligence" [ref=e99]:
+              - generic [ref=e100]: Recruitment Desk
+              - generic [ref=e101]: scout · Bay United first-team intelligence
+          - generic [ref=e102]:
+            - generic [ref=e103]: 2 workspaces
+            - generic [ref=e104]: 2 scout-limited personas
+            - generic [ref=e105]: admin surface enabled
+        - generic [ref=e106]:
+          - generic [ref=e107]:
+            - img [ref=e108]
+            - text: Source gate
+          - paragraph [ref=e111]: External ingest stays locked until endpoint and token checks pass.
+    - main [ref=e114]:
+      - generic [ref=e115]:
+        - generic [ref=e116]:
+          - paragraph [ref=e117]: OmniPitch control room
+          - heading "Dashboard" [level=1] [ref=e118]
+          - paragraph [ref=e119]: A matchday operations desk for fixtures, live state, table pressure, source health, and scout context.
+        - link "Match center" [ref=e121] [cursor=pointer]:
+          - /url: /matches
+          - text: Match center
+          - img [ref=e122]
+      - generic [ref=e124]:
+        - generic [ref=e125]:
+          - generic [ref=e126]:
+            - generic [ref=e127]:
+              - paragraph [ref=e128]: Live match watch
+              - paragraph [ref=e129]: Stadium tracking, clock state, and probability context are shown only when the source is explicit.
+            - generic [ref=e130]: Live
+          - generic [ref=e131]:
+            - generic [ref=e132]:
+              - paragraph [ref=e133]: SVS 1 - 1 BAY
+              - paragraph [ref=e134]: Silicon Valley Sparks vs Bay United at Sparks Lab, Palo Alto
+              - generic [ref=e135]:
+                - generic [ref=e136]:
+                  - paragraph [ref=e137]: Clock
+                  - paragraph [ref=e138]: 49'
+                  - paragraph [ref=e139]: second half
+                - generic [ref=e140]:
+                  - paragraph [ref=e141]: xG
+                  - paragraph [ref=e142]: 1.34 - 1.18
+                - generic [ref=e143]:
+                  - paragraph [ref=e144]: Pressure
+                  - paragraph [ref=e145]: 76 - 63
+              - link "Open live match" [ref=e146] [cursor=pointer]:
+                - /url: /matches/match-silicon-bay-006
+                - text: Open live match
+                - img [ref=e147]
+            - generic "Stylized soccer pitch" [ref=e149]
+        - generic [ref=e150]:
+          - generic [ref=e152]:
+            - img [ref=e153]
+            - generic [ref=e157]:
+              - paragraph [ref=e158]: "8"
+              - paragraph [ref=e159]: Tracked matches
+          - generic [ref=e161]:
+            - img [ref=e162]
+            - generic [ref=e169]:
+              - paragraph [ref=e170]: "14"
+              - paragraph [ref=e171]: Match events
+          - generic [ref=e173]:
+            - img [ref=e174]
+            - generic [ref=e177]:
+              - paragraph [ref=e178]: "1"
+              - paragraph [ref=e179]: Source issues
+      - generic [ref=e180]:
+        - generic [ref=e181]:
+          - generic [ref=e182]:
+            - paragraph [ref=e183]: Match state
+            - heading "second half · 49'" [level=2] [ref=e184]
+          - generic [ref=e185]:
+            - img [ref=e186]
+            - text: 86% confidence
+        - generic [ref=e189]:
+          - generic [ref=e190]:
+            - generic [ref=e191]:
+              - img [ref=e192]
+              - text: Expected goals
+            - paragraph [ref=e196]: 1.34 - 1.18
+            - paragraph [ref=e197]: SVS vs BAY
+          - generic [ref=e198]:
+            - generic [ref=e199]:
+              - img [ref=e200]
+              - text: Shots on target
+            - paragraph [ref=e202]: 4 - 3
+            - paragraph [ref=e203]: Total shots 9 - 8
+          - generic [ref=e204]:
+            - generic [ref=e205]:
+              - img [ref=e206]
+              - text: Pressure
+            - paragraph [ref=e209]: 76 - 63
+            - paragraph [ref=e210]: PPDA 8.9 - 10.7
+        - generic [ref=e211]:
+          - generic [ref=e212]:
+            - generic [ref=e213]:
+              - generic [ref=e214]: Possession
+              - generic [ref=e215]: 54% - 46%
+            - generic "Possession split" [ref=e216]
+            - paragraph [ref=e218]: SVS share
+          - generic [ref=e219]:
+            - generic [ref=e220]:
+              - generic [ref=e221]: Field tilt
+              - generic [ref=e222]: 58% - 42%
+            - generic "Field tilt split" [ref=e223]
+            - paragraph [ref=e225]: SVS share
+        - generic [ref=e226]:
+          - generic [ref=e227]:
+            - img [ref=e228]
+            - generic [ref=e233]:
+              - paragraph [ref=e234]: Conditions
+              - paragraph [ref=e235]: 63 F, dry, north breeze
+          - generic [ref=e236]:
+            - img [ref=e237]
+            - generic [ref=e241]:
+              - paragraph [ref=e242]: Operations log
+              - paragraph [ref=e243]: 6,914 attendance · Amara Chen · May 23, 4:19 PM
+        - paragraph [ref=e244]: The live match leans slightly toward Silicon Valley on territory, but Bay United are still finding high-value near-post runs.
+        - paragraph [ref=e245]: "Source: stadium-tracking-sandbox"
+      - generic [ref=e246]:
+        - generic [ref=e247]:
+          - generic [ref=e248]:
+            - heading "Next fixtures" [level=2] [ref=e249]
+            - link "View all" [ref=e250] [cursor=pointer]:
+              - /url: /matches
+          - generic [ref=e251]:
+            - link "BAY Bay United vs Golden Gate Athletic May 24, 1:00 PM · Francisco Street Ground" [ref=e252] [cursor=pointer]:
+              - /url: /matches/match-bay-golden-007
+              - generic [ref=e253]: BAY
+              - generic [ref=e254]:
+                - paragraph [ref=e255]: Bay United vs Golden Gate Athletic
+                - paragraph [ref=e256]: May 24, 1:00 PM · Francisco Street Ground
+            - link "MIS Mission City FC vs East Bay Press May 24, 7:00 PM · Mission Bowl" [ref=e257] [cursor=pointer]:
+              - /url: /matches/match-mission-east-008
+              - generic [ref=e258]: MIS
+              - generic [ref=e259]:
+                - paragraph [ref=e260]: Mission City FC vs East Bay Press
+                - paragraph [ref=e261]: May 24, 7:00 PM · Mission Bowl
+        - generic [ref=e262]:
+          - generic [ref=e263]:
+            - heading "Table snapshot" [level=2] [ref=e264]
+            - link "Standings" [ref=e265] [cursor=pointer]:
+              - /url: /standings
+          - generic [ref=e266]:
+            - generic [ref=e267]:
+              - generic [ref=e268]: "1"
+              - generic [ref=e269]: Golden Gate Athletic
+              - generic [ref=e270]: GD +2
+              - generic [ref=e271]: "4"
+            - generic [ref=e272]:
+              - generic [ref=e273]: "2"
+              - generic [ref=e274]: East Bay Press
+              - generic [ref=e275]: GD +1
+              - generic [ref=e276]: "3"
+            - generic [ref=e277]:
+              - generic [ref=e278]: "3"
+              - generic [ref=e279]: Bay United
+              - generic [ref=e280]: GD +1
+              - generic [ref=e281]: "3"
+            - generic [ref=e282]:
+              - generic [ref=e283]: "4"
+              - generic [ref=e284]: Harbor Rovers
+              - generic [ref=e285]: GD 0
+              - generic [ref=e286]: "1"
+      - generic [ref=e288]:
+        - img [ref=e289]
+        - generic [ref=e291]:
+          - heading "External source blockers" [level=2] [ref=e292]
+          - paragraph [ref=e293]: External HTTP ingest is withheld until the required endpoint and token are configured.
+          - list [ref=e294]:
+            - listitem [ref=e295]:
+              - strong [ref=e296]: "httpProvider:"
+              - text: Missing OMNIPITCH_HTTP_PROVIDER_URL and OMNIPITCH_HTTP_PROVIDER_TOKEN
+  - alert [ref=e297]

@@ -1,19 +1,18 @@
 "use client";
 
 import { useMemo } from "react";
+import Image from "next/image";
 import { Network } from "lucide-react";
 import { AnimatePresence, motion, useReducedMotion } from "motion/react";
 import { PopIn } from "@/components/motion/presence";
 import { springSoft, springSnappy } from "@/components/motion/variants";
 import { cx } from "@/components/ui";
-import { AGENT_TONE } from "@/lib/agents";
 import {
   findLatestTurnForMember,
   influenceByAgent,
   isAgentActive,
   isParallelCouncilNode,
   resolveInfluenceValue,
-  toneClasses,
 } from "@/lib/council";
 import {
   buildCouncilWebEdges,
@@ -28,9 +27,16 @@ import {
 import type { AgentInfluence } from "@/lib/types";
 import { useMounted } from "@/lib/use-mounted";
 import type { AgentStatus, CouncilInfluenceReport, DebateState, TranscriptTurn } from "@/lib/types";
-import { AGENT_ICONS } from "./agent-visuals";
 import { Panel, StatusBadge } from "./primitives";
-import { ServerCog } from "lucide-react";
+
+const AGENT_NODE_ICON_SRC: Record<WebNodeId, string> = {
+  cfo: "/assets/atlas-icons/atlas-agent-cfo.png",
+  treasury: "/assets/atlas-icons/atlas-agent-treasury.png",
+  fpna: "/assets/atlas-icons/atlas-agent-fpna.png",
+  risk: "/assets/atlas-icons/atlas-agent-risk.png",
+  procurement: "/assets/atlas-icons/atlas-agent-procurement.png",
+  reliability: "/assets/atlas-icons/atlas-agent-reliability.png",
+};
 
 export function CouncilWeb({
   agentStatuses,
@@ -211,7 +217,6 @@ function WebNodeOrb({
   const latestTurn = findLatestTurnForMember(memberId, transcript);
   const active = isAgentActive({ agentStatus, healthReady, memberId, nodeName, running });
   const statusLine = webNodeStatusLine({ agentStatus, active, running, started });
-  const accent = toneClasses(AGENT_TONE[memberId] ?? "neutral");
   const shortLabel = WEB_SHORT_LABEL[memberId];
   const influenceValue = resolveInfluenceValue(agentStatus, influence);
   const headline =
@@ -252,9 +257,7 @@ function WebNodeOrb({
         )}
       >
         {active && <span className="council-orb-pulse absolute inset-0 rounded-full border border-info/30" aria-hidden />}
-        <span className={cx("grid h-10 w-10 place-items-center rounded-full", accent.soft)}>
-          <SeatIcon id={memberId} className="h-[18px] w-[18px]" />
-        </span>
+        <AgentNodeIcon id={memberId} />
         {active && (
           <motion.span
             className="absolute -right-0.5 -top-0.5 h-2.5 w-2.5 rounded-full bg-info shadow-[0_0_0_3px_var(--surface)]"
@@ -309,9 +312,21 @@ function WebNodeOrb({
   );
 }
 
-function SeatIcon({ id, className }: { id: string; className?: string }) {
-  const Icon = AGENT_ICONS[id] ?? ServerCog;
-  return <Icon className={className} strokeWidth={1.85} />;
+function AgentNodeIcon({ id }: { id: WebNodeId }) {
+  return (
+    <span className={cx("agent-node-icon", `agent-node-icon--${id}`)} aria-hidden>
+      <Image
+        src={AGENT_NODE_ICON_SRC[id]}
+        alt=""
+        width={192}
+        height={192}
+        unoptimized
+        loading="eager"
+        draggable={false}
+        className="agent-node-icon__image"
+      />
+    </span>
+  );
 }
 
 function CouncilWebSkeleton() {

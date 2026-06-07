@@ -1,0 +1,52 @@
+---
+description: Invariants for the Atlas orchestration engine (agent/src/orchestration, ATLAS_ORCHESTRATOR)
+globs: agent/src/orchestration/**,agent/src/agent.py
+alwaysApply: false
+---
+
+# Atlas orchestration engine — invariants
+
+The orchestration engine (`agent/src/orchestration/`) is a deep, **opt-in** agent
+layer: a Conductor plans the debate topology per decision, a dynamic roster seats
+specialists, a multi-round debate detects convergence and survives a red-team, and
+positions are reconciled by reliability-weighted voting — durable in Redis and
+evaluatable in W&B Weave. It is governed by the strict live-only contract
+(`.cursor/rules/atlas-live-only.mdc`) PLUS these rules.
+
+## Isolation (do not break)
+- All orchestration code lives under `agent/src/orchestration/`. Keep it there.
+- It owns the **`atlas:orch:*`** Redis subtree ONLY (see `namespace.py`). Never read
+  or write the financial-OS, governance, or `atlas:stream:decisions` namespaces from
+  this package; never let other packages write `atlas:orch:*`.
+- The engine is activated only behind the **`ATLAS_ORCHESTRATOR`** env flag (default
+  off). With the flag off, the live demo graph in `agent/src/agent.py` must remain
+  byte-for-byte unchanged. The only permitted edit to `agent.py` is the single
+  additive, flag-gated graph swap at EOF.
+- Reuse `ROSTER`, `Position`, `Recommendation`, `llm`, `LLM_MODEL` from `src.agent`
+  via **lazy** imports (inside functions), never at module top — so the package
+  imports cleanly offline and never races a sibling editing `agent.py`.
+
+## Live-only (no fakes)
+- No mock model calls, fake traces, fake Redis data, or hard-coded responses. If a
+  step's model call fails, degrade honestly (deterministic fallback topology, kept
+  prior stance, recorded error in telemetry) — never fabricate a model response.
+- Every financial number must be computed from the live record or cited from the
+  context the seats were given; never hallucinate figures.
+
+## Typing / streaming / persistence
+- Structured OpenAI outputs use the strict closed schemas in `models.py`
+  (`extra="forbid"`, all fields required): `ConductorPlan`, `RedTeamReport`,
+  `SeatPosition`, `VoteBallot`, `NegotiationOutcome`.
+- Persisted/streamed records use the tolerant `OrchModel` types; persist with
+  `model_dump(mode="json")` so enums serialize.
+- Every node/agent step is a `@weave.op` so the run is a named span tree in Weave.
+- Secrets only from the root `.env`; keep `redact_secrets`/`safe_url` over every new
+  error path and API response.
+- New streamed state keys must be mirrored into the frontend `DebateState`
+  (`frontend/src/lib/types.ts`) when the UI consumes them.
+
+## Verification
+- New module: `py_compile` + import smoke (must import offline).
+- Pure logic (convergence, voting, gate): offline unit checks.
+- Anything touching Redis/OpenAI/Weave: verify against the LIVE stack (Redis Stack
+  with RedisJSON+RediSearch) before committing.
