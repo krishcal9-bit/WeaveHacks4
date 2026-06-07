@@ -154,7 +154,6 @@ export function RedisActivityRail({ activity, active = false }: { activity: Redi
       id="redis-activity"
       icon={Database}
       visualIcon="memory"
-      eyebrow="System of record"
       title="Redis activity"
       count={activity.length}
       scroll

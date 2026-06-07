@@ -1,7 +1,6 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { Workflow } from "lucide-react";
 import { ROSTER, ROSTER_BY_ID } from "@/lib/agents";
 import { api } from "@/lib/api";
 import type { CompanyFinancials, PromptVersion, RosterMember } from "@/lib/types";
@@ -52,18 +51,8 @@ export default function DepartmentPage() {
     <div className="mx-auto w-full max-w-[1180px] px-4 py-5 sm:px-6">
       <div className="flex items-center gap-3">
         <AtlasIcon name="council" size="sm" className="atlas-icon-badge--quiet" />
-        <div className="min-w-0">
-          <div className="flex items-center gap-1.5 text-[10px] font-medium uppercase tracking-[0.08em] text-subtle-foreground">
-            <Workflow className="h-3.5 w-3.5" strokeWidth={1.85} />
-            Council memory
-          </div>
-          <h1 className="mt-1 text-[20px] font-semibold tracking-tight text-foreground">Your finance team</h1>
-        </div>
+        <h1 className="text-[20px] font-semibold tracking-tight text-foreground">Your finance team</h1>
       </div>
-      <p className="mt-0.5 text-[12px] text-muted-foreground">
-        A standing finance team: analysts review each file from their lane, the CFO makes the call, and Reliability
-        checks the evidence, calibration, traces, and prompt updates after the run.
-      </p>
 
       {/* Chair */}
       <div className="mt-6 flex justify-center">
@@ -102,7 +91,6 @@ function MemberCard({
   track?: TrackRecord;
 }) {
   const promptSummary = prompt ? summarizePrompt(prompt) : null;
-  const mandate = member.mandate ? formatDisplayText(member.mandate) : "";
 
   return (
     <Card className={cx("flex flex-col p-4", highlight ? "w-full max-w-sm border-border-strong" : "")}>
@@ -117,17 +105,11 @@ function MemberCard({
           <div className="truncate text-[11px] text-subtle-foreground">{formatRole(member.role)}</div>
         </div>
       </div>
-      {mandate && (
-        <p title={mandate} className="mt-3 line-clamp-3 text-[12px] leading-relaxed text-muted-foreground">{mandate}</p>
-      )}
 
       {(track || prompt) && (
         <div className="mt-3 space-y-2.5 border-t border-border pt-3">
           {track && (
             <div>
-              <div className="text-[10px] font-medium uppercase tracking-[0.08em] text-subtle-foreground">
-                Track record
-              </div>
               <div className="mt-1 flex items-center gap-2 text-[12px]">
                 <span className="tabular-nums text-muted-foreground">
                   {track.count} decision{track.count === 1 ? "" : "s"}
@@ -145,20 +127,11 @@ function MemberCard({
           )}
           {promptSummary && (
             <div>
-              <div className="text-[10px] font-medium uppercase tracking-[0.08em] text-subtle-foreground">
-                Review plan
-              </div>
               <div className="mt-1 text-[11.5px] font-medium leading-relaxed text-foreground">
                 Current: {promptSummary.current}
               </div>
-              <div className="mt-0.5 text-[11px] leading-relaxed text-muted-foreground">
-                Next: {promptSummary.candidate}
-              </div>
               <div className="mt-1 text-[10.5px] font-semibold text-info">
                 Primary check: {promptSummary.primaryCheck}
-              </div>
-              <div className="mt-0.5 line-clamp-2 text-[11px] leading-relaxed text-muted-foreground">
-                Focus: {promptSummary.focusAreas}.
               </div>
             </div>
           )}

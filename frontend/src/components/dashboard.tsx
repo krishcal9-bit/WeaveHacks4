@@ -48,7 +48,6 @@ export function severityTone(severity?: string | null): Tone {
  */
 export function Panel({
   title,
-  eyebrow,
   icon: Icon,
   visualIcon,
   action,
@@ -57,7 +56,6 @@ export function Panel({
   bodyClassName = "",
 }: {
   title: ReactNode;
-  eyebrow?: ReactNode;
   icon?: ComponentType<{ className?: string; strokeWidth?: number }>;
   visualIcon?: AtlasIconName;
   action?: ReactNode;
@@ -69,11 +67,6 @@ export function Panel({
     <section className={cx("command-surface flex min-w-0 flex-col", className)}>
       <header className="flex items-start justify-between gap-3 border-b border-border px-4 py-3">
         <div className="min-w-0">
-          {eyebrow && (
-            <div className="text-[10px] font-medium uppercase tracking-[0.08em] text-subtle-foreground">
-              {eyebrow}
-            </div>
-          )}
           <h2 className="flex items-center gap-1.5 text-[12.5px] font-semibold text-foreground">
             {visualIcon ? (
               <AtlasIcon name={visualIcon} size="xs" className="atlas-icon-badge--quiet" />
@@ -119,7 +112,7 @@ export function MetricTile({
       <div className={cx("mt-2 text-[22px] font-semibold leading-none tracking-tight tabular-nums", TONE_TEXT[tone])}>
         {value}
       </div>
-      <div className="mt-1.5 min-h-[15px] truncate text-[11px] tabular-nums text-subtle-foreground">{sub}</div>
+      {sub ? <div className="mt-1.5 truncate text-[11px] tabular-nums text-subtle-foreground">{sub}</div> : null}
     </div>
   );
 }

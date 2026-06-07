@@ -716,7 +716,6 @@ function DemoScenarioSelector({
   return (
     <Panel
       title="Messy scenarios"
-      eyebrow="Demo selector"
       icon={Sparkles}
       count={scenarios.length || undefined}
       className="shrink-0"
