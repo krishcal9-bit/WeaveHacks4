@@ -13,9 +13,17 @@ type MotionLinkProps = ComponentProps<typeof Link> & {
 export function MotionLink({ children, className, variant = "default", ...props }: MotionLinkProps) {
   const mounted = useMounted();
   const reduced = useReducedMotion();
+  const fullWidth = typeof className === "string" && /\bw-full\b/.test(className);
+  const wrapperClass = fullWidth ? "flex w-full" : "inline-flex";
 
   if (!mounted || reduced) {
-    return (
+    return fullWidth ? (
+      <div className={wrapperClass}>
+        <Link className={className} {...props}>
+          {children}
+        </Link>
+      </div>
+    ) : (
       <Link className={className} {...props}>
         {children}
       </Link>
@@ -24,7 +32,7 @@ export function MotionLink({ children, className, variant = "default", ...props 
 
   return (
     <motion.div
-      className="inline-flex"
+      className={wrapperClass}
       whileHover={variant === "landing-cta" ? { scale: 1.03, y: -1 } : { scale: 1.02 }}
       whileTap={{ scale: 0.97 }}
       transition={{ type: "spring", stiffness: 480, damping: 28 }}

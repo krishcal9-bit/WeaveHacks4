@@ -267,13 +267,13 @@ export default function DataRoomPage() {
           <MotionLink
             href="/decisions"
             className={cx(
-              "inline-flex h-10 items-center justify-center gap-2 rounded-lg border px-4 text-[13px] font-semibold transition-colors",
+              "inline-flex h-11 shrink-0 items-center justify-center gap-2.5 rounded-lg border px-5 text-[13px] font-semibold transition-colors",
               readyToRun
                 ? "border-border bg-surface text-foreground hover:bg-surface-muted"
                 : "border-border bg-surface text-muted-foreground",
             )}
           >
-            <Play className="h-4 w-4" strokeWidth={2} />
+            <Play className="h-4 w-4 shrink-0" strokeWidth={2} />
             Run council
           </MotionLink>
           <motion.button
@@ -496,6 +496,8 @@ function FileRow({
   const tone = rowTone(status, state);
   const detail = state?.detail ?? connector?.source_name ?? "";
   const statusKey = rowLabel(status, state);
+  const isLoaded = loadedStatus(status);
+  const showChoose = !isLoaded || state?.status === "error";
 
   return (
     <motion.div
@@ -560,42 +562,46 @@ function FileRow({
           expected
         )}
       </div>
-      <input
-        id={inputId}
-        className="file-input-offscreen"
-        type="file"
-        accept={FILE_ACCEPT}
-        disabled={uploading}
-        onChange={(event) => {
-          const [file] = Array.from(event.target.files ?? []);
-          if (file) onFile(file);
-          event.currentTarget.value = "";
-        }}
-      />
-      <motion.label
-        htmlFor={inputId}
-        className={cx(
-          "inline-flex h-9 cursor-pointer items-center justify-center gap-2 rounded-lg border border-border bg-surface px-3 text-[12px] font-semibold transition-colors hover:bg-surface-muted",
-          uploading && "pointer-events-none opacity-60",
-        )}
-        whileHover={uploading ? undefined : { scale: 1.04 }}
-        whileTap={uploading ? undefined : { scale: 0.96 }}
-        transition={springSnappy}
-      >
-        <AnimatePresence mode="wait">
-          <motion.span
-            key={uploading ? "loading" : "idle"}
-            initial={{ opacity: 0, rotate: -90 }}
-            animate={{ opacity: 1, rotate: 0 }}
-            exit={{ opacity: 0, rotate: 90 }}
-            transition={{ duration: 0.2 }}
-            className="inline-flex"
+      {showChoose && (
+        <>
+          <input
+            id={inputId}
+            className="file-input-offscreen"
+            type="file"
+            accept={FILE_ACCEPT}
+            disabled={uploading}
+            onChange={(event) => {
+              const [file] = Array.from(event.target.files ?? []);
+              if (file) onFile(file);
+              event.currentTarget.value = "";
+            }}
+          />
+          <motion.label
+            htmlFor={inputId}
+            className={cx(
+              "inline-flex h-9 cursor-pointer items-center justify-center gap-2 rounded-lg border border-border bg-surface px-3 text-[12px] font-semibold transition-colors hover:bg-surface-muted",
+              uploading && "pointer-events-none opacity-60",
+            )}
+            whileHover={uploading ? undefined : { scale: 1.04 }}
+            whileTap={uploading ? undefined : { scale: 0.96 }}
+            transition={springSnappy}
           >
-            {uploading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Upload className="h-4 w-4" />}
-          </motion.span>
-        </AnimatePresence>
-        Choose
-      </motion.label>
+            <AnimatePresence mode="wait">
+              <motion.span
+                key={uploading ? "loading" : "idle"}
+                initial={{ opacity: 0, rotate: -90 }}
+                animate={{ opacity: 1, rotate: 0 }}
+                exit={{ opacity: 0, rotate: 90 }}
+                transition={{ duration: 0.2 }}
+                className="inline-flex"
+              >
+                {uploading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Upload className="h-4 w-4" />}
+              </motion.span>
+            </AnimatePresence>
+            Choose
+          </motion.label>
+        </>
+      )}
     </motion.div>
   );
 }
@@ -706,23 +712,23 @@ function ResultPanel({
         </AnimatePresence>
       </div>
 
-      <div className="mt-4 border-t border-border pt-3">
+      <div className="mt-4 border-t border-border pt-4">
         <div className="flex items-center justify-between gap-2 text-[12px] text-muted-foreground">
           <span>File check</span>
           <span>{serviceError ? "Offline" : ready ? (issues.length ? "Review notes" : "Ready") : loaded ? "Waiting" : "Not started"}</span>
         </div>
-        <PopIn show={readyToRun}>
+        <PopIn show={readyToRun} className="mt-4 w-full">
           <MotionLink
             href="/decisions"
-            className="mt-3 inline-flex h-10 w-full items-center justify-center gap-2 rounded-lg bg-accent text-[13px] font-semibold text-accent-foreground"
+            className="inline-flex h-11 w-full items-center justify-center gap-2.5 rounded-lg bg-accent px-5 py-2.5 text-[13px] font-semibold text-accent-foreground"
           >
-            <Play className="h-4 w-4" />
+            <Play className="h-4 w-4 shrink-0" strokeWidth={2} />
             Run council
           </MotionLink>
         </PopIn>
         {!readyToRun && (
-          <div className="mt-3 inline-flex h-10 w-full items-center justify-center gap-2 rounded-lg bg-surface-muted text-[13px] font-semibold text-muted-foreground">
-            <Play className="h-4 w-4" />
+          <div className="mt-4 inline-flex h-11 w-full items-center justify-center gap-2.5 rounded-lg bg-surface-muted px-5 py-2.5 text-[13px] font-semibold text-muted-foreground">
+            <Play className="h-4 w-4 shrink-0" strokeWidth={2} />
             Run council
           </div>
         )}

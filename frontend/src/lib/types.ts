@@ -252,7 +252,7 @@ export interface DebateState {
   reliability_scores?: ReliabilityScore[];
   council_influence?: CouncilInfluenceReport;
   learning_report?: LearningReport;
-  // W&B Weave-driven self-improvement loop (agent/src/self_improvement.py): the
+  // W&B Weave-driven agent replacement loop (agent/src/self_improvement.py): the
   // least-reliable sub-agent is improved each round; reliability trends over time.
   agent_improvements?: AgentImprovementState;
   // Deterministic strategic-planning digital twin (agent/src/planning.py),
@@ -600,9 +600,9 @@ export interface LearningReport {
 }
 
 // --------------------------------------------------------------------------- //
-// W&B Weave-driven self-improvement loop — mirrors agent/src/self_improvement.py.
-// The five-agent council (CFO + four sub-agents) improves its least-reliable
-// sub-agent every round; reliability fluctuates and trends across rounds.
+// W&B Weave-driven agent replacement loop — mirrors agent/src/self_improvement.py.
+// The five-agent council (CFO + four sub-agents) retires and replaces its
+// least-reliable sub-agent every round; reliability fluctuates with Weave traces.
 // --------------------------------------------------------------------------- //
 export interface ReliabilityHistoryPoint {
   round: number;
@@ -611,10 +611,16 @@ export interface ReliabilityHistoryPoint {
 
 export interface AgentImprovementEntry {
   round: number;
+  action?: "replaced" | "improved";
+  from_generation?: number;
+  to_generation?: number;
   from_version?: number;
   to_version?: number;
   version_label?: string;
+  incarnation_id?: string;
   focus?: string;
+  replacement_rationale?: string;
+  mandate_emphasis?: string;
   directive?: string;
   targeted_dimension?: string;
   expected_gain?: string;
@@ -626,27 +632,38 @@ export interface AgentImprovementEntry {
 export interface AgentImprovementSeat {
   agent_id?: string;
   label?: string;
+  generation?: number;
+  incarnation_id?: string;
   version?: number;
   version_label?: string;
   directive?: string;
+  mandate_emphasis?: string;
   focus?: string;
   targeted_dimension?: string;
   applied_round?: number;
   reliability_history?: ReliabilityHistoryPoint[];
   improvement_history?: AgentImprovementEntry[];
+  replaced_this_round?: boolean;
   improved_this_round?: boolean;
 }
 
 export interface ImprovementRoundEntry {
   round: number;
+  action?: "replaced" | "improved";
+  replaced?: string;
+  replaced_label?: string;
   improved?: string;
   improved_label?: string;
   focus?: string;
+  replacement_rationale?: string;
+  mandate_emphasis?: string;
   targeted_dimension?: string;
   prior_reliability?: number;
   council_average?: number;
   scores?: Record<string, number>;
   version_label?: string;
+  generation?: number;
+  incarnation_id?: string;
   source?: string;
   at?: string;
 }
@@ -655,6 +672,7 @@ export interface AgentImprovementState {
   company_id?: string;
   round?: number;
   updated_at?: string;
+  last_replaced?: string | null;
   last_improved?: string | null;
   agents?: Record<string, AgentImprovementSeat>;
   rounds?: ImprovementRoundEntry[];

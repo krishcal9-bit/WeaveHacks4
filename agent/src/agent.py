@@ -248,11 +248,11 @@ class DebateState(CopilotKitState):
     reliability_scores: list
     council_influence: dict
     learning_report: dict
-    # W&B Weave-driven self-improvement loop (see src/self_improvement.py). Holds
-    # the rolling per-sub-agent reliability history, the current standing
-    # directive grafted onto each analyst, and which agent was improved this
-    # round. Loaded at intake (prior rounds), updated by the self_improvement
-    # node after the reliability audit. Mirrored in frontend/src/lib/types.ts.
+    # W&B Weave-driven agent replacement loop (see src/self_improvement.py). Holds
+    # rolling per-sub-agent reliability history, active incarnation directives, and
+    # which sub-agent was retired/replaced this round. Loaded at intake (prior
+    # rounds), updated by the self_improvement node after the reliability audit.
+    # Mirrored in frontend/src/lib/types.ts.
     agent_improvements: dict
     # Governance outcome (policy controls, approval route, audit, obligations).
     # Set by the governance node; mirrored in frontend/src/lib/types.ts.
@@ -904,10 +904,10 @@ async def intake_node(state: DebateState, config: RunnableConfig) -> dict:
     except Exception as exc:  # pragma: no cover - defensive
         print(f"[intake] operations snapshot skipped: {exc}")
     prompt_versions = prompt_versions_payload(context)
-    # Load the rolling self-improvement overlay earned from prior W&B Weave
-    # reliability traces. The standing directives here are grafted onto each
-    # analyst this round; the self_improvement node updates the overlay after the
-    # reliability audit so the NEXT round improves further.
+    # Load the rolling replacement overlay earned from prior W&B Weave reliability
+    # traces. Standing directives from the current incarnation are grafted onto
+    # each analyst this round; the self_improvement node retires the weakest and
+    # spawns a replacement after the reliability audit.
     try:
         improvement_state = SI.agent_improvement_state(_company_id(context))
     except Exception as exc:
@@ -1217,6 +1217,9 @@ async def _run_analyst_parallel(role_key: str, state: DebateState, config: Runna
 
     overlay = (state.get("agent_improvements") or {}).get("agents", {}).get(role_key) or {}
     improvement_directive = str(overlay.get("directive") or "")
+    mandate_emphasis = str(overlay.get("mandate_emphasis") or "").strip()
+    if mandate_emphasis:
+        improvement_directive = f"{mandate_emphasis}\n\n{improvement_directive}".strip()
     result = await analyst_position(
         role_key=role_key,
         persona=persona,
@@ -1232,8 +1235,8 @@ async def _run_analyst_parallel(role_key: str, state: DebateState, config: Runna
         config=config,
     )
     prompt_version = next((pv for pv in (state.get("prompt_versions") or []) if pv.get("role") == role_key), {})
-    # Surface the self-improvement version (e.g. treasury.v4-evidence-plan+imp3)
-    # so the transcript shows the agent is running an improved prompt this round.
+    # Surface the replacement generation label (e.g. treasury.v4-evidence-plan+gen3)
+    # so the transcript shows which incarnation is active this round.
     displayed_version = overlay.get("version_label") if overlay.get("directive") else prompt_version.get("version")
 
     if not result.ok:
@@ -1413,6 +1416,9 @@ def make_analyst_node(role_key: str):
         )
         overlay = (state.get("agent_improvements") or {}).get("agents", {}).get(role_key) or {}
         improvement_directive = str(overlay.get("directive") or "")
+        mandate_emphasis = str(overlay.get("mandate_emphasis") or "").strip()
+        if mandate_emphasis:
+            improvement_directive = f"{mandate_emphasis}\n\n{improvement_directive}".strip()
         result = await analyst_position(
             role_key=role_key,
             persona=persona,
@@ -1707,7 +1713,11 @@ async def influence_node(state: DebateState, config: RunnableConfig) -> dict:
     decision_type = state.get("decision_type") or "general"
     positions = state.get("positions", [])
     debate_turns = [t for t in state.get("transcript", []) if t.get("type") == "rebuttal"]
-    historical = CI.historical_reliability(company_id, state.get("context"))
+    historical = CI.weave_reliability_priors(
+        company_id,
+        state.get("context"),
+        state.get("agent_improvements"),
+    )
     signals = CI.debate_signals(
         positions=positions,
         challenge_report=state.get("challenge_report"),
@@ -1722,7 +1732,7 @@ async def influence_node(state: DebateState, config: RunnableConfig) -> dict:
     events = _append(
         state.get("observability_events"),
         _event("W&B Weave", "Trace span opened", "council_influence", "positive"),
-        _event("Redis", "Historical reliability priors loaded", json.dumps(historical), "positive"),
+        _event("Redis", "Weave reliability priors loaded", json.dumps(historical), "positive"),
         _sponsor_event(health),
     )
     await _emit_patch(
@@ -1736,7 +1746,7 @@ async def influence_node(state: DebateState, config: RunnableConfig) -> dict:
         redis_activity=_append(
             state.get("redis_activity"),
             _redis_ping_activity(health),
-            _redis_activity("Council influence", "Blending debate signals with rolling reliability priors", "state"),
+            _redis_activity("Council influence", "Blending debate signals with W&B Weave reliability priors", "state"),
         ),
         sponsor_health=health,
     )
@@ -2170,6 +2180,12 @@ async def reliability_node(state: DebateState, config: RunnableConfig) -> dict:
 
     if _fast_council():
         scorecard, summary = _fast_reliability_scorecard(positions, recommendation)
+        scorecard = WE.blend_weave_trace_scores(
+            scorecard,
+            positions=positions,
+            transcript=state.get("transcript") or [],
+            recommendation=recommendation,
+        )
         average_score = round(sum(score["reliability"] for score in scorecard) / len(scorecard)) if scorecard else 0
         weave_meta = weave_status()
         try:
@@ -2296,6 +2312,12 @@ async def reliability_node(state: DebateState, config: RunnableConfig) -> dict:
     )
     report: ReliabilityReport = await model.ainvoke([system, human], config)
     scorecard = _normalize_reliability_scores(report.scores)
+    scorecard = WE.blend_weave_trace_scores(
+        scorecard,
+        positions=positions,
+        transcript=state.get("transcript") or [],
+        recommendation=state.get("recommendation") or {},
+    )
     average_score = round(sum(score["reliability"] for score in scorecard) / len(scorecard)) if scorecard else 0
     # W&B Weave learning layer: enrich the report with replay-set + promotion-gate
     # context so the streamed scorecard carries the eval/replay/gate story.
@@ -2451,13 +2473,12 @@ async def reliability_node(state: DebateState, config: RunnableConfig) -> dict:
 
 @weave.op(name="self_improvement")
 async def self_improvement_node(state: DebateState, config: RunnableConfig) -> dict:
-    """W&B Weave-driven self-improvement: improve the least-reliable sub-agent.
+    """W&B Weave-driven agent selection: retire and replace the weakest sub-agent.
 
     The roster is fixed at five agents (CFO + four sub-agents). After the CFO
     rules and the reliability auditor scores the council against the W&B Weave
-    rubric, this node records every sub-agent's reliability for the round, finds
-    the weakest, and rewrites its standing directive from its Weave trace so it
-    improves next round. No agent is ever removed — only improved.
+    rubric, this node records every sub-agent's reliability for the round, retires
+    the weakest incarnation, and spawns a brand-new replacement from its Weave trace.
     """
     require_live_ready()
     health = sponsor_health()
@@ -2469,48 +2490,48 @@ async def self_improvement_node(state: DebateState, config: RunnableConfig) -> d
         state.get("agent_statuses"),
         "reliability",
         status="thinking",
-        detail="Selecting the least-reliable sub-agent to improve from its W&B Weave trace",
+        detail="Selecting the least-reliable sub-agent to retire and replace from its W&B Weave trace",
     )
     events = _append(
         state.get("observability_events"),
-        _event("W&B Weave", "Self-improvement span opened", "self_improvement", "positive"),
-        _event("W&B Weave", "Scoring sub-agents for improvement", "Lowest Weave reliability is improved, never removed", "positive"),
+        _event("W&B Weave", "Replacement span opened", "self_improvement", "positive"),
+        _event("W&B Weave", "Scoring sub-agents for replacement", "Lowest Weave reliability is retired and replaced", "positive"),
         _sponsor_event(health),
     )
     await _emit_patch(
         state,
         config,
         phase="self_improvement",
-        current_phase="Improving the least-reliable sub-agent from its W&B Weave trace",
+        current_phase="Retiring the least-reliable sub-agent and spawning its replacement from W&B Weave",
         agent_statuses=agent_statuses,
         observability_events=events,
         trace_summary=_trace_summary("self_improvement", "running", model_calls=0 if _fast_council() else 1, tool_calls=1, telemetry=state.get("model_telemetry")),
         redis_activity=_append(
             state.get("redis_activity"),
             _redis_ping_activity(health),
-            _redis_activity("Self-improvement", "Reading rolling reliability history and standing directives", "json"),
+            _redis_activity("Agent replacement", "Reading rolling reliability history and active incarnations", "json"),
         ),
         sponsor_health=health,
     )
 
     if not scorecard:
-        # No sub-agent scores → nothing to improve this round; pass through.
+        # No sub-agent scores → nothing to replace this round; pass through.
         improvement_state = state.get("agent_improvements") or SI.agent_improvement_state(company_id)
         agent_statuses = _set_agent_status(
             agent_statuses,
             "reliability",
             status="done",
-            detail="No sub-agent scores available to improve this round",
+            detail="No sub-agent scores available to replace this round",
         )
         return {
             "agent_improvements": improvement_state,
             "phase": "self_improvement",
-            "current_phase": "Self-improvement skipped — no sub-agent scores",
+            "current_phase": "Agent replacement skipped — no sub-agent scores",
             "agent_statuses": agent_statuses,
             "observability_events": _append(
                 events,
-                _event("W&B Weave", "Self-improvement skipped", "No sub-agent reliability scores in this run", "warning"),
-                _event("W&B Weave", "Self-improvement span closed", "self_improvement", "positive"),
+                _event("W&B Weave", "Replacement skipped", "No sub-agent reliability scores in this run", "warning"),
+                _event("W&B Weave", "Replacement span closed", "self_improvement", "positive"),
             ),
             "trace_summary": _trace_summary("self_improvement", "warning", telemetry=state.get("model_telemetry")),
             "sponsor_health": health,
@@ -2519,7 +2540,7 @@ async def self_improvement_node(state: DebateState, config: RunnableConfig) -> d
     improvement = None
     warning = None
     try:
-        improvement = await SI.improve_weakest_agent(
+        improvement = await SI.replace_weakest_agent(
             company_id=company_id,
             company=company_name,
             scorecard=scorecard,
@@ -2555,62 +2576,68 @@ async def self_improvement_node(state: DebateState, config: RunnableConfig) -> d
 
     # Reload the authoritative, freshly-persisted overlay for downstream streaming.
     improvement_state = SI.agent_improvement_state(company_id)
-    improved_label = improvement.get("improved_label") or improvement.get("improved_agent")
+    replaced_label = improvement.get("replaced_label") or improvement.get("replaced_agent")
     round_no = improvement.get("round")
     focus = improvement.get("focus") or ""
     prior_reliability = improvement.get("prior_reliability")
     council_average = improvement.get("council_average")
+    generation = improvement.get("generation")
     weave_published = bool((improvement.get("weave") or {}).get("published"))
 
     agent_statuses = _set_agent_status(
         agent_statuses,
         "reliability",
         status="done",
-        headline=f"Round {round_no} · improved {improved_label}",
-        detail=f"{improved_label} reliability {prior_reliability}% → directive bumped to {improvement.get('version_label')}",
+        headline=f"Round {round_no} · replaced {replaced_label}",
+        detail=(
+            f"{replaced_label} retired at {prior_reliability}% → generation {generation} "
+            f"({improvement.get('version_label')})"
+        ),
     )
-    improve_turn = _turn(
+    replace_turn = _turn(
         "reliability",
         type="reliability",
-        headline=f"Self-improvement · round {round_no}: {improved_label}",
+        headline=f"Agent replacement · round {round_no}: {replaced_label}",
         argument=(
-            f"{improved_label} was the least reliable sub-agent at {prior_reliability}% on this decision. "
-            f"Its prompt now carries a W&B Weave-derived directive targeting {focus or 'its weakest dimension'} "
-            f"({improvement.get('version_label')}) so it improves next round."
+            f"{replaced_label} was the least reliable sub-agent at {prior_reliability}% on this decision. "
+            f"Its incarnation was retired and replaced with generation {generation} — a brand-new agent grounded in "
+            f"its W&B Weave trace, targeting {focus or 'its weakest dimension'} "
+            f"({improvement.get('version_label')})."
         ),
         key_points=[
             f"Council sub-agent average: {council_average}%",
-            f"Improvement directive: {improvement.get('directive', '')[:160]}",
+            improvement.get("replacement_rationale") or improvement.get("mandate_emphasis") or "",
+            f"Replacement directive: {improvement.get('directive', '')[:160]}",
         ],
     )
     return {
         "agent_improvements": improvement_state,
         "phase": "self_improvement",
-        "current_phase": f"Round {round_no}: improved {improved_label} from its W&B Weave trace",
+        "current_phase": f"Round {round_no}: replaced {replaced_label} from its W&B Weave trace",
         "agent_statuses": agent_statuses,
-        "transcript": state.get("transcript", []) + [improve_turn],
+        "transcript": state.get("transcript", []) + [replace_turn],
         "observability_events": _append(
             events,
             _event(
                 "W&B Weave",
-                f"Sub-agent improved · round {round_no}",
-                f"{improved_label} {prior_reliability}% → {improvement.get('version_label')} (targets {focus or 'weakest dimension'})",
+                f"Sub-agent replaced · round {round_no}",
+                f"{replaced_label} {prior_reliability}% retired → gen {generation} ({improvement.get('version_label')})",
                 "positive",
             ),
             _event(
                 "W&B Weave",
-                "Improvement snapshot published" if weave_published else "Improvement snapshot persisted",
+                "Replacement snapshot published" if weave_published else "Replacement snapshot persisted",
                 "atlas:stream:agent_improvements" if not weave_published else (improvement.get("weave") or {}).get("url") or "W&B Weave",
                 "positive",
             ),
-            _event("W&B Weave", "Self-improvement span closed", "self_improvement", "positive"),
+            _event("W&B Weave", "Replacement span closed", "self_improvement", "positive"),
         ),
         "trace_summary": _trace_summary("self_improvement", "complete", model_calls=0 if _fast_council() else 1, tool_calls=1, telemetry=state.get("model_telemetry")),
         "redis_activity": _append(
             state.get("redis_activity"),
             _redis_activity(
-                "Self-improvement",
-                f"Round {round_no}: {improved_label} directive → {improvement.get('version_label')}",
+                "Agent replacement",
+                f"Round {round_no}: {replaced_label} retired → gen {generation} ({improvement.get('version_label')})",
                 "json",
             ),
         ),

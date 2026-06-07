@@ -14,6 +14,7 @@ import {
 } from "@/lib/council";
 import type { AgentStatus, DebateState, EvidenceItem, TranscriptTurn } from "@/lib/types";
 import { agentIcon } from "./agent-visuals";
+import { CfoRulingCard } from "./cfo-ruling";
 import { EmptyState, Panel, SkeletonText, StatusBadge, type IconType } from "./primitives";
 
 const TYPE_LABEL: Record<string, string> = {
@@ -224,6 +225,30 @@ function TurnRow({
   const body = turn.argument || turn.point || "";
   const stance = turn.stance ? toneClasses(stanceTone(String(turn.stance))) : null;
   const evidence = Array.isArray(turn.evidence) ? turn.evidence : [];
+  const isDecision = turn.type === "decision";
+  const rulingDecision = recommendation?.decision ?? (turn.headline?.split("·")[0]?.trim() || "");
+
+  if (isDecision && rulingDecision) {
+    return (
+      <motion.li
+        layout
+        variants={transcriptTurn}
+        initial={reduced ? false : "hidden"}
+        animate="show"
+        exit={{ opacity: 0, y: -6, scale: 0.985, transition: { duration: 0.2 } }}
+        transition={{ ...springSnappy, delay: reduced ? 0 : Math.min(index * 0.03, 0.18) }}
+        className="min-w-0"
+      >
+        <CfoRulingCard
+          decision={rulingDecision}
+          confidence={recommendation?.confidence}
+          rationale={recommendation?.rationale ?? body}
+          keyPoints={turn.key_points}
+          variant="transcript"
+        />
+      </motion.li>
+    );
+  }
 
   return (
     <motion.li
@@ -238,7 +263,6 @@ function TurnRow({
         "border-l-2",
         accent.ring,
         turn.type === "influence" && "border-info/35 bg-info-bg/15",
-        turn.type === "decision" && "border-positive/35 bg-positive-bg/10",
       )}
     >
       <div className="flex min-w-0 items-center justify-between gap-2">
@@ -283,12 +307,6 @@ function TurnRow({
             </li>
           ))}
         </ul>
-      )}
-
-      {turn.type === "decision" && recommendation?.decision && (
-        <div className="mt-2 text-[11px] font-semibold text-positive">
-          Recorded: {recommendation.decision} · {recommendation.confidence ?? "--"}% confidence
-        </div>
       )}
 
       {evidence.length > 0 && <EvidenceChips evidence={evidence} />}

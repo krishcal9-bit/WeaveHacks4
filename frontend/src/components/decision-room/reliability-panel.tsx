@@ -34,7 +34,7 @@ export function ReliabilityPanel({
       id="evals"
       icon={Activity}
       visualIcon="health"
-      eyebrow="W&B self-improvement"
+      eyebrow="W&B Weave scoring"
       title="Council reliability"
       action={
         typeof avg === "number" ? (

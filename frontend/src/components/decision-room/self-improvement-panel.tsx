@@ -1,7 +1,7 @@
 "use client";
 
 import { useMemo } from "react";
-import { Sparkles, TrendingDown, TrendingUp } from "lucide-react";
+import { RefreshCw, Sparkles, TrendingDown, TrendingUp } from "lucide-react";
 import { cx } from "@/components/ui";
 import { ROSTER_BY_ID } from "@/lib/agents";
 import { COUNCIL_ANALYST_IDS, reliabilityColor, reliabilityTone, toneClasses } from "@/lib/council";
@@ -25,8 +25,9 @@ export function SelfImprovementPanel({
   const agents = agentImprovements?.agents ?? {};
   const rounds = agentImprovements?.rounds ?? [];
   const latestRound = rounds.length ? rounds[rounds.length - 1] : undefined;
-  const lastImproved = agentImprovements?.last_improved ?? latestRound?.improved;
-  const latestDirective = lastImproved ? agents[lastImproved]?.directive : undefined;
+  const lastReplaced =
+    agentImprovements?.last_replaced ?? agentImprovements?.last_improved ?? latestRound?.replaced ?? latestRound?.improved;
+  const latestDirective = lastReplaced ? agents[lastReplaced]?.directive : undefined;
   const liveScoreById = useMemo(
     () => Object.fromEntries(reliabilityScores.map((s) => [s.agent_id, s.reliability])),
     [reliabilityScores],
@@ -38,8 +39,8 @@ export function SelfImprovementPanel({
     <Panel
       id="self-improvement"
       visualIcon="memory"
-      eyebrow="W&B self-improvement"
-      title="Self-improving council"
+      eyebrow="W&B agent selection"
+      title="Weave-driven council evolution"
       action={
         hasHistory ? (
           <StatusBadge tone="info">Round {round || rounds.length}</StatusBadge>
@@ -50,26 +51,32 @@ export function SelfImprovementPanel({
         running ? (
           <div>
             <div className="mb-2 text-[12px] font-semibold text-info">
-              The weakest sub-agent is improved from its W&B Weave trace after the CFO rules.
+              The weakest sub-agent is retired and replaced from its W&B Weave trace after the CFO rules.
             </div>
             <SkeletonText lines={3} />
           </div>
         ) : (
           <EmptyState icon={Sparkles} visualIcon="memory">
             {started
-              ? "Five agents stay fixed (CFO + four sub-agents). Each round, the least-reliable sub-agent is improved — never removed — from its W&B Weave reliability trace."
-              : "After each round, the least-reliable sub-agent is improved from its W&B Weave reliability trace. Reliability fluctuates and trends up over rounds."}
+              ? "Five agents stay fixed (CFO + four sub-agents). Each round, W&B Weave scores reliability, the CFO weights input by those scores, and the least-reliable sub-agent is replaced with a new incarnation."
+              : "After each round, the least-reliable sub-agent is retired and replaced from its W&B Weave reliability trace. Scores fluctuate every decision."}
           </EmptyState>
         )
       ) : (
         <>
           {latestRound && (
             <p className="break-words text-[12px] leading-relaxed text-muted-foreground">
-              Round <span className="font-semibold text-foreground">{latestRound.round}</span>: improved{" "}
+              Round <span className="font-semibold text-foreground">{latestRound.round}</span>: replaced{" "}
               <span className="font-semibold text-foreground">
-                {ROSTER_BY_ID[latestRound.improved ?? ""]?.label ?? latestRound.improved_label ?? latestRound.improved}
+                {ROSTER_BY_ID[latestRound.replaced ?? latestRound.improved ?? ""]?.label ??
+                  latestRound.replaced_label ??
+                  latestRound.improved_label ??
+                  latestRound.replaced ??
+                  latestRound.improved}
               </span>{" "}
-              (was {latestRound.prior_reliability ?? "—"}%){latestRound.focus ? ` — targets ${latestRound.focus}` : ""}.
+              (retired at {latestRound.prior_reliability ?? "—"}%)
+              {latestRound.generation ? ` → generation ${latestRound.generation}` : ""}
+              {latestRound.focus ? ` — targets ${latestRound.focus}` : ""}.
             </p>
           )}
 
@@ -80,14 +87,14 @@ export function SelfImprovementPanel({
                 id={id}
                 seat={agents[id]}
                 liveReliability={liveScoreById[id]}
-                improvedThisRound={lastImproved === id}
+                replacedThisRound={lastReplaced === id}
               />
             ))}
           </div>
 
           {latestDirective && (
             <div className="mt-3 rounded-md border border-info/35 bg-info-bg/20 px-2.5 py-2">
-              <SectionLabel>Latest learned directive</SectionLabel>
+              <SectionLabel>Replacement directive</SectionLabel>
               <p className="mt-1 break-words text-[11px] leading-relaxed text-foreground">{latestDirective}</p>
             </div>
           )}
@@ -101,12 +108,12 @@ function AgentTrendRow({
   id,
   seat,
   liveReliability,
-  improvedThisRound,
+  replacedThisRound,
 }: {
   id: string;
   seat?: AgentImprovementSeat;
   liveReliability?: number;
-  improvedThisRound: boolean;
+  replacedThisRound: boolean;
 }) {
   const label = ROSTER_BY_ID[id]?.label ?? seat?.label ?? id;
   const history = seat?.reliability_history ?? [];
@@ -120,13 +127,18 @@ function AgentTrendRow({
     <div
       className={cx(
         "rounded-md border px-2.5 py-2",
-        improvedThisRound ? "border-info/40 bg-info-bg/20" : "border-border bg-background",
+        replacedThisRound ? "border-info/40 bg-info-bg/20" : "border-border bg-background",
       )}
     >
       <div className="flex items-center justify-between gap-2">
         <div className="flex min-w-0 items-center gap-1.5">
           <span className="truncate text-[12px] font-semibold">{label}</span>
-          {improvedThisRound && <StatusBadge tone="info">Improved</StatusBadge>}
+          {replacedThisRound && (
+            <StatusBadge tone="info">
+              <RefreshCw className="mr-0.5 inline h-3 w-3" strokeWidth={2.5} />
+              Replaced
+            </StatusBadge>
+          )}
         </div>
         <div className="flex shrink-0 items-center gap-1.5">
           {typeof delta === "number" && delta !== 0 && (
@@ -149,11 +161,10 @@ function AgentTrendRow({
 
       <div className="mt-1.5 flex items-center gap-2">
         <Sparkline values={values} className="h-6 flex-1" />
-        {seat?.version_label && (
-          <span className="shrink-0 rounded border border-border bg-surface px-1.5 py-0.5 font-mono text-[9px] font-medium text-muted-foreground">
-            {seat.version_label}
-          </span>
-        )}
+        <span className="shrink-0 rounded border border-border bg-surface px-1.5 py-0.5 font-mono text-[9px] font-medium text-muted-foreground">
+          {seat?.version_label ?? "—"}
+          {seat?.generation ? ` · g${seat.generation}` : ""}
+        </span>
       </div>
     </div>
   );

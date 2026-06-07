@@ -1,12 +1,11 @@
 "use client";
 
-import { Download, Gavel, Loader2, TrendingDown, TrendingUp } from "lucide-react";
-import { motion, useReducedMotion } from "motion/react";
-import { springSnappy } from "@/components/motion/variants";
+import { Download, Loader2, TrendingDown, TrendingUp } from "lucide-react";
 import { cx } from "@/components/ui";
-import { averageReliability, decisionTone, topInfluenceAgent, toneClasses } from "@/lib/council";
+import { averageReliability, toneClasses, topInfluenceAgent } from "@/lib/council";
 import { fmtMonths, fmtSignedMonths } from "@/lib/format";
 import type { DebateState, ReliabilityScore, RunwayImpact } from "@/lib/types";
+import { CfoRulingCard } from "./cfo-ruling";
 import { CopyButton, EmptyState, Panel, SectionLabel, SkeletonText } from "./primitives";
 
 function buildBoardMemo(
@@ -89,20 +88,17 @@ export function BoardMemo({
   healthReady: boolean;
   started: boolean;
 }) {
-  const reduced = useReducedMotion();
   const rec = recommendation;
   const hasDecision = Boolean(rec?.decision);
   const avg = averageReliability(reliabilityScores);
   const leadInfluence = topInfluenceAgent(rec?.council_influence);
-  const tone = hasDecision ? toneClasses(decisionTone(rec?.decision)) : null;
   const memo = hasDecision && rec ? buildBoardMemo(decision, rec, companyName, avg) : "";
 
   return (
     <Panel
       id="council-memo"
-      icon={Gavel}
       visualIcon="memo"
-      title="Recommendation"
+      title="CFO ruling"
       action={
         hasDecision ? (
           <div className="flex items-center gap-1.5">
@@ -120,47 +116,32 @@ export function BoardMemo({
       }
     >
       {hasDecision && rec ? (
-        <motion.div
-          initial={reduced ? false : { opacity: 0, y: 12 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.45, ease: [0.22, 1, 0.36, 1] }}
-        >
-          <div className="flex flex-wrap items-center gap-2">
-            <motion.span
-              className={cx("inline-flex items-center gap-1.5 rounded-md border px-3 py-1 text-[15px] font-bold", tone?.soft)}
-              initial={reduced ? false : { scale: 0.92, opacity: 0 }}
-              animate={{ scale: 1, opacity: 1 }}
-              transition={springSnappy}
-            >
-              <Gavel className="h-4 w-4" strokeWidth={2.25} />
-              {rec.decision}
-            </motion.span>
-            {typeof rec.confidence === "number" && (
-              <span className="rounded-md border border-border bg-background px-2.5 py-1 text-[12px] font-semibold tabular-nums text-muted-foreground">
-                {rec.confidence}% confidence
-              </span>
-            )}
+        <>
+          <CfoRulingCard
+            decision={rec.decision!}
+            confidence={rec.confidence}
+            rationale={rec.rationale}
+            variant="memo"
+          />
+
+          <div className="mt-3 flex flex-wrap gap-2">
             {leadInfluence && (
-              <span className="rounded-md border border-border bg-background px-2.5 py-1 text-[12px] font-semibold tabular-nums text-muted-foreground">
-                {leadInfluence.agent_id} {leadInfluence.influence_weight}% influence
+              <span className="rounded-md border border-border bg-background px-2.5 py-1 text-[11px] font-semibold tabular-nums text-muted-foreground">
+                {leadInfluence.agent_id} led at {leadInfluence.influence_weight}% influence
               </span>
             )}
             {typeof rec.confidence_factors?.delta === "number" && rec.confidence_factors.delta !== 0 && (
-              <span className="rounded-md border border-border bg-background px-2.5 py-1 text-[12px] font-semibold tabular-nums text-muted-foreground">
+              <span className="rounded-md border border-border bg-background px-2.5 py-1 text-[11px] font-semibold tabular-nums text-muted-foreground">
                 Confidence {rec.confidence_factors.delta > 0 ? "+" : ""}
                 {rec.confidence_factors.delta} from council cohesion
               </span>
             )}
             {typeof avg === "number" && (
-              <span className="rounded-md border border-border bg-background px-2.5 py-1 text-[12px] font-semibold tabular-nums text-muted-foreground">
-                Reliability {avg}%
+              <span className="rounded-md border border-border bg-background px-2.5 py-1 text-[11px] font-semibold tabular-nums text-muted-foreground">
+                Council reliability {avg}%
               </span>
             )}
           </div>
-
-          {rec.rationale && (
-            <p className="dropcap mt-3 break-words font-serif text-[14px] leading-relaxed text-foreground">{rec.rationale}</p>
-          )}
 
           {(rec.key_risks?.length || rec.conditions?.length) && (
             <div className="mt-3 grid gap-3 sm:grid-cols-2">
@@ -172,7 +153,7 @@ export function BoardMemo({
               )}
             </div>
           )}
-        </motion.div>
+        </>
       ) : running ? (
         <div>
           <div className="mb-2 flex items-center gap-2 text-[12px] font-semibold text-info">
@@ -182,7 +163,7 @@ export function BoardMemo({
           <SkeletonText lines={3} />
         </div>
       ) : (
-        <EmptyState icon={Gavel} visualIcon={healthReady ? "memo" : "health"}>
+        <EmptyState visualIcon={healthReady ? "memo" : "health"}>
           {!healthReady
             ? "Preflight must pass before the CFO can issue a ruling."
             : started

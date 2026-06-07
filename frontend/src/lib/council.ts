@@ -573,6 +573,31 @@ export function decisionTone(decision?: string): Tone {
   }
 }
 
+/** Editorial flourish + kicker copy for the CFO ruling surface. */
+export function cfoRulingFlourish(decision?: string): { kicker: string; flourish: string } {
+  switch ((decision ?? "").toUpperCase()) {
+    case "APPROVE":
+      return { kicker: "Office of the CFO", flourish: "The chair approves — proceed with eyes open." };
+    case "REJECT":
+      return { kicker: "Office of the CFO", flourish: "The chair declines — not on these terms." };
+    case "CONDITIONAL":
+      return { kicker: "Office of the CFO", flourish: "Approved only if the guardrails hold." };
+    case "DEFER":
+      return { kicker: "Office of the CFO", flourish: "The chair defers — more evidence required." };
+    default:
+      return { kicker: "Office of the CFO", flourish: "The chair has ruled." };
+  }
+}
+
+/** Split rationale into a lead sentence (emphasized) and the remainder. */
+export function splitCfoRationale(text: string): { lead: string; rest: string } {
+  const trimmed = text.trim();
+  if (!trimmed) return { lead: "", rest: "" };
+  const match = trimmed.match(/^(.+?[.!?])(?:\s+([\s\S]+))?$/);
+  if (!match) return { lead: trimmed, rest: "" };
+  return { lead: match[1].trim(), rest: (match[2] ?? "").trim() };
+}
+
 export function getAgentHeadline(
   member: RosterMember,
   turn?: TranscriptTurn,
