@@ -52,6 +52,7 @@ the strict live-only contract and without clobbering the sibling editing
 - [x] M11 — analytics endpoint (/api/orchestration/observability) + eval CLI (eval_run) + selftest (26/26)
 - [x] M12 — hierarchical/parallel sub-debates (bus-coordinated): decompose → concurrent committees → aggregate (live-verified)
 - [x] M13 — auto-route complex decisions to hierarchical mode inside the live graph (live-verified: acquisition → hierarchical, REJECT@91)
+- [x] M14 — what-if debate branching (time-travel checkpointer): branch + counterfactual re-run + compare (live-verified: weighting Treasury 3x flipped CONDITIONAL→REJECT)
 
 ## Log
 - **M0 done**: `__init__.py`, `namespace.py` (atlas:orch:* key map, pure/offline-safe), PROGRESS.md.
@@ -123,6 +124,10 @@ the strict live-only contract and without clobbering the sibling editing
   inside the live graph (cost-bounded lean sub-committees); persist now writes episodic memory + decision event
   for BOTH single and hierarchical paths. LIVE: "$6M acquisition to expand into Europe" → mode=hierarchical,
   4 sub-committees [REJECT,REJECT,CONDITIONAL,CONDITIONAL] → REJECT@91, hrun persisted, $0.26. CLAUDE.md synced.
+- **M14 done**: `whatif.py` — what-if branching via the time-travel checkpointer: branch a persisted run's
+  thread, counterfactually re-run with altered reliability weights, compare. POST /api/orchestration/whatif.
+  LIVE: weighting Treasury 3x flipped the Datadog renewal CONDITIONAL→REJECT (branch thread + lineage persisted).
+  Now ALL orchestration infra is exercised end-to-end (incl. branch / time-travel).
 
 ## Status: every explicit goal bullet delivered + live-verified; demo green with the flag off.
 All 11 modules (namespace, models, store, conductor, registry, debate, llm_io, eval, graph, api, control, seed)
