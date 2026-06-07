@@ -415,6 +415,12 @@ const TurnRow = memo(function TurnRow({
           dissent={recommendation?.dissent ?? turn.dissent}
           runwayImpactSummary={recommendation?.runway_impact_summary ?? turn.runway_impact_summary}
           keyPoints={turn.key_points}
+          questionKind={recommendation?.question_kind ?? turn.question_kind}
+          isVerdict={recommendation?.is_verdict ?? turn.is_verdict}
+          headline={recommendation?.headline ?? turn.headline}
+          answerLabel={recommendation?.answer_label ?? turn.answer_label}
+          recommendedActions={recommendation?.recommended_actions ?? turn.recommended_actions}
+          selectedOptions={recommendation?.selected_options ?? turn.selected_options}
           variant="transcript"
         />
       </motion.li>

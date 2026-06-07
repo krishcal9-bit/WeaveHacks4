@@ -5,6 +5,7 @@ import {
   ClipboardCheck,
   Gavel,
   GitBranch,
+  ListChecks,
   Scale,
   ShieldCheck,
   TrendingUp,
@@ -21,7 +22,7 @@ import {
 } from "@/components/motion/variants";
 import { cx } from "@/components/ui";
 import { cfoRulingFlourish, decisionTone, splitCfoRationale, toneClasses } from "@/lib/council";
-import type { CfoAnalystInfluence, OperatorAction } from "@/lib/types";
+import type { CfoAnalystInfluence, OperatorAction, QuestionKind } from "@/lib/types";
 
 export function CfoRulingCard({
   decision,
@@ -35,6 +36,12 @@ export function CfoRulingCard({
   runwayImpactSummary,
   operatorActions,
   keyPoints,
+  questionKind,
+  isVerdict,
+  headline,
+  answerLabel,
+  recommendedActions,
+  selectedOptions,
   variant = "memo",
 }: {
   decision: string;
@@ -48,13 +55,28 @@ export function CfoRulingCard({
   runwayImpactSummary?: string;
   operatorActions?: OperatorAction[];
   keyPoints?: string[];
+  questionKind?: QuestionKind | string;
+  isVerdict?: boolean;
+  headline?: string;
+  answerLabel?: string;
+  recommendedActions?: string[];
+  selectedOptions?: string[];
   variant?: "memo" | "transcript";
 }) {
   const reduced = useReducedMotion();
   const shouldReduce = reduced ?? false;
-  const tone = decisionTone(decision);
+  // A result is a VERDICT only when explicitly flagged. Open-ended recommendations
+  // and multiple-choice selections (isVerdict === false) render neutrally and lead
+  // with the human headline, never the raw RECOMMENDATION / SELECTION token.
+  const nonVerdict = isVerdict === false;
+  const tone = nonVerdict ? "info" : decisionTone(decision);
   const colors = toneClasses(tone);
   const { kicker, flourish } = cfoRulingFlourish(decision);
+  const marquee = nonVerdict ? headline?.trim() || decision : decision;
+  const badgeLabel = nonVerdict ? answerLabel || "Recommendation" : "Final ruling";
+  const isMultipleChoice = questionKind === "multiple_choice";
+  const actionItems = recommendedActions?.filter((item) => item && item.trim()) ?? [];
+  const optionItems = selectedOptions?.filter((item) => item && item.trim()) ?? [];
   const { lead, rest } = splitCfoRationale(rationale ?? "");
   const isMemo = variant === "memo";
   const chairRuling = ruling || lead;
@@ -102,7 +124,7 @@ export function CfoRulingCard({
         </div>
         <span className={cx("cfo-ruling-badge inline-flex shrink-0 items-center gap-1.5 rounded-md border px-2 py-1", colors.soft)}>
           <Gavel className="h-3.5 w-3.5" strokeWidth={2.25} />
-          <span className="text-[10px] font-bold uppercase">Final ruling</span>
+          <span className="text-[10px] font-bold uppercase">{badgeLabel}</span>
         </span>
       </StagedBlock>
 
@@ -115,12 +137,22 @@ export function CfoRulingCard({
 
       <StagedBlock delay={reveal(2)} reduced={shouldReduce} className="mt-3 flex flex-wrap items-end gap-x-3 gap-y-2">
         <motion.p
-          className={cx("cfo-verdict font-display font-semibold", colors.text, isMemo ? "text-[clamp(1.75rem,4vw,2.35rem)]" : "text-[clamp(1.45rem,3.5vw,1.9rem)]")}
+          className={cx(
+            "cfo-verdict min-w-0 break-words font-display font-semibold",
+            colors.text,
+            nonVerdict
+              ? isMemo
+                ? "text-[clamp(1.25rem,2.6vw,1.6rem)] leading-tight"
+                : "text-[clamp(1.1rem,2.4vw,1.4rem)] leading-tight"
+              : isMemo
+                ? "text-[clamp(1.75rem,4vw,2.35rem)]"
+                : "text-[clamp(1.45rem,3.5vw,1.9rem)]",
+          )}
           initial={shouldReduce ? false : { scale: 0.94, opacity: 0 }}
           animate={{ scale: 1, opacity: 1 }}
           transition={springSnappy}
         >
-          {decision}
+          {marquee}
         </motion.p>
         {typeof confidence === "number" && (
           <p className={cx("pb-1 font-display text-[13px] italic tabular-nums", colors.text)}>
@@ -128,6 +160,22 @@ export function CfoRulingCard({
           </p>
         )}
       </StagedBlock>
+
+      {nonVerdict && isMultipleChoice && optionItems.length > 0 && (
+        <StagedBlock delay={reveal(2.6)} reduced={shouldReduce} className="mt-3 rounded-md border border-border bg-background/80 p-2.5">
+          <p className="text-[10px] font-bold uppercase text-subtle-foreground">Selected option(s)</p>
+          <div className="mt-2 flex flex-wrap gap-1.5">
+            {optionItems.map((option) => (
+              <span
+                key={option}
+                className={cx("inline-flex max-w-full items-center gap-1.5 rounded-md border px-2 py-1 text-[12px] font-semibold", colors.soft)}
+              >
+                <span className="break-words">{option}</span>
+              </span>
+            ))}
+          </div>
+        </StagedBlock>
+      )}
 
       {typeof confidence === "number" && (
         <StagedBlock delay={reveal(3)} reduced={shouldReduce} className="mt-3">
@@ -176,6 +224,18 @@ export function CfoRulingCard({
       {rationaleBody && (
         <StagedBlock delay={reveal(6)} reduced={shouldReduce} className={cx("mt-3 space-y-2", isMemo ? "text-[15px]" : "text-[13px]")}>
           <p className="cfo-ruling-body leading-relaxed text-foreground">{rationaleBody}</p>
+        </StagedBlock>
+      )}
+
+      {nonVerdict && actionItems.length > 0 && (
+        <StagedBlock delay={reveal(6.5)} reduced={shouldReduce}>
+          <CfoOrderedPanel
+            icon={ListChecks}
+            title="Recommended course of action"
+            items={actionItems}
+            toneClass={colors.text}
+            className="mt-3"
+          />
         </StagedBlock>
       )}
 
@@ -258,6 +318,41 @@ function CfoMiniPanel({
           </li>
         ))}
       </ul>
+    </div>
+  );
+}
+
+// Prioritized, numbered course-of-action steps — the primary answer body for
+// open-ended recommendations. Reuses the card's mini-panel surface styling.
+function CfoOrderedPanel({
+  icon: Icon,
+  title,
+  items,
+  toneClass,
+  className,
+}: {
+  icon: LucideIcon;
+  title: string;
+  items: string[];
+  toneClass: string;
+  className?: string;
+}) {
+  return (
+    <div className={cx("rounded-md border border-border/80 bg-background/75 p-2.5", className)}>
+      <div className="flex items-center gap-1.5">
+        <Icon className={cx("h-3.5 w-3.5", toneClass)} strokeWidth={2.25} />
+        <p className="text-[10px] font-bold uppercase text-subtle-foreground">{title}</p>
+      </div>
+      <ol className="mt-2 space-y-1.5">
+        {items.slice(0, 6).map((item, index) => (
+          <li key={`${item}-${index}`} className="flex gap-2 text-[12px] leading-relaxed text-foreground">
+            <span className="mt-0.5 grid h-5 w-5 shrink-0 place-items-center rounded-full border border-border bg-surface text-[10px] font-semibold tabular-nums text-muted-foreground">
+              {index + 1}
+            </span>
+            <span className="min-w-0 break-words">{item}</span>
+          </li>
+        ))}
+      </ol>
     </div>
   );
 }

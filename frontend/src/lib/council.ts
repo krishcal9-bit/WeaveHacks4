@@ -533,7 +533,9 @@ export function getAgentStanceLabel(
   turn?: TranscriptTurn,
   recommendation?: DebateState["recommendation"],
 ): string {
-  if (member.id === "cfo" && recommendation?.decision) return recommendation.decision;
+  if (member.id === "cfo" && recommendation?.decision) {
+    return recommendation.answer_label ?? recommendation.decision;
+  }
   if (member.id === "reliability") return "Evaluator";
   if (turn?.stance) {
     const stance = String(turn.stance).toLowerCase();
@@ -550,7 +552,9 @@ export function agentStanceTone(
   turn?: TranscriptTurn,
   recommendation?: DebateState["recommendation"],
 ): Tone {
-  if (member.id === "cfo" && recommendation?.decision) return decisionTone(recommendation.decision);
+  if (member.id === "cfo" && recommendation?.decision) {
+    return recommendation.is_verdict ? decisionTone(recommendation.decision) : "info";
+  }
   if (member.id === "reliability") return "info";
   if (turn?.stance) return stanceTone(String(turn.stance));
   return "neutral";
@@ -578,6 +582,16 @@ export function decisionTone(decision?: string): Tone {
   }
 }
 
+/**
+ * Tone for the CFO answer surface. Verdicts (closed questions) keep the
+ * decision tone (green APPROVE / red REJECT / amber CONDITIONAL·DEFER); open-
+ * ended recommendations and multiple-choice selections stay neutral info.
+ */
+export function answerTone(recommendation?: DebateState["recommendation"]): Tone {
+  if (!recommendation) return "info";
+  return recommendation.is_verdict ? decisionTone(recommendation.decision) : "info";
+}
+
 /** Editorial flourish + kicker copy for the CFO ruling surface. */
 export function cfoRulingFlourish(decision?: string): { kicker: string; flourish: string } {
   switch ((decision ?? "").toUpperCase()) {
@@ -589,6 +603,10 @@ export function cfoRulingFlourish(decision?: string): { kicker: string; flourish
       return { kicker: "Office of the CFO", flourish: "Approved only if the guardrails hold." };
     case "DEFER":
       return { kicker: "Office of the CFO", flourish: "The chair defers — more evidence required." };
+    case "RECOMMENDATION":
+      return { kicker: "Office of the CFO", flourish: "The chair recommends a path forward." };
+    case "SELECTION":
+      return { kicker: "Office of the CFO", flourish: "The chair selects the best option." };
     default:
       return { kicker: "Office of the CFO", flourish: "The chair has ruled." };
   }
@@ -610,7 +628,12 @@ export function getAgentHeadline(
   agentStatus?: AgentStatus,
 ): string {
   if (member.id === "cfo" && recommendation?.decision) {
-    return `${recommendation.decision} at ${recommendation.confidence ?? "--"}% confidence`;
+    if (recommendation.is_verdict) {
+      return `${recommendation.decision} at ${recommendation.confidence ?? "--"}% confidence`;
+    }
+    // Open-ended / multiple-choice: show the human marquee answer, never the
+    // raw RECOMMENDATION / SELECTION token.
+    return recommendation.headline ?? recommendation.answer_label ?? recommendation.decision;
   }
   return agentStatus?.headline || turn?.headline || member.mandate || "Awaiting live council output";
 }

@@ -162,6 +162,11 @@ export function decisionStyle(decision?: string): string {
       return "text-risk bg-risk-bg border-risk/20";
     case "CONDITIONAL":
       return "text-warning bg-warning-bg border-warning/20";
+    // Non-verdict answers (open-ended recommendation / multiple-choice selection)
+    // render with the neutral info style — never green/red.
+    case "RECOMMENDATION":
+    case "SELECTION":
+      return "text-info bg-info-bg border-info/20";
     default:
       return "text-info bg-info-bg border-info/20";
   }

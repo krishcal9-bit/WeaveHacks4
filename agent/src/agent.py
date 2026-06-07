@@ -977,17 +977,46 @@ async def intake_node(state: DebateState, config: RunnableConfig) -> dict:
         "vendors": json.loads(_tool_body(list_vendors)),
         "policies": json.loads(_tool_body(search_finance_policies, query=decision or "financial decision")),
     }
-    # Fold in imported finance-operations data + reconciliation, but only when a
-    # connector has actually ingested data — keeps the core demo unchanged and
-    # never invents operations facts. Best-effort: must not fail the debate.
+    # Prefer the MOST RECENTLY UPLOADED company dataset when one exists, else fall
+    # back to the seeded Northwind system of record. Uploads land in Redis as
+    # finance-operations (connector) data + indexed documents — never a fabricated
+    # company record — so this stays strictly live-grounded. Best-effort: must not
+    # fail the debate.
+    uploaded_dataset = False
     try:
         from src.integrations.service import operations_context_snapshot
 
         operations = operations_context_snapshot()
         if operations:
             context["operations"] = operations
+            uploaded_dataset = True
     except Exception as exc:  # pragma: no cover - defensive
         print(f"[intake] operations snapshot skipped: {exc}")
+    # Fold in the most-recent uploaded documents (RAG corpus, newest first) so the
+    # committee debates against just-uploaded files, not only the seed.
+    try:
+        from src.documents.store import list_documents
+
+        docs, _total = list_documents(limit=8)
+        if docs:
+            uploaded_dataset = True
+            context["uploaded_documents"] = [
+                {
+                    "filename": d.filename,
+                    "source_category": d.source_category,
+                    "vendor": d.vendor,
+                    "uploaded_at": d.uploaded_at,
+                    "excerpt": (d.excerpt or "")[:400],
+                }
+                for d in docs
+            ]
+    except Exception as exc:  # pragma: no cover - defensive
+        print(f"[intake] uploaded documents skipped: {exc}")
+    context["dataset_source"] = (
+        {"kind": "upload", "label": "uploaded company dataset"}
+        if uploaded_dataset
+        else {"kind": "seed", "label": _company_name(context)}
+    )
     prompt_versions = prompt_versions_payload(context)
     # Load the rolling replacement overlay earned from prior W&B Weave reliability
     # traces. Standing directives from the current incarnation are grafted onto
@@ -1485,7 +1514,16 @@ async def committee_parallel_node(state: DebateState, config: RunnableConfig) ->
     live.agent_statuses = agent_statuses
     live.transcript = (state.get("transcript") or []) + thinking_turns
 
-    await asyncio.gather(*[_run_analyst_parallel(role_key, state, config, live) for role_key in ANALYSTS])
+    # return_exceptions=True so one analyst raising (e.g. a per-call timeout that
+    # surfaced as an exception) can never abort the whole committee node; each
+    # analyst already records a graceful failure turn internally on a not-ok call.
+    results = await asyncio.gather(
+        *[_run_analyst_parallel(role_key, state, config, live) for role_key in ANALYSTS],
+        return_exceptions=True,
+    )
+    for role_key, outcome in zip(ANALYSTS, results):
+        if isinstance(outcome, Exception):
+            print(f"[committee_parallel] {role_key} analyst raised: {redact_secrets(outcome)}")
 
     model_calls = len(live.positions)
     closing = _append(
@@ -2113,6 +2151,11 @@ async def synthesis_node(state: DebateState, config: RunnableConfig) -> dict:
     if rec_result.ok:
         rec = rec_result.parsed
         rec_decision, rec_ruling, rec_rationale = rec.decision, rec.ruling, rec.rationale
+        rec_question_kind = getattr(rec, "question_kind", None)
+        rec_question_kind = rec_question_kind.value if hasattr(rec_question_kind, "value") else (rec_question_kind or "closed")
+        rec_headline = (rec.headline or "").strip()
+        rec_recommended_actions = list(rec.recommended_actions or [])
+        rec_selected_options = list(rec.selected_options or [])
         rec_confidence, confidence_factors = CI.confidence_adjustment(
             base_confidence=rec.confidence,
             influence=state.get("council_influence"),
@@ -2132,6 +2175,10 @@ async def synthesis_node(state: DebateState, config: RunnableConfig) -> dict:
         # Honest surfacing: DEFER with the real error as rationale (not fabricated analysis).
         detail = rec_result.telemetry.refusal or rec_result.telemetry.error or "CFO synthesis returned no recommendation"
         rec_decision, rec_confidence = "DEFER", 0
+        rec_question_kind = "closed"
+        rec_headline = "DEFER until live CFO synthesis completes."
+        rec_recommended_actions = []
+        rec_selected_options = []
         rec_ruling = "DEFER until live CFO synthesis completes."
         rec_rationale = f"Synthesis could not complete live: {detail}"
         rec_key_risks, rec_conditions = ["CFO synthesis call did not complete"], []
@@ -2153,8 +2200,22 @@ async def synthesis_node(state: DebateState, config: RunnableConfig) -> dict:
         )
     )
     runway_summary = _runway_impact_summary(impact)
+    # Verdict kinds keep a badge; non-verdict answers surface a label, not a fake verdict.
+    _verdict_kinds = {"APPROVE", "REJECT", "CONDITIONAL", "DEFER"}
+    is_verdict = rec_question_kind == "closed" and rec_decision in _verdict_kinds
+    answer_label = (
+        rec_decision
+        if is_verdict
+        else ("Recommendation" if rec_question_kind == "open_ended" else "Selection" if rec_question_kind == "multiple_choice" else rec_decision)
+    )
     recommendation = {
         "decision": rec_decision,
+        "question_kind": rec_question_kind,
+        "is_verdict": is_verdict,
+        "headline": rec_headline or rec_ruling,
+        "answer_label": answer_label,
+        "recommended_actions": rec_recommended_actions,
+        "selected_options": rec_selected_options,
         "ruling": rec_ruling,
         "confidence": rec_confidence,
         "rationale": rec_rationale,
@@ -2196,14 +2257,24 @@ async def synthesis_node(state: DebateState, config: RunnableConfig) -> dict:
         else:
             memo_status = memo_result.telemetry.refusal or memo_result.telemetry.error or "memo unavailable"
 
+    closing_headline = (
+        f"{rec_decision} · {rec_confidence}% confidence"
+        if is_verdict
+        else f"{rec_headline or rec_ruling} · {rec_confidence}% confidence"
+    )
     closing = _turn(
         "cfo",
         type="decision",
-        headline=f"{rec_decision} · {rec_confidence}% confidence",
+        headline=closing_headline,
         argument=rec_ruling,
-        key_points=rec_conditions or rec_key_risks,
+        key_points=rec_recommended_actions or rec_conditions or rec_key_risks,
         ruling=rec_ruling,
         confidence=rec_confidence,
+        question_kind=rec_question_kind,
+        is_verdict=is_verdict,
+        answer_label=answer_label,
+        recommended_actions=rec_recommended_actions,
+        selected_options=rec_selected_options,
         rationale=rec_rationale,
         tradeoffs=rec_tradeoffs,
         analyst_influence=rec_analyst_influence,
@@ -2216,16 +2287,25 @@ async def synthesis_node(state: DebateState, config: RunnableConfig) -> dict:
         tokens=telemetry.get("total_tokens"),
         cost_usd=telemetry.get("estimated_cost_usd"),
     )
-    summary = (
-        f"**Recommendation: {rec_decision}** ({rec_confidence}% confidence)\n\n"
-        f"{rec_ruling}\n\n{runway_summary}\n\n{rec_rationale}"
-    )
+    if is_verdict:
+        summary = (
+            f"**Recommendation: {rec_decision}** ({rec_confidence}% confidence)\n\n"
+            f"{rec_ruling}\n\n{runway_summary}\n\n{rec_rationale}"
+        )
+        status_headline = f"{rec_decision} · {rec_confidence}% confidence"
+    else:
+        _actions_md = "".join(f"\n- {step}" for step in rec_recommended_actions)
+        summary = (
+            f"**{answer_label}: {rec_headline or rec_ruling}** ({rec_confidence}% confidence)\n\n"
+            f"{rec_ruling}{_actions_md}\n\n{runway_summary}\n\n{rec_rationale}"
+        )
+        status_headline = f"{rec_headline or rec_ruling} · {rec_confidence}% confidence"
     agent_statuses = _set_agent_status(
         agent_statuses,
         "cfo",
         status="speaking" if rec_result.ok else "warning",
         stance=rec_decision.lower(),
-        headline=f"{rec_decision} · {rec_confidence}% confidence",
+        headline=status_headline,
         detail=rec_ruling,
     )
     return {

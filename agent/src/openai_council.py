@@ -27,6 +27,7 @@ returned to the caller — never replaced with invented content.
 
 from __future__ import annotations
 
+import asyncio
 import hashlib
 import json
 import os
@@ -87,12 +88,22 @@ load_env()
 LLM_PROVIDER = os.getenv("LLM_PROVIDER", "openai")
 LLM_MODEL = os.getenv("LLM_MODEL", "gpt-5.5")
 LLM_REASONING_EFFORT = os.getenv("LLM_REASONING_EFFORT", "xhigh")
+# Hot-path stages default fast so a full live debate finishes in well under ~60s
+# (planner/debate are cheap classification/moderation passes — "minimal" is plenty);
+# analyst/synthesis stay "low" for differentiation + ruling quality. Base
+# LLM_REASONING_EFFORT stays xhigh (the strict-live health gate requires it); these
+# per-stage knobs are not gated and can be overridden in .env.
 LLM_ANALYST_REASONING_EFFORT = os.getenv("LLM_ANALYST_REASONING_EFFORT", "low")
-LLM_DEBATE_REASONING_EFFORT = os.getenv("LLM_DEBATE_REASONING_EFFORT", "low")
-LLM_PLANNER_REASONING_EFFORT = os.getenv("LLM_PLANNER_REASONING_EFFORT", "low")
+LLM_DEBATE_REASONING_EFFORT = os.getenv("LLM_DEBATE_REASONING_EFFORT", "minimal")
+LLM_PLANNER_REASONING_EFFORT = os.getenv("LLM_PLANNER_REASONING_EFFORT", "minimal")
 LLM_SYNTHESIS_REASONING_EFFORT = os.getenv("LLM_SYNTHESIS_REASONING_EFFORT", "low")
 LLM_TEXT_VERBOSITY = os.getenv("LLM_TEXT_VERBOSITY", "low")
 OPENAI_SERVICE_TIER = os.getenv("OPENAI_SERVICE_TIER", "priority")
+# Hard per-call wall-clock ceiling so one stalled model call can never hang the
+# AG-UI stream forever (the OpenAI SDK default read timeout is 600s, with retries).
+# On timeout the call is recorded as a real error and the node degrades gracefully.
+LLM_REQUEST_TIMEOUT = float(os.getenv("LLM_REQUEST_TIMEOUT", "60"))
+LLM_MAX_RETRIES = int(os.getenv("LLM_MAX_RETRIES", "1"))
 
 # Cost is only reported when real per-token pricing is configured in the
 # environment — we never fabricate a dollar figure. Values are USD per 1M tokens.
@@ -111,6 +122,8 @@ def llm(temperature: float = 0.3, *, reasoning_effort: str | None = None) -> Any
             verbosity=LLM_TEXT_VERBOSITY,
             output_version="responses/v1",
             service_tier=OPENAI_SERVICE_TIER,
+            request_timeout=LLM_REQUEST_TIMEOUT,
+            max_retries=LLM_MAX_RETRIES,
         )
     return init_chat_model(LLM_MODEL, model_provider=LLM_PROVIDER, temperature=temperature)
 
@@ -263,7 +276,11 @@ async def structured_call(
     for attempt in range(retries + 1):
         attempts += 1
         try:
-            res = await model.ainvoke(messages, config) if config is not None else await model.ainvoke(messages)
+            coro = model.ainvoke(messages, config) if config is not None else model.ainvoke(messages)
+            res = await asyncio.wait_for(coro, timeout=LLM_REQUEST_TIMEOUT + 5)
+        except asyncio.TimeoutError:  # stalled call — bound it so the stream can never hang
+            last_error = f"call timed out after {LLM_REQUEST_TIMEOUT + 5:.0f}s"
+            continue
         except Exception as exc:  # transport / API error — record and retry
             last_error = redact_secrets(exc)
             continue
@@ -385,30 +402,70 @@ def merge_telemetry(telemetry: dict[str, Any] | None, call: CallTelemetry) -> di
 # --------------------------------------------------------------------------- #
 # Static system-prompt templates. Hashing the template (not the per-decision
 # fill) lets W&B replay evals detect prompt drift and gate promotion.
-_ANALYST_TEMPLATE = (
-    "You are {label} at {company} ({stage}), a member of its investment committee. "
-    "Your mandate is {mandate}. Your role-specific directive is: {role_directive}. "
-    "Evaluate the decision strictly from your function's perspective. You are NOT the CFO chair: "
-    "do not issue the final ruling, do not balance every function equally, and do not speak outside "
-    "your lane. "
-    "This is a {decision_type} decision; keep these front-of-mind: {focus}. "
-    "Ground every claim in specific figures from the company context and the planned evidence "
-    "(forecast, cohort, pipeline, audit, vendor, security, and outcome history when relevant). "
-    "When relying on imported operations data, explicitly mention source confidence/freshness if confidence is "
-    "below 90, any source is stale, validation failures/duplicates exist, reconciliation has open discrepancies, "
-    "or required facts are missing. Treat low-confidence facts as assumptions or conditions, not settled truth. "
-    "Populate role_specific_lens with the functional boundary you used and cited_metrics with the concrete numbers you used. "
-    "Populate forecast_assumptions, scenario_sensitivities, and plan_vs_actual_deltas when relevant; "
-    "FP&A must populate all three with forecastability, unit-economics, sensitivity, or variance facts. "
-    "Populate control_findings, missing_evidence_requests, and approval_or_policy_blockers when relevant; "
-    "Risk & Audit must populate all three with controls, approval, evidence, provenance, reconciliation, "
-    "security, or compliance facts. Take a clear stance "
-    "Populate negotiation_levers when relevant; Procurement must populate it with supplier leverage, "
-    "contract terms, renewal timing, price benchmarks, consolidation, switching cost, SLAs, termination "
-    "clauses, volume discounts, or negotiation strategy. "
-    "(support / oppose / conditional) and defend it crisply. Speak like a senior finance executive "
-    "in a boardroom — precise, quantified, no fluff. Never mention being an AI or a model."
+# Each analyst gets a LANE-LOCKED template (not one shared template), so the
+# model never reads another seat's schema obligations. The shared scaffold is
+# deliberately minimal; the lane is set by {mandate} + {role_directive} and a
+# single role-owned schema instruction. This is what keeps Treasury, FP&A, Risk,
+# and Procurement from collapsing onto the same consensus voice.
+_ANALYST_BASE_HEADER = (
+    "You are {label} at {company} ({stage}) on its investment committee — a single-function "
+    "specialist, NOT the CFO chair. Your mandate is {mandate}. Your role-specific directive is: "
+    "{role_directive} "
+    "This is a {decision_type} decision; from your lane keep these front-of-mind: {focus}. "
+    "Speak ONLY from your function. Do NOT issue the final ruling, do NOT balance the other "
+    "functions, do NOT restate the committee consensus, and do NOT borrow another seat's "
+    "vocabulary or evidence — if a point belongs to another lane, leave it to them. "
+    "Ground EVERY claim in concrete figures taken from YOUR planned evidence bundle, not from the "
+    "shared company context headline. If you cannot ground a claim in your evidence, drop it. When "
+    "a figure you rely on is low-confidence, stale, unreconciled, or missing, say so and treat it "
+    "as an assumption or condition, not settled truth. role_specific_lens must name your lane and "
+    "its boundary in one sentence; cited_metrics must be the exact numbers from your lane that you "
+    "relied on. Take a clear, defensible stance (support / oppose / conditional) and, when your "
+    "lane's evidence warrants it, openly DISAGREE with the emerging consensus rather than softening "
+    "to fit it. Talk like a senior finance executive in a boardroom — precise, quantified, no "
+    "preamble, no fluff. Never mention being an AI or a model."
 )
+_ANALYST_FOOTER = (
+    "Stay strictly inside your lane: leave every array that belongs to another seat empty ([])."
+)
+_TREASURY_TEMPLATE = (
+    _ANALYST_BASE_HEADER
+    + " As Treasury, your decision-relevant arrays are cited_metrics (liquidity figures only). "
+    "Leave forecast_assumptions, scenario_sensitivities, plan_vs_actual_deltas, control_findings, "
+    "missing_evidence_requests, approval_or_policy_blockers, and negotiation_levers EMPTY unless a "
+    "fact is genuinely about cash timing. "
+    + _ANALYST_FOOTER
+)
+_FPNA_TEMPLATE = (
+    _ANALYST_BASE_HEADER
+    + " As FP&A, you MUST populate forecast_assumptions, scenario_sensitivities, and "
+    "plan_vs_actual_deltas with forecastability, unit-economics, sensitivity-range, or "
+    "plan-vs-actual facts (at least one quantified sensitivity range). Leave control_findings, "
+    "missing_evidence_requests, approval_or_policy_blockers, and negotiation_levers EMPTY — those "
+    "are other seats' lanes. "
+    + _ANALYST_FOOTER
+)
+_RISK_TEMPLATE = (
+    _ANALYST_BASE_HEADER
+    + " As Risk & Audit, you MUST populate control_findings, missing_evidence_requests, and "
+    "approval_or_policy_blockers with controls, approval-route, audit-trail, provenance, "
+    "reconciliation, security, or compliance facts, citing concrete policy IDs (gov-*, pol-*, BP-*) "
+    "when present. Leave forecast_assumptions, scenario_sensitivities, plan_vs_actual_deltas, and "
+    "negotiation_levers EMPTY — those are other seats' lanes. "
+    + _ANALYST_FOOTER
+)
+_PROCUREMENT_TEMPLATE = (
+    _ANALYST_BASE_HEADER
+    + " As Procurement, you MUST populate negotiation_levers with supplier leverage, contract "
+    "terms, renewal/auto-renewal timing, price benchmarks, consolidation, switching cost, SLAs, "
+    "termination clauses, volume discounts, or negotiation strategy. Leave forecast_assumptions, "
+    "scenario_sensitivities, plan_vs_actual_deltas, control_findings, missing_evidence_requests, "
+    "and approval_or_policy_blockers EMPTY — those are other seats' lanes. "
+    + _ANALYST_FOOTER
+)
+# Back-compat: some modules/tests still import _ANALYST_TEMPLATE as the generic
+# fallback for non-analyst roles. Point it at the lane-neutral header.
+_ANALYST_TEMPLATE = _ANALYST_BASE_HEADER + " " + _ANALYST_FOOTER
 TREASURY_LIQUIDITY_DIRECTIVE = (
     "Treasury is obsessed with liquidity mechanics. Speak only from cash runway, cash timing, working "
     "capital, payment terms, renewal payment schedules, hiring start timing, fully loaded hiring cash impact, "
@@ -499,6 +556,13 @@ _CLASSIFIER_TEMPLATE = (
     "vendor clauses, procurement notes, renewal dates, auto-renewal/termination terms, price benchmarks, "
     "consolidation options, switching cost, SLAs, volume discounts, and prior renewal outcomes; it should "
     "not be routed to generic finance/runway/forecast evidence unless that evidence changes supplier leverage. "
+    "Also classify the SHAPE of the question into question_kind: closed for a yes/no or approval-style "
+    "decision that a single APPROVE/REJECT/CONDITIONAL/DEFER cleanly answers (e.g. 'Should we renew Datadog?'); "
+    "open_ended for a prescriptive how/where/what's-the-best-path question that wants a recommended course of "
+    "action rather than a verdict (e.g. 'How should we extend runway?', 'Where should we cut spend?'); "
+    "multiple_choice when the operator names explicit options to choose among (e.g. 'AWS, GCP, or Azure?'). "
+    "When the question_kind is multiple_choice, list those explicit options in the options field; otherwise "
+    "leave options empty. "
     "Never invent data that is not in the context."
 )
 _CHALLENGE_TEMPLATE = (
@@ -540,7 +604,11 @@ _CFO_TEMPLATE = (
     "own their lanes; you arbitrate across them. Frame the tradeoffs, weigh each analyst according to "
     "the supplied influence weights, force unresolved assumptions into explicit conditions, resolve "
     "dissent, and issue a board-ready ruling. Higher-weight analysts should move your ruling more; "
-    "low-weight roles should not dominate even if loud. Your ruling must state the decision, confidence, "
+    "low-weight roles should not dominate even if loud. Adapt your answer to the question shape: issue a "
+    "decisive verdict (APPROVE/REJECT/CONDITIONAL/DEFER) for closed approval-style questions, a prioritized "
+    "recommended course of action (decision=RECOMMENDATION) for open-ended 'how/where/what's-the-best-path' "
+    "questions, and a selected option (decision=SELECTION) for multiple-choice questions — never force a "
+    "verdict onto an open or multiple-choice question. Your answer must state the headline, confidence, "
     "conditions, the strongest dissent and how you resolved it, and the quantified cost/revenue levers "
     "that the runway tool will use. Do not invent current-vs-after runway months; estimate only the "
     "incremental monthly cost, one-time cost, and added monthly revenue (numbers only, 0 if none), then "
@@ -581,10 +649,10 @@ _RELIABILITY_TEMPLATE = (
 
 _PROMPT_TEMPLATES: dict[str, str] = {
     "classifier": _CLASSIFIER_TEMPLATE,
-    "treasury": _ANALYST_TEMPLATE,
-    "fpna": _ANALYST_TEMPLATE,
-    "risk": _ANALYST_TEMPLATE,
-    "procurement": _ANALYST_TEMPLATE,
+    "treasury": _TREASURY_TEMPLATE,
+    "fpna": _FPNA_TEMPLATE,
+    "risk": _RISK_TEMPLATE,
+    "procurement": _PROCUREMENT_TEMPLATE,
     "challenge": _CHALLENGE_TEMPLATE,
     "debate": _DEBATE_TEMPLATE,
     "influence": _INFLUENCE_TEMPLATE,
@@ -595,10 +663,10 @@ _PROMPT_TEMPLATES: dict[str, str] = {
 
 _PROMPT_VERSION_IDS: dict[str, str] = {
     "classifier": "classifier.v1-evidence-plan",
-    "treasury": "treasury.v6-liquidity-mechanics",
-    "fpna": "fpna.v6-forecast-unit-economics",
-    "risk": "risk.v7-controls-adversary",
-    "procurement": "procurement.v5-commercial-negotiator",
+    "treasury": "treasury.v7-liquidity-lane-lock",
+    "fpna": "fpna.v7-forecast-lane-lock",
+    "risk": "risk.v8-controls-lane-lock",
+    "procurement": "procurement.v6-commercial-lane-lock",
     "challenge": "challenge.v1-grounding-gate",
     "debate": "debate.v2-gap-pressure",
     "influence": "influence.v1-weighted-council",
@@ -2218,21 +2286,22 @@ async def analyst_position(
         )
     human = (
         f"DECISION UNDER REVIEW:\n{decision}\n\n"
-        f"COMPANY CONTEXT ({company}):\n{json.dumps(context, default=str)[:12000]}\n\n"
-        f"PLANNED EVIDENCE (gathered live from Redis for your seat — lean on this):\n"
-        f"{json.dumps(evidence, default=str)[:6000]}\n\n"
-        "Give a concise, role-bounded position: role_specific_lens must name your lane and boundary; "
-        "headline ≤10 words; argument ≤2 short sentences; exactly 2 key_points; and cited_metrics "
-        "with the concrete numbers you relied on. Populate forecast_assumptions, scenario_sensitivities, "
-        "and plan_vs_actual_deltas when relevant; FP&A must populate all three with forecastability, "
-        "unit-economics, sensitivity, or variance facts. Populate control_findings, "
-        "missing_evidence_requests, and approval_or_policy_blockers when relevant; Risk & Audit must "
-        "populate all three with controls, approval, evidence, provenance, reconciliation, security, "
-        "or compliance facts. Populate negotiation_levers when relevant; Procurement must populate it "
-        "with supplier leverage, contract terms, renewal timing, price benchmarks, consolidation, "
-        "switching cost, SLAs, termination clauses, volume discounts, or negotiation strategy. "
-        "Other roles may use [] when outside their lane. "
-        "Be direct — no preamble."
+        f"YOUR PLANNED EVIDENCE (gathered live from Redis for the {persona['label']} seat — build "
+        f"your position ON THIS; these are the figures you must cite):\n"
+        f"{json.dumps(evidence, default=str)[:9000]}\n\n"
+        f"SHARED COMPANY CONTEXT ({company}) — background only; do NOT anchor your argument on its "
+        f"headline numbers, and do NOT cite a figure from here unless it is also in your evidence "
+        f"bundle above:\n{json.dumps(context, default=str)[:6000]}\n\n"
+        "Write your position from your lane ONLY:\n"
+        "- role_specific_lens: one sentence naming your function's lens and its boundary.\n"
+        "- stance: support / oppose / conditional — take the position YOUR evidence supports, even "
+        "if it conflicts with the other seats; do not converge to a safe consensus.\n"
+        "- headline: <=10 words, in your lane's language.\n"
+        "- argument: <=2 short sentences, each citing a concrete number from YOUR evidence bundle.\n"
+        "- key_points: exactly 2 crisp, lane-specific bullets.\n"
+        "- cited_metrics: the exact figures from your lane that you relied on.\n"
+        "Populate ONLY the schema arrays that belong to your seat (per your system instructions); "
+        "leave every other seat's array as []. Be direct — no preamble."
         f"{operator_directives}"
     )
     return await structured_call(
@@ -2419,9 +2488,13 @@ async def cfo_recommendation(
     gaps = (challenge_report or {}).get("unresolved_gaps") or []
     influence_weights = (council_influence or {}).get("weights") or []
     follow_up_questions = (decision_plan or {}).get("follow_up_questions") or []
+    planned_question_kind = (decision_plan or {}).get("question_kind") or "closed"
+    planned_options = (decision_plan or {}).get("options") or []
     human = (
         f"DECISION:\n{decision}\n\n"
         f"COMPANY CONTEXT:\n{json.dumps(context, default=str)[:12000]}\n\n"
+        f"PLANNER QUESTION SHAPE (confirm or override in question_kind):\n{planned_question_kind}\n\n"
+        f"NAMED OPTIONS (only for multiple_choice; empty otherwise):\n{json.dumps(planned_options, default=str)}\n\n"
         f"COUNCIL INFLUENCE WEIGHTS (must shape your ruling — not equal voice):\n"
         f"{json.dumps(council_influence or {}, default=str)}\n\n"
         f"POSITIONS:\n"
@@ -2430,12 +2503,23 @@ async def cfo_recommendation(
         f"STATED ASSUMPTIONS (facts that were missing):\n{json.dumps(assumptions, default=str)}\n\n"
         f"FOLLOW-UP QUESTIONS THAT REMAIN OPEN:\n{json.dumps(follow_up_questions, default=str)}\n\n"
         f"UNRESOLVED EVIDENCE GAPS (resolve or explicitly accept; they should lower confidence):\n{json.dumps(gaps, default=str)}\n\n"
-        "Return a CFO-chair structured ruling, not another analyst position. The conditions and "
-        "assumptions_converted_to_conditions fields must explicitly capture every unresolved assumption "
-        "you are willing to proceed under. The analyst_influence field must include all four analysts "
-        "with their weights and how each moved the ruling. Populate policy_citations with every concrete "
-        "policy_id/source_id you relied on (gov-*, pol-*, or BP-*); use an empty list only if no governance "
-        "or board policy evidence is relevant."
+        "Return a CFO-chair structured ruling, not another analyst position. "
+        "FIRST decide question_kind, then ANSWER IN THAT SHAPE:\n"
+        "- closed: decision is one of APPROVE/REJECT/CONDITIONAL/DEFER; headline is a short verdict phrase; "
+        "recommended_actions and selected_options may be empty (use conditions for guardrails).\n"
+        "- open_ended: decision is the token RECOMMENDATION (do NOT force a verdict); headline is the recommended "
+        "path in <= 12 words; recommended_actions is a prioritized, quantified 3-6 step course of action; "
+        "selected_options is empty.\n"
+        "- multiple_choice: decision is the token SELECTION; headline names the chosen option(s); selected_options "
+        "lists the option(s) you picked from the named options; justify the pick in ruling/rationale; "
+        "recommended_actions may carry sequencing steps.\n"
+        "Whatever the shape, still quantify cost/revenue levers (estimated_monthly_cost, estimated_one_time_cost, "
+        "estimated_added_monthly_revenue, runway_impact_basis) for the path/option/verdict you land on so the runway "
+        "tool can compute impact. The conditions and assumptions_converted_to_conditions fields must explicitly "
+        "capture every unresolved assumption you are willing to proceed under. The analyst_influence field must "
+        "include all four analysts with their weights and how each moved the ruling. Populate policy_citations with "
+        "every concrete policy_id/source_id you relied on (gov-*, pol-*, or BP-*); use an empty list only if no "
+        "governance or board policy evidence is relevant."
         f"{operator_directives}"
     )
     return await structured_call(

@@ -116,6 +116,11 @@ export interface DecisionEvent {
   title: string;
   summary?: string;
   decision?: string;
+  // Adaptive-answer fields (feature-detected for older snapshots).
+  question_kind?: QuestionKind | string;
+  is_verdict?: boolean;
+  headline?: string;
+  answer_label?: string;
   confidence?: number;
   reliability_scores?: ReliabilityScore[];
   learning_report?: LearningReport;
@@ -173,6 +178,11 @@ export interface TranscriptTurn {
   approval_or_policy_blockers?: string[];
   negotiation_levers?: string[];
   // CFO chair extras (decision turns; feature-detected for older snapshots)
+  question_kind?: QuestionKind | string;
+  is_verdict?: boolean;
+  answer_label?: string;
+  recommended_actions?: string[];
+  selected_options?: string[];
   ruling?: string;
   rationale?: string;
   tradeoffs?: string[];
@@ -254,8 +264,19 @@ export interface CfoAnalystInfluence {
   effect_on_ruling?: string;
 }
 
+// The CFO's adaptive answer kind — closed questions get a verdict, open-ended
+// questions get a recommendation, multiple-choice questions get a selection.
+export type QuestionKind = "closed" | "open_ended" | "multiple_choice";
+
 export interface Recommendation {
   decision?: string;
+  // Adaptive-answer fields (feature-detected; older snapshots omit them).
+  question_kind?: QuestionKind | string;
+  is_verdict?: boolean;
+  headline?: string;
+  answer_label?: string;
+  recommended_actions?: string[];
+  selected_options?: string[];
   ruling?: string;
   confidence?: number;
   rationale?: string;
@@ -1310,34 +1331,6 @@ export interface DemoResetResponse {
   confidence: ImportConfidence;
   command_state?: CommandState;
   reseed?: Record<string, unknown>;
-}
-
-export interface DemoScenarioSource {
-  source_type: string;
-  source_system: string;
-  messy_fields: string[];
-  records: Record<string, unknown>[];
-  record_count: number;
-}
-
-export interface DemoScenarioPack {
-  id: string;
-  branch_id: string;
-  title: string;
-  decision_type: DecisionType | string;
-  decision_prompt: string;
-  description: string;
-  tags: string[];
-  sources: DemoScenarioSource[];
-  source_count: number;
-  source_types: string[];
-  messy_input_count: number;
-  expected_council_focus: string[];
-}
-
-export interface DemoScenarioResponse {
-  count: number;
-  scenarios: DemoScenarioPack[];
 }
 
 // --------------------------------------------------------------------------- //

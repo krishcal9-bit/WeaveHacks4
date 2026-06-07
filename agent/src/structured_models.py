@@ -46,6 +46,19 @@ class DecisionType(str, Enum):
     general = "general"
 
 
+class QuestionKind(str, Enum):
+    """The *shape* of the operator's question — orthogonal to DecisionType.
+
+    Drives how the CFO answers: a decisive verdict for closed/approval-style
+    questions, a prioritized course of action for open-ended questions, and a
+    selected option for multiple-choice questions.
+    """
+
+    closed = "closed"  # yes/no / approval-style ("Should we renew Datadog?")
+    open_ended = "open_ended"  # prescriptive ("How should we extend runway?")
+    multiple_choice = "multiple_choice"  # pick-one ("AWS, GCP, or Azure?")
+
+
 class RequiredFact(StrictStructuredModel):
     """A fact the council needs to decide responsibly, and whether we have it."""
 
@@ -125,6 +138,18 @@ class DecisionPlan(StrictStructuredModel):
     """Output of the planning phase: classify the decision and route evidence."""
 
     decision_type: DecisionType = Field(description="the operating-committee category for this decision")
+    question_kind: QuestionKind = Field(
+        default=QuestionKind.closed,
+        description=(
+            "the SHAPE of the question, independent of decision_type. closed = a yes/no or "
+            "approval-style decision a single APPROVE/REJECT/CONDITIONAL/DEFER cleanly answers "
+            "('Should we renew Datadog?'). open_ended = a prescriptive how/where/what's-the-best-path "
+            "question that wants a recommended course of action, not a verdict ('How should we extend "
+            "runway?'). multiple_choice = the operator named explicit options to choose among "
+            "('AWS, GCP, or Azure?'). When unsure between closed and open_ended, prefer closed only "
+            "if one verdict cleanly answers it."
+        ),
+    )
     title: str = Field(description="a short, normalized title for the decision (<= 12 words)")
     summary: str = Field(description="1-2 sentence neutral restatement of what is being decided")
     entities: list[str] = Field(description="concrete entities referenced: vendor names, team names, dollar amounts, dates")
@@ -133,6 +158,13 @@ class DecisionPlan(StrictStructuredModel):
     follow_up_questions: list[FollowUpQuestion] = Field(description="clarifying questions for missing or uncertain facts")
     role_plans: list[RoleEvidencePlan] = Field(description="evidence plans for each council role")
     decision_specific_focus: list[str] = Field(description="2-4 bullets the whole committee should keep front-of-mind for this decision type")
+    options: list[str] = Field(
+        default_factory=list,
+        description=(
+            "for multiple_choice questions, the explicit options the operator asked to choose among "
+            "(e.g. ['AWS', 'GCP', 'Azure']); empty list for closed and open_ended questions"
+        ),
+    )
 
 
 # --------------------------------------------------------------------------- #
@@ -141,13 +173,25 @@ class DecisionPlan(StrictStructuredModel):
 class Position(StrictStructuredModel):
     role_specific_lens: str = Field(
         description=(
-            "one sentence naming this analyst's functional lens and boundary, "
-            "e.g. Treasury only on liquidity/runway, not the final CFO ruling"
+            "one sentence naming THIS analyst's functional lens and its hard boundary, and what it "
+            "deliberately leaves to other seats, e.g. 'Treasury: liquidity/runway/payment timing only — "
+            "not forecast ROI, not vendor negotiation, not the final CFO ruling'. Must match the role's "
+            "own lane, never a blended committee view."
         )
     )
-    stance: str = Field(description="one of: support, oppose, conditional")
+    stance: str = Field(
+        description=(
+            "one of: support, oppose, conditional. Choose the stance THIS role's own evidence supports; "
+            "do not soften to match the other analysts — surface genuine disagreement when your lane warrants it."
+        )
+    )
     headline: str = Field(description="one-line position, <= 10 words")
-    argument: str = Field(description="1-2 short sentences citing specific figures")
+    argument: str = Field(
+        description=(
+            "1-2 short sentences citing specific figures FROM THIS ROLE'S evidence/lane only; must not "
+            "restate the committee consensus or cite another seat's metrics"
+        )
+    )
     key_points: list[str] = Field(description="exactly 2 crisp bullets")
     cited_metrics: list[str] = Field(
         description=(
@@ -267,10 +311,50 @@ class AnalystInfluenceView(StrictStructuredModel):
 
 
 class Recommendation(StrictStructuredModel):
-    decision: str = Field(description="one of: APPROVE, REJECT, CONDITIONAL, DEFER")
-    ruling: str = Field(description="one board-ready sentence stating the CFO chair's final ruling and why")
+    question_kind: QuestionKind = Field(
+        default=QuestionKind.closed,
+        description=(
+            "the SHAPE of the question you are answering (confirm or override the planner): closed = "
+            "answer with a verdict (decision is APPROVE/REJECT/CONDITIONAL/DEFER); open_ended = answer "
+            "with a recommended course of action (decision is RECOMMENDATION); multiple_choice = answer "
+            "by selecting the best option(s) (decision is SELECTION)."
+        ),
+    )
+    decision: str = Field(
+        description=(
+            "For closed questions: one of APPROVE, REJECT, CONDITIONAL, DEFER. For open_ended questions: "
+            "the literal token RECOMMENDATION (a prescriptive course of action, not a verdict). For "
+            "multiple_choice questions: the literal token SELECTION. Never force APPROVE/REJECT onto an "
+            "open_ended or multiple_choice question."
+        )
+    )
+    headline: str = Field(
+        default="",
+        description=(
+            "the one-line answer rendered as the marquee result. closed: a short verdict phrase, e.g. "
+            "'Conditional approval'. open_ended: the recommended path in <= 12 words, e.g. 'Extend runway "
+            "to ~14 months via three prioritized moves'. multiple_choice: the chosen option(s), e.g. "
+            "'Select AWS'. Always answer the actual question; never restate it."
+        ),
+    )
+    ruling: str = Field(description="one board-ready sentence stating the CFO chair's final ruling, recommendation, or selection and why")
     confidence: int = Field(ge=0, le=100)
     rationale: str = Field(description="3-5 sentences, decisive and quantified; written as the CFO chair resolving the committee, not as an analyst")
+    recommended_actions: list[str] = Field(
+        default_factory=list,
+        description=(
+            "prioritized, concrete course-of-action steps. REQUIRED for open_ended questions (the "
+            "prescriptive answer: 3-6 ordered, quantified moves). May be empty for closed/multiple_choice "
+            "(use conditions / operator actions instead)."
+        ),
+    )
+    selected_options: list[str] = Field(
+        default_factory=list,
+        description=(
+            "for multiple_choice questions, the option(s) selected from the operator's named choices "
+            "(usually one; more only for a primary + fallback). Empty for closed and open_ended."
+        ),
+    )
     tradeoffs: list[str] = Field(description="2-4 explicit tradeoffs the CFO chair weighed across growth, runway, risk, and execution")
     analyst_influence: list[AnalystInfluenceView] = Field(
         description="how the CFO weighed treasury, fpna, risk, and procurement inputs; include all four roles"

@@ -42,7 +42,26 @@ function buildBoardMemo(
   }
   lines.push(`**Decision under review:** ${decision || "—"}`);
   lines.push("");
-  lines.push(`**Recommendation:** ${rec.decision ?? "—"}${typeof rec.confidence === "number" ? ` (${rec.confidence}% confidence)` : ""}`);
+  const confidenceSuffix = typeof rec.confidence === "number" ? ` (${rec.confidence}% confidence)` : "";
+  if (rec.is_verdict === false) {
+    // Open-ended / multiple-choice: lead with the human headline under the
+    // adaptive label, not the raw RECOMMENDATION / SELECTION token.
+    const answerLabel = rec.answer_label || "Recommendation";
+    const answerBody = rec.headline?.trim() || rec.decision || "—";
+    lines.push(`**${answerLabel}:** ${answerBody}${confidenceSuffix}`);
+  } else {
+    lines.push(`**Recommendation:** ${rec.decision ?? "—"}${confidenceSuffix}`);
+  }
+  if (rec.is_verdict === false && rec.recommended_actions?.length) {
+    lines.push("");
+    lines.push("## Recommended course of action");
+    rec.recommended_actions.forEach((action, index) => lines.push(`${index + 1}. ${action}`));
+  }
+  if (rec.is_verdict === false && rec.selected_options?.length) {
+    lines.push("");
+    lines.push("## Selected option(s)");
+    for (const option of rec.selected_options) lines.push(`- ${option}`);
+  }
   if (rec.ruling) {
     lines.push("");
     lines.push(`**CFO ruling:** ${rec.ruling}`);
@@ -156,6 +175,10 @@ export function BoardMemo({
   const shouldReduce = reduced ?? false;
   const rec = recommendation;
   const hasDecision = Boolean(rec?.decision);
+  // Open-ended / multiple-choice answers are not "rulings" — soften the chrome copy.
+  const nonVerdict = rec?.is_verdict === false;
+  const panelTitle = nonVerdict ? "CFO recommendation" : "CFO ruling";
+  const packetHeadline = boardMemo?.headline ?? (nonVerdict ? "Board-ready CFO recommendation issued" : "Board-ready CFO ruling issued");
   const avg = averageReliability(reliabilityScores);
   const leadInfluence = topInfluenceAgent(rec?.council_influence);
   const memo = hasDecision && rec ? buildBoardMemo(decision, rec, companyName, boardMemo, operatorActions, avg) : "";
@@ -169,7 +192,7 @@ export function BoardMemo({
     <Panel
       id="council-memo"
       visualIcon="memo"
-      title="CFO ruling"
+      title={panelTitle}
       action={
         hasDecision ? (
           <div className="flex items-center gap-1.5">
@@ -202,7 +225,7 @@ export function BoardMemo({
                     Executive packet
                   </div>
                   <h3 className="mt-1 font-display text-[18px] font-medium leading-tight text-foreground">
-                    {boardMemo?.headline ?? "Board-ready CFO ruling issued"}
+                    {packetHeadline}
                   </h3>
                   {boardMemo?.context && (
                     <p className="mt-1 max-w-2xl break-words text-[12px] leading-relaxed text-muted-foreground">
@@ -230,6 +253,12 @@ export function BoardMemo({
               dissent={memoDissent}
               runwayImpactSummary={rec.runway_impact_summary}
               operatorActions={actions}
+              questionKind={rec.question_kind}
+              isVerdict={rec.is_verdict}
+              headline={rec.headline}
+              answerLabel={rec.answer_label}
+              recommendedActions={rec.recommended_actions}
+              selectedOptions={rec.selected_options}
               variant="memo"
             />
           </MemoStage>

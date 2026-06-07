@@ -5,7 +5,6 @@ import type {
   ConnectorImportResponse,
   ConnectorInventory,
   DemoResetResponse,
-  DemoScenarioResponse,
   DecisionEvent,
   Discrepancy,
   ObservabilitySnapshot,
@@ -179,7 +178,6 @@ export const api = {
   discrepancy: (id: string) =>
     getJSON<Discrepancy>(`/api/reconciliation/discrepancies/${encodeURIComponent(id)}`),
   resetDemo: () => postJSON<DemoResetResponse>("/api/demo/reset"),
-  demoScenarios: () => getJSON<DemoScenarioResponse>("/api/demo/scenarios"),
   // Strategic planning digital twin: plans, playbooks, stress tests, sensitivity,
   // portfolios, and (model-generated) board narratives. The compute calls are
   // deterministic; planNarrative is the one OpenAI-backed call.

@@ -12,6 +12,7 @@ import {
   RefreshCw,
   RotateCcw,
   Upload,
+  X,
 } from "lucide-react";
 import { CollapseIn, PopIn } from "@/components/motion/presence";
 import { MotionLink } from "@/components/motion/motion-link";
@@ -254,6 +255,7 @@ export default function DataRoomPage() {
   const [dropTarget, setDropTarget] = useState<"batch" | string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [refreshing, setRefreshing] = useState(true);
+  const [uploadNotice, setUploadNotice] = useState<"empty" | "incomplete" | null>(null);
 
   const load = useCallback(async () => {
     setRefreshing(true);
@@ -273,6 +275,13 @@ export default function DataRoomPage() {
     const timeout = window.setTimeout(() => void load(), 0);
     return () => window.clearTimeout(timeout);
   }, [load]);
+
+  useEffect(() => {
+    const need = new URLSearchParams(window.location.search).get("need");
+    if (need !== "empty" && need !== "incomplete") return;
+    const timeout = window.setTimeout(() => setUploadNotice(need), 0);
+    return () => window.clearTimeout(timeout);
+  }, []);
 
   useEffect(() => onDemoReset(() => {
     setUploadState({});
@@ -581,6 +590,41 @@ export default function DataRoomPage() {
   return (
     <main className="mx-auto flex w-full max-w-[1180px] flex-col gap-4 px-4 py-5 sm:px-6">
       <Stagger className="flex flex-col gap-4">
+      {uploadNotice && !readyToRun && (
+        <StaggerItem>
+          <div
+            className={cx(
+              "flex items-start justify-between gap-3 rounded-lg border px-3 py-2 text-[13px] font-medium",
+              uploadNotice === "incomplete"
+                ? "border-warning/20 bg-warning-bg text-warning"
+                : "border-risk/20 bg-risk-bg text-risk",
+            )}
+            role="status"
+          >
+            <div className="flex min-w-0 items-start gap-2">
+              <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0" strokeWidth={2} />
+              <div className="min-w-0">
+                <div className="font-semibold">
+                  {uploadNotice === "incomplete" ? "Incomplete data" : "No data uploaded"}
+                </div>
+                <div className="mt-0.5 font-normal leading-relaxed">
+                  {uploadNotice === "incomplete"
+                    ? "Finish uploading the required company files below, then run the council."
+                    : "Add your company files below, then run the council."}
+                </div>
+              </div>
+            </div>
+            <button
+              type="button"
+              onClick={() => setUploadNotice(null)}
+              aria-label="Dismiss"
+              className="-mr-1 -mt-0.5 inline-flex h-6 w-6 shrink-0 items-center justify-center rounded-md transition-colors hover:bg-current/10"
+            >
+              <X className="h-4 w-4" strokeWidth={2} />
+            </button>
+          </div>
+        </StaggerItem>
+      )}
       <StaggerItem className="grid gap-4 border-b border-border pb-5 lg:grid-cols-[minmax(0,1fr)_360px] lg:items-end">
         <div className="flex min-w-0 items-start gap-3">
           <AtlasIcon name="upload" size="lg" className="mt-1 hidden sm:inline-grid" />

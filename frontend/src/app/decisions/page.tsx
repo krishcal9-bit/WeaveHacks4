@@ -1,9 +1,9 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useRouter } from "next/navigation";
 import { useCoAgent, useCopilotAction, useCopilotChat } from "@copilotkit/react-core";
 import { MessageRole, TextMessage } from "@copilotkit/runtime-client-gql";
-import { Database, FileSpreadsheet, Play, Sparkles } from "lucide-react";
 import { api } from "@/lib/api";
 import { ROSTER_BY_ID } from "@/lib/agents";
 import {
@@ -17,30 +17,37 @@ import {
 } from "@/lib/council";
 import type {
   CommandResult,
-  CommandState,
   DebateState,
-  DemoScenarioPack,
   OperatorCommand,
   VoiceTranscriptEntry,
 } from "@/lib/types";
 import { CouncilWeb } from "@/components/decision-room/council-web";
 import { BoardMemo, ScenarioImpactCard } from "@/components/decision-room/board-memo";
 import { CommandConsole } from "@/components/decision-room/command-console";
-import { CouncilCommandPanel } from "@/components/council-command-panel";
 import { CouncilHeader, PreflightPanel } from "@/components/decision-room/council-chrome";
 import { InfluencePanel } from "@/components/decision-room/influence-panel";
 import { SelfImprovementPanel } from "@/components/decision-room/self-improvement-panel";
 import { TranscriptStream } from "@/components/decision-room/transcript-stream";
 import { EvidenceDrawer } from "@/components/decision-room/evidence-drawer";
 import { RedisActivityRail } from "@/components/decision-room/activity-rails";
-import { Panel, StatusBadge } from "@/components/decision-room/primitives";
+import { SteerCouncil } from "@/components/decision-room/steer-council";
 import { Stagger, StaggerItem } from "@/components/motion/stagger";
-import { cx } from "@/components/ui";
 
 import { agentBase } from "@/lib/agent-base";
 import { connectRealtimeVoice, type RealtimeVoiceHandle, type VoiceTranscriptUpdate } from "@/lib/realtime-voice";
 import { useDemoResetListener } from "@/hooks/use-demo-reset";
 import { useDeferredHealthReady, useMounted } from "@/lib/use-mounted";
+
+const REQUIRED_CONNECTOR_IDS = [
+  "ledger",
+  "invoices",
+  "vendor_export",
+  "crm_opportunities",
+  "headcount_plan",
+  "security_evidence",
+  "board_policy",
+] as const;
+const LOADED_CONNECTOR_STATUSES = ["imported", "partial", "skipped_unchanged"];
 
 function isRealtimeViewStatus(value: unknown): value is RealtimeView["status"] {
   return value === "idle" || value === "connecting" || value === "connected" || value === "blocked";
@@ -75,8 +82,6 @@ export default function DecisionsPage() {
   const [realtime, setRealtime] = useState<RealtimeView>({ status: "idle", detail: "Realtime 2 voice idle" });
   const [voiceTranscript, setVoiceTranscript] = useState<VoiceTranscriptEntry[]>([]);
   const [activityPulseActive, setActivityPulseActive] = useState(false);
-  const [demoScenarios, setDemoScenarios] = useState<DemoScenarioPack[]>([]);
-  const [selectedScenarioId, setSelectedScenarioId] = useState<string>("");
 
   const realtimeAudioRef = useRef<HTMLAudioElement | null>(null);
   const realtimeVoiceRef = useRef<RealtimeVoiceHandle | null>(null);
@@ -104,6 +109,7 @@ export default function DecisionsPage() {
     });
   }, []);
 
+  const router = useRouter();
   const { state, setState, running, nodeName } = useCoAgent<DebateState>({ name: "finance_department" });
   const { appendMessage } = useCopilotChat();
   const [stateMirror, setStateMirror] = useState<Partial<DebateState>>({});
@@ -120,25 +126,9 @@ export default function DecisionsPage() {
   const contextState = state?.context && Object.keys(state.context).length > 0 ? state.context : stateMirror.context;
   const redisActivityState = state?.redis_activity?.length ? state.redis_activity : stateMirror.redis_activity;
   const pinnedEvidenceState = state?.pinned_evidence?.length ? state.pinned_evidence : stateMirror.pinned_evidence;
-  const commandQueueState = state?.command_queue?.length ? state.command_queue : stateMirror.command_queue;
-  const activeCommandState =
-    state?.active_command && Object.keys(state.active_command).length > 0 ? state.active_command : stateMirror.active_command;
-  const requestedScenarioState =
-    state?.requested_scenario && Object.keys(state.requested_scenario).length > 0 ? state.requested_scenario : stateMirror.requested_scenario;
-  const agentFocusState =
-    state?.agent_focus && Object.keys(state.agent_focus).length > 0 ? state.agent_focus : stateMirror.agent_focus;
-  const phaseControlsState =
-    state?.phase_controls && Object.keys(state.phase_controls).length > 0 ? state.phase_controls : stateMirror.phase_controls;
-  const exportStatusState =
-    state?.export_status && Object.keys(state.export_status).length > 0 ? state.export_status : stateMirror.export_status;
-  const commandAuditState = state?.command_audit_log?.length ? state.command_audit_log : stateMirror.command_audit_log;
   const realtimeStatusState =
     state?.realtime_status && Object.keys(state.realtime_status).length > 0 ? state.realtime_status : stateMirror.realtime_status;
   const companyName = contextState?.financials?.name ?? "the company";
-  const selectedDemoScenario = useMemo(
-    () => demoScenarios.find((scenario) => scenario.id === selectedScenarioId) ?? demoScenarios[0],
-    [demoScenarios, selectedScenarioId],
-  );
 
   const mounted = useMounted();
   const started = transcript.length > 0 || running;
@@ -165,29 +155,6 @@ export default function DecisionsPage() {
     if (!mounted || realtime.status !== "idle" || !streamedRealtime) return realtime;
     return streamedRealtime;
   }, [mounted, realtime, realtimeStatusState]);
-  const displayCommandState = useMemo<CommandState>(
-    () => ({
-      command_queue: mounted ? (commandQueueState ?? []) : [],
-      active_command: mounted ? (activeCommandState ?? {}) : {},
-      pinned_evidence: mounted ? (pinnedEvidenceState ?? []) : [],
-      requested_scenario: mounted ? (requestedScenarioState ?? {}) : {},
-      agent_focus: mounted ? (agentFocusState ?? {}) : {},
-      phase_controls: mounted ? (phaseControlsState ?? { paused: false }) : { paused: false },
-      export_status: mounted ? (exportStatusState ?? { ready: false }) : { ready: false },
-      command_audit_log: mounted ? (commandAuditState ?? []) : [],
-    }),
-    [
-      activeCommandState,
-      agentFocusState,
-      commandAuditState,
-      commandQueueState,
-      exportStatusState,
-      mounted,
-      phaseControlsState,
-      pinnedEvidenceState,
-      requestedScenarioState,
-    ],
-  );
 
   const currentPhase = getCurrentPhaseLabel({
     health,
@@ -258,21 +225,6 @@ export default function DecisionsPage() {
     };
   }, [loadHealth]);
 
-  const loadScenarios = useCallback(async () => {
-    try {
-      const payload = await api.demoScenarios();
-      setDemoScenarios(payload.scenarios ?? []);
-      setSelectedScenarioId((current) => current || payload.scenarios?.[0]?.id || "");
-    } catch {
-      setDemoScenarios([]);
-    }
-  }, []);
-
-  useEffect(() => {
-    const timeout = window.setTimeout(() => void loadScenarios(), 0);
-    return () => window.clearTimeout(timeout);
-  }, [loadScenarios]);
-
   useEffect(() => {
     if (!mounted) return;
     const count = displayRedisActivity.length;
@@ -284,6 +236,30 @@ export default function DecisionsPage() {
     const timeout = window.setTimeout(() => setActivityPulseActive(false), 2600);
     return () => window.clearTimeout(timeout);
   }, [displayRedisActivity.length, mounted]);
+
+  // ----------------------------------------------------------------------- //
+  // Gate: the council only runs once the operator has uploaded company data.
+  // On shortfall, schedule a redirect to the Data tab and return a message.
+  // ----------------------------------------------------------------------- //
+  const requireCompanyDataOrRedirect = useCallback(async (): Promise<string | null> => {
+    let loaded = 0;
+    try {
+      const inventory = await api.connectors();
+      loaded = (inventory.connectors ?? []).filter(
+        (connector) =>
+          LOADED_CONNECTOR_STATUSES.includes(connector.status ?? "") &&
+          (connector.record_count ?? 0) > 0,
+      ).length;
+    } catch {
+      loaded = 0;
+    }
+    if (loaded >= REQUIRED_CONNECTOR_IDS.length) return null;
+    const reason = loaded === 0 ? "empty" : "incomplete";
+    window.setTimeout(() => router.push(`/dashboard?need=${reason}`), 900);
+    return loaded === 0
+      ? "No data uploaded. Add your company files on the Data tab to run the council."
+      : "Incomplete data. Finish uploading the required company files on the Data tab.";
+  }, [router]);
 
   // ----------------------------------------------------------------------- //
   // OpenAI Realtime 2 voice (WebRTC): gated behind strict-live preflight.
@@ -311,7 +287,6 @@ export default function DecisionsPage() {
     setActivityPulseActive(false);
     redisActivityCountRef.current = 0;
     setRealtime({ status: "idle", detail: "Realtime 2 voice idle" });
-    void loadScenarios();
   });
 
   const startRealtime = useCallback(async () => {
@@ -336,6 +311,8 @@ export default function DecisionsPage() {
           onTranscript: mergeVoiceTranscript,
           onSubmitDecision: async (decision) => {
             if (running || !healthReady) return;
+            const blockedMessage = await requireCompanyDataOrRedirect();
+            if (blockedMessage) return;
             setInput(decision);
             await appendMessage(new TextMessage({ role: MessageRole.User, content: decision }));
           },
@@ -345,7 +322,7 @@ export default function DecisionsPage() {
       stopRealtime();
       setRealtime({ status: "blocked", detail: err instanceof Error ? err.message : String(err) });
     }
-  }, [appendMessage, healthReady, mergeVoiceTranscript, running, stopRealtime]);
+  }, [appendMessage, healthReady, mergeVoiceTranscript, requireCompanyDataOrRedirect, running, stopRealtime]);
 
   const onVoiceButton = useCallback(() => {
     if (realtime.status === "connected") {
@@ -367,10 +344,12 @@ export default function DecisionsPage() {
     async (text: string) => {
       const content = text.trim();
       if (!content || running || !healthReady) return;
+      const blockedMessage = await requireCompanyDataOrRedirect();
+      if (blockedMessage) throw new Error(blockedMessage);
       setInput("");
       await appendMessage(new TextMessage({ role: MessageRole.User, content }));
     },
-    [appendMessage, healthReady, running],
+    [appendMessage, healthReady, running, requireCompanyDataOrRedirect],
   );
 
   // ----------------------------------------------------------------------- //
@@ -640,16 +619,7 @@ export default function DecisionsPage() {
           </Stagger>
 
           <aside className="room-scroll flex min-w-0 flex-col gap-2 xl:sticky xl:top-2 xl:max-h-[calc(100dvh-1rem)] xl:self-start xl:overflow-y-auto">
-            <DemoScenarioSelector
-              scenarios={demoScenarios}
-              selected={selectedDemoScenario}
-              selectedId={selectedScenarioId}
-              onSelect={setSelectedScenarioId}
-              onUse={(scenario) => setInput(scenario.decision_prompt)}
-              onRun={(scenario) => void submit(scenario.decision_prompt)}
-              running={displayRunning}
-              healthReady={displayHealthReady}
-            />
+            <SteerCouncil onUse={setInput} running={displayRunning} healthReady={displayHealthReady} />
             <CommandConsole
               input={input}
               onInput={setInput}
@@ -663,15 +633,6 @@ export default function DecisionsPage() {
               commands={commands}
               audioRef={realtimeAudioRef}
             />
-            <CouncilCommandPanel
-              healthReady={displayHealthReady}
-              running={displayRunning}
-              decision={displayDecision}
-              recommendation={displayRecommendation}
-              transcript={displayTranscript}
-              commandState={displayCommandState}
-              dispatch={dispatchCommand}
-            />
             <EvidenceDrawer
               context={displayContext}
               started={displayStarted}
@@ -683,124 +644,5 @@ export default function DecisionsPage() {
         </div>
       </div>
     </main>
-  );
-}
-
-function sourceLabel(value: string) {
-  return value.replace(/_/g, " ");
-}
-
-function DemoScenarioSelector({
-  scenarios,
-  selected,
-  selectedId,
-  onSelect,
-  onUse,
-  onRun,
-  running,
-  healthReady,
-}: {
-  scenarios: DemoScenarioPack[];
-  selected?: DemoScenarioPack;
-  selectedId: string;
-  onSelect: (id: string) => void;
-  onUse: (scenario: DemoScenarioPack) => void;
-  onRun: (scenario: DemoScenarioPack) => void;
-  running: boolean;
-  healthReady: boolean;
-}) {
-  const disabled = !selected || running;
-  const runDisabled = disabled || !healthReady;
-  const sourcePreview = selected?.sources?.slice(0, 4) ?? [];
-
-  return (
-    <Panel
-      title="Messy scenarios"
-      eyebrow="Demo selector"
-      icon={Sparkles}
-      count={scenarios.length || undefined}
-      className="shrink-0"
-      bodyClassName="min-w-0 space-y-3"
-    >
-      {scenarios.length === 0 ? (
-        <div className="rounded-md border border-border bg-surface-muted p-3 text-[12px] text-muted-foreground">
-          Scenario examples load from Redis when the agent service is available.
-        </div>
-      ) : (
-        <>
-          <label className="block text-[11px] font-semibold uppercase tracking-[0.08em] text-subtle-foreground" htmlFor="demo-scenario">
-            Council case
-          </label>
-          <select
-            id="demo-scenario"
-            value={selected?.id ?? selectedId}
-            onChange={(event) => onSelect(event.target.value)}
-            className="h-9 w-full rounded-md border border-border bg-background px-2.5 text-[12px] font-medium text-foreground outline-none transition-colors focus:border-accent"
-          >
-            {scenarios.map((scenario) => (
-              <option key={scenario.id} value={scenario.id}>
-                {scenario.title}
-              </option>
-            ))}
-          </select>
-
-          {selected && (
-            <div className="space-y-3">
-              <p className="text-[12px] leading-5 text-muted-foreground">{selected.description}</p>
-
-              <div className="flex flex-wrap gap-1.5">
-                <StatusBadge tone="info" icon={Database}>
-                  {selected.source_count} sources
-                </StatusBadge>
-                <StatusBadge tone="warning" icon={FileSpreadsheet}>
-                  {selected.messy_input_count} messy fields
-                </StatusBadge>
-              </div>
-
-              <div className="grid min-w-0 gap-1.5">
-                {sourcePreview.map((source) => (
-                  <div key={`${selected.id}-${source.source_type}`} className="min-w-0 rounded-md border border-border bg-surface-muted px-2.5 py-2">
-                    <div className="flex min-w-0 items-center justify-between gap-2">
-                      <span className="min-w-0 truncate text-[12px] font-semibold text-foreground">{sourceLabel(source.source_type)}</span>
-                      <span className="shrink-0 font-mono text-[10px] text-subtle-foreground">{source.record_count} rows</span>
-                    </div>
-                    <div className="mt-1 min-w-0 truncate text-[11px] text-muted-foreground">
-                      {source.source_system} · {(source.messy_fields ?? []).slice(0, 2).join("; ")}
-                    </div>
-                  </div>
-                ))}
-              </div>
-
-              <div className="flex gap-2">
-                <button
-                  type="button"
-                  disabled={disabled}
-                  onClick={() => selected && onUse(selected)}
-                  className={cx(
-                    "inline-flex h-8 flex-1 items-center justify-center gap-1.5 rounded-md border border-border bg-surface px-2 text-[12px] font-semibold text-foreground transition-colors hover:bg-surface-muted",
-                    disabled && "cursor-not-allowed opacity-50 hover:bg-surface",
-                  )}
-                >
-                  <FileSpreadsheet className="h-3.5 w-3.5" strokeWidth={2.25} />
-                  Fill prompt
-                </button>
-                <button
-                  type="button"
-                  disabled={runDisabled}
-                  onClick={() => selected && onRun(selected)}
-                  className={cx(
-                    "inline-flex h-8 flex-1 items-center justify-center gap-1.5 rounded-md bg-accent px-2 text-[12px] font-semibold text-accent-foreground transition-colors hover:brightness-95",
-                    runDisabled && "cursor-not-allowed opacity-50 hover:brightness-100",
-                  )}
-                >
-                  <Play className="h-3.5 w-3.5" strokeWidth={2.25} />
-                  Run
-                </button>
-              </div>
-            </div>
-          )}
-        </>
-      )}
-    </Panel>
   );
 }

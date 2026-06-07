@@ -273,7 +273,7 @@ function WebNodeOrb({
   const influenceValue = resolveInfluenceValue(agentStatus, influence);
   const headline =
     memberId === "cfo" && recommendation?.decision
-      ? recommendation.decision
+      ? recommendation.headline ?? recommendation.answer_label ?? recommendation.decision
       : latestTurn?.headline ?? agentStatus?.headline;
   const left = `${(layout.x / 1000) * 100}%`;
   const top = `${(layout.y / 640) * 100}%`;
