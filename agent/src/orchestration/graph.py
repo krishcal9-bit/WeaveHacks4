@@ -352,41 +352,53 @@ async def _debate_node(state: dict, config) -> dict:
 @weave.op(name="orch_persist")
 async def _persist_node(state: dict, config) -> dict:
     trace_dict = state.get("_trace") or {}
+    htrace_dict = state.get("_htrace") or {}
     trace = M.OrchestrationTrace(**trace_dict) if trace_dict else None
     decision = state.get("decision", "")
     context = state.get("context", {})
     _company_name, _stage, company_id = _company(context)
     recommendation = (trace.recommendation if trace else state.get("recommendation")) or {}
+    orch_in = state.get("orchestration") or {}
 
-    saved = {"trace": False, "memory": False, "event": False}
+    # Identifiers that work for a single debate OR a hierarchical (sub-debate) run.
+    run_id = trace.run_id if trace else (htrace_dict.get("run_id") or orch_in.get("hierarchical_run_id") or "")
+    decision_type = trace.decision_type if trace else (htrace_dict.get("decision_type") or "hierarchical")
+    topology_id = trace.topology_id if trace else ""
+    topology_name = trace.topology_name if trace else (orch_in.get("topology") or {}).get("name", "hierarchical")
+
+    saved = {"trace": False, "memory": False, "event": False, "mode": "hierarchical" if htrace_dict else "single"}
     if trace:
         try:
             STORE.save_trace(trace)
             saved["trace"] = True
         except Exception as exc:
             print(f"[orch persist] trace save skipped: {exc}")
+    # Episodic memory + decision event for BOTH paths, so a hierarchical decision is
+    # recalled as precedent later exactly like a single-committee one.
+    if recommendation.get("decision"):
         try:
-            mem = M.EpisodicMemoryRecord(
-                company_id=company_id,
-                decision=decision,
-                decision_type=trace.decision_type,
-                recommendation=str(recommendation.get("decision", "")),
-                confidence=int(recommendation.get("confidence") or 0),
-                key_metrics=list((recommendation.get("key_risks") or [])[:4]),
-                lessons=list((recommendation.get("conditions") or [])[:4]),
-                topology_id=trace.topology_id,
-                run_id=trace.run_id,
+            STORE.remember(
+                M.EpisodicMemoryRecord(
+                    company_id=company_id,
+                    decision=decision,
+                    decision_type=decision_type,
+                    recommendation=str(recommendation.get("decision", "")),
+                    confidence=int(recommendation.get("confidence") or 0),
+                    key_metrics=list((recommendation.get("key_risks") or [])[:4]),
+                    lessons=list((recommendation.get("conditions") or [])[:4]),
+                    topology_id=topology_id,
+                    run_id=run_id,
+                )
             )
-            STORE.remember(mem)
             saved["memory"] = True
         except Exception as exc:
             print(f"[orch persist] memory save skipped: {exc}")
         try:
             STORE.emit_event(
                 {"label": "decision", "decision": decision, "ruling": recommendation.get("decision"),
-                 "topology": trace.topology_name, "run_id": trace.run_id}
+                 "topology": topology_name, "run_id": run_id, "mode": saved["mode"]}
             )
-            STORE.publish_bus({"event": "decision", "run_id": trace.run_id, "ruling": recommendation.get("decision")})
+            STORE.publish_bus({"event": "decision", "run_id": run_id, "ruling": recommendation.get("decision")})
             saved["event"] = True
         except Exception as exc:
             print(f"[orch persist] event publish skipped: {exc}")
@@ -403,7 +415,7 @@ async def _persist_node(state: dict, config) -> dict:
     orch_view = dict(state.get("orchestration") or {})
     orch_view["phase"] = "persisted"
     orch_view["persisted"] = saved
-    orch_view["run_id"] = trace.run_id if trace else ""
+    orch_view["run_id"] = run_id
 
     patch = {
         "phase": "complete",

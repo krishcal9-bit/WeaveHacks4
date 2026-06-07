@@ -51,7 +51,7 @@ the strict live-only contract and without clobbering the sibling editing
 - [x] M10 — operator HITL control: inject/retire seats, force rounds, override threshold (live-verified)
 - [x] M11 — analytics endpoint (/api/orchestration/observability) + eval CLI (eval_run) + selftest (26/26)
 - [x] M12 — hierarchical/parallel sub-debates (bus-coordinated): decompose → concurrent committees → aggregate (live-verified)
-- [~] M13 — auto-route complex decisions to hierarchical mode inside the live graph (deterministic complexity router)   (verifying)
+- [x] M13 — auto-route complex decisions to hierarchical mode inside the live graph (live-verified: acquisition → hierarchical, REJECT@91)
 
 ## Log
 - **M0 done**: `__init__.py`, `namespace.py` (atlas:orch:* key map, pure/offline-safe), PROGRESS.md.
@@ -119,6 +119,10 @@ the strict live-only contract and without clobbering the sibling editing
   LIVE: "Open a Berlin sales office?" → 4 sub-decisions (affordability/runway, ROI/CAC, operating-model,
   tax+compliance) → 4 concurrent committees [REJECT,REJECT,CONDITIONAL,CONDITIONAL] → CFO aggregate REJECT@90,
   grounded in $4.2M cash / $310k burn; 4 sub-traces + 1 hrun persisted; $0.28. Package `README.md` added.
+- **M13 done**: `graph.py` deterministic complexity router auto-sends complex decisions to hierarchical mode
+  inside the live graph (cost-bounded lean sub-committees); persist now writes episodic memory + decision event
+  for BOTH single and hierarchical paths. LIVE: "$6M acquisition to expand into Europe" → mode=hierarchical,
+  4 sub-committees [REJECT,REJECT,CONDITIONAL,CONDITIONAL] → REJECT@91, hrun persisted, $0.26. CLAUDE.md synced.
 
 ## Status: every explicit goal bullet delivered + live-verified; demo green with the flag off.
 All 11 modules (namespace, models, store, conductor, registry, debate, llm_io, eval, graph, api, control, seed)
