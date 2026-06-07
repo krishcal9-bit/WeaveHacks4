@@ -155,9 +155,9 @@ export default function DecisionsPage() {
   // tree repaints a few times per second instead of on every AG-UI delta (the
   // unthrottled stream froze the page). Logic below (submit guards, command sync,
   // copilot actions, dispatchCommand) still uses the LIVE state/running/nodeName.
-  const vState = useThrottledValue(state, 140);
-  const vRunning = useThrottledValue(running, 140);
-  const vNode = useThrottledValue(nodeName, 140);
+  const vState = useThrottledValue(state, 250);
+  const vRunning = useThrottledValue(running, 250);
+  const vNode = useThrottledValue(nodeName, 250);
 
   // Defensive reads: every field is optional and may arrive incrementally.
   const transcript = useMemo(() => vState?.transcript ?? [], [vState?.transcript]);
