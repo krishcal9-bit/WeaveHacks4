@@ -120,3 +120,33 @@ async def plan(body: dict = Body(...)):
         }
     except Exception as exc:
         raise _fail(exc)
+
+
+@orchestration_router.get("/orchestration/control/{thread_id}")
+def get_control(thread_id: str):
+    """Read the operator's standing directives for a live debate thread."""
+    from src.orchestration import control as CONTROL
+
+    try:
+        return CONTROL.read_control(thread_id)
+    except Exception as exc:
+        raise _fail(exc)
+
+
+@orchestration_router.post("/orchestration/control/{thread_id}")
+def set_control(thread_id: str, body: dict = Body(...)):
+    """Steer a live debate (HITL): inject/retire seats, force rounds, override threshold."""
+    from src.orchestration import control as CONTROL
+
+    body = body or {}
+    try:
+        return CONTROL.set_control(
+            thread_id,
+            inject_seats=body.get("inject_seats"),
+            retire_seats=body.get("retire_seats"),
+            force_more_rounds=body.get("force_more_rounds"),
+            override_threshold=body.get("override_threshold"),
+            note=body.get("note"),
+        )
+    except Exception as exc:
+        raise _fail(exc)

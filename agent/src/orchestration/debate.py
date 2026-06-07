@@ -271,6 +271,7 @@ async def run_debate(
     personas: list[dict] | None = None,
     reliability_weights: dict | None = None,
     precedents=None,
+    control_thread: str | None = None,
     emit=None,
     config=None,
 ) -> M.OrchestrationTrace:
@@ -294,13 +295,33 @@ async def run_debate(
     convergence = None
     stop_reason = M.StopReason.max_rounds
     max_rounds = max(1, int(topology.max_rounds or 1))
+    threshold = topology.convergence_threshold
 
-    for r in range(1, max_rounds + 1):
+    r = 0
+    while r < max_rounds:
+        r += 1
+        # Human-in-the-loop: before each round, honor operator directives for this
+        # debate thread (inject/retire seats, force more rounds, override threshold).
+        if control_thread:
+            from src.orchestration import control as CTRL
+
+            ctrl = CTRL.read_control(control_thread)
+            updated_seats = CTRL.apply_seats(debate_seats, ctrl)
+            if [p["id"] for p in updated_seats] != [p["id"] for p in debate_seats]:
+                debate_seats = updated_seats
+                await _emit(emit, phase=f"operator updated seats -> {[p['id'] for p in debate_seats]}")
+            if ctrl.get("override_threshold") is not None:
+                threshold = float(ctrl["override_threshold"])
+            forced = CTRL._consume_force_rounds(control_thread, ctrl)
+            if forced:
+                max_rounds = min(CTRL.ABS_MAX_ROUNDS, max_rounds + forced)
+                await _emit(emit, phase=f"operator forced +{forced} round(s) -> max {max_rounds}")
+
         await _emit(emit, phase=f"debate round {r}/{max_rounds}", round_index=r)
         stances, tels = await _run_round(debate_seats, decision, digest, r, prev_stances, None, topology.fan_out, config)
         for tel in tels:
             telemetry = IO.merge_telemetry(telemetry, tel)
-        convergence = compute_convergence(stances, weights, r, topology.convergence_threshold, prev_stances)
+        convergence = compute_convergence(stances, weights, r, threshold, prev_stances)
         rounds.append(M.DebateRound(index=r, stances=stances, convergence=convergence))
         await _emit(
             emit,
@@ -328,7 +349,7 @@ async def run_debate(
             stances, tels = await _run_round(debate_seats, decision, digest, next_index, prev_stances, focus, topology.fan_out, config)
             for tel in tels:
                 telemetry = IO.merge_telemetry(telemetry, tel)
-            convergence = compute_convergence(stances, weights, next_index, topology.convergence_threshold, prev_stances)
+            convergence = compute_convergence(stances, weights, next_index, threshold, prev_stances)
             rounds.append(M.DebateRound(index=next_index, stances=stances, convergence=convergence, notes="loop-back addressing red-team"))
             prev_stances = stances
             red_team2, tel2 = await _red_team(decision, digest, prev_stances, config)

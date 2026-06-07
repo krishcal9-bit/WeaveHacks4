@@ -309,7 +309,7 @@ async def _debate_node(state: dict, config) -> dict:
 
     trace = await DEBATE.run_debate(
         decision, context, topology, company=company, stage=stage,
-        reliability_weights={}, precedents=precedents, emit=emit_cb, config=config,
+        reliability_weights={}, precedents=precedents, control_thread=thread_id, emit=emit_cb, config=config,
     )
     trace.thread_id = thread_id
     trace.checkpoints = checkpoints
@@ -323,9 +323,13 @@ async def _debate_node(state: dict, config) -> dict:
         cost_usd=trace.cost_usd,
         seats=trace.seats,
     )
+    final_stances = trace.rounds[-1].stances if trace.rounds else []
+    final_positions = [_stance_turn(s.model_dump(mode="json")) for s in final_stances]
     patch = {
         "phase": "debate-complete",
         "current_phase": f"Debate complete · {len(trace.rounds)} round(s) · {trace.stop_reason.value}",
+        "positions": final_positions,
+        "transcript": [framing, *final_positions],
         "orchestration": orch_view,
         "observability_events": [
             _event("W&B Weave", "Span: orch_debate", f"{len(trace.rounds)} round(s) traced", "positive"),

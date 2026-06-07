@@ -47,7 +47,8 @@ the strict live-only contract and without clobbering the sibling editing
 - [x] M7 — REST surface mounted flag-gated on src/api.py (0 routes off / 9 on, verified)
 - [x] M8 — flag-gated graph: agent.py EOF swap verified (off=linear 11-node / on=orchestrator 4-node) + types.ts mirrored
 - [x] M9 — seed (`seed.py`, live-verified) + `.cursor/rules/atlas-orchestration.mdc` + CLAUDE.md docs
-- [~] Infra+verify — Redis Stack up ✓, seeded ✓; flag-on graph E2E running; preflight + commit pending
+- [x] Infra+verify — Redis Stack up + seeded; flag-on graph E2E live OK; preflight green (flag off); committed (324a386)
+- [x] M10 — operator HITL control: inject/retire seats, force rounds, override threshold (live-verified)
 
 ## Log
 - **M0 done**: `__init__.py`, `namespace.py` (atlas:orch:* key map, pure/offline-safe), PROGRESS.md.
@@ -98,3 +99,15 @@ the strict live-only contract and without clobbering the sibling editing
   (run-85eb…, 3 checkpoints); episodic recall after run OK. All sponsors exercised through one flag.
 - **DEMO GREEN (flag off)**: `scripts/live-preflight.sh` PASSED — env keys, OpenAI models, Redis Stack
   (JSON/Search/TS), financial-OS indices, scenario branch — unaffected by the additive flag-off wiring.
+- **M10 done**: `control.py` — operator HITL directives in `atlas:orch:control:<thread>` (inject/retire seats,
+  force rounds [one-shot], override threshold), read cooperatively between rounds in `run_debate(control_thread=…)`,
+  wired through `graph._debate_node` + POST/GET `/api/orchestration/control/{thread}`. Verified offline
+  (apply_seats, one-shot force) + LIVE (operator injected `risk` + forced +1 round → 2 rounds, risk seated).
+  Also: the debate node now returns final positions/transcript for a rich end-state snapshot.
+
+## Status: every explicit goal bullet delivered + live-verified; demo green with the flag off.
+All 11 modules (namespace, models, store, conductor, registry, debate, llm_io, eval, graph, api, control, seed)
++ flag-gated wiring committed (40dcea1, cfa07ef, cbd3020, 324a386, + M10). OpenAI (Conductor/dynamic roster/
+multi-round/red-team/negotiation/weighted-vote), W&B Weave (topology-as-eval-unit + promotion gate + span trees),
+Redis Stack (checkpointer/episodic vector memory/streams+consumer-group bus/pubsub), CopilotKit/AG-UI (streamed
+orchestration state + operator HITL), Cursor (rules) — all exercised deeper, behind ATLAS_ORCHESTRATOR (default off).
