@@ -2840,3 +2840,23 @@ workflow.add_edge("persist", END)
 
 checkpointer = MemorySaver()
 graph = workflow.compile(checkpointer=checkpointer)
+
+
+# --------------------------------------------------------------------------- #
+# Optional orchestration engine (ATLAS_ORCHESTRATOR, default OFF).
+# When enabled, swap in the deep orchestration graph (Conductor → dynamic roster →
+# multi-round debate → red-team → reliability-weighted vote → CFO synthesis), built
+# in the isolated src/orchestration package over this same DebateState so the AG-UI
+# bridge and frontend are unchanged. Additive and fail-safe: any import/build error
+# falls back to the linear graph above, so the live demo is byte-for-byte unchanged
+# whenever the flag is off or the engine is unavailable.
+# See agent/src/orchestration/ and .cursor/rules/atlas-orchestration.mdc.
+# --------------------------------------------------------------------------- #
+if os.getenv("ATLAS_ORCHESTRATOR", "").strip().lower() in ("1", "true", "yes", "on"):
+    try:
+        from src.orchestration.graph import build_orchestrator_graph as _build_orchestrator_graph
+
+        graph = _build_orchestrator_graph(base_graph=graph)
+        print("[atlas] ATLAS_ORCHESTRATOR enabled — orchestration engine graph active.")
+    except Exception as _orchestration_exc:  # fall back to the linear graph, never break the demo
+        print(f"[atlas] orchestration engine unavailable; using linear graph: {_orchestration_exc}")

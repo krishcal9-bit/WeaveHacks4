@@ -36,6 +36,20 @@ from src.financial_api import financial_router  # noqa: E402
 
 router.include_router(financial_router)
 
+# Mount the orchestration engine's read-mostly router additively, ONLY when the
+# ATLAS_ORCHESTRATOR engine is enabled (default off → this module is unchanged).
+import os as _os  # noqa: E402
+
+if _os.getenv("ATLAS_ORCHESTRATOR", "").strip().lower() in ("1", "true", "yes", "on"):
+    try:
+        from src.orchestration.api import orchestration_router  # noqa: E402
+
+        router.include_router(orchestration_router)
+    except Exception as _exc:  # never break the dashboard API if the engine is absent
+        from src.env import redact_secrets as _redact
+
+        print(f"[api] orchestration router not mounted: {_redact(_exc)}")
+
 COMPANY_KEY = f"{R.NS}:company:northwind"
 
 

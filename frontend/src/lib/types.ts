@@ -287,6 +287,48 @@ export interface DebateState {
   phase_controls?: PhaseControls;
   export_status?: ExportStatus;
   command_audit_log?: CommandAuditEntry[];
+  // --- Orchestration engine (agent/src/orchestration/*, ATLAS_ORCHESTRATOR) --- //
+  // Live topology shape, per-round convergence, reliability-weighted vote + minority
+  // reports, and persistence summary; set by the orchestration graph when the flag is on.
+  orchestration?: OrchestrationView;
+}
+
+/** Live view of an orchestrated debate (agent/src/orchestration/graph.py). */
+export interface OrchestrationView {
+  phase?: string;
+  engine?: string;
+  thread_id?: string;
+  run_id?: string;
+  stop_reason?: string;
+  cost_usd?: number;
+  precedents?: { decision?: string; recommendation?: string }[];
+  topology?: OrchestrationTopologyView;
+  rounds?: OrchestrationRoundView[];
+  convergence?: Record<string, unknown>;
+  tally?: Record<string, unknown>;
+  red_team?: Record<string, unknown>;
+  seats?: string[];
+  persisted?: Record<string, boolean>;
+}
+
+export interface OrchestrationTopologyView {
+  id?: string;
+  name?: string;
+  decision_type?: string;
+  max_rounds?: number;
+  requires_red_team?: boolean;
+  allow_loops?: boolean;
+  fan_out?: boolean;
+  convergence_threshold?: number;
+  seats?: string[];
+  nodes?: Record<string, unknown>[];
+  edges?: Record<string, unknown>[];
+}
+
+export interface OrchestrationRoundView {
+  index?: number;
+  convergence?: Record<string, unknown>;
+  stances?: Record<string, unknown>[];
 }
 
 // --------------------------------------------------------------------------- //

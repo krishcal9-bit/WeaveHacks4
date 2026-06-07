@@ -44,10 +44,10 @@ the strict live-only contract and without clobbering the sibling editing
 - [x] M4 — dynamic specialist registry (`registry.py`)
 - [x] M5 — debate engine: rounds/convergence/red-team/voting (`debate.py`, `llm_io.py`)
 - [x] M6 — Weave eval + promotion gate (`eval.py`)
-- [~] M7 — REST surface (`api.py` module done; include_router wiring into src/api.py pending)
-- [~] M8 — flag-gated graph (`graph.py` built; agent.py EOF + types.ts wiring pending; E2E verifying)
-- [ ] M9 — seed data + `.cursor/rules` + CLAUDE.md docs
-- [ ] Infra+verify — Redis Stack up, preflight, real debate (flag off+on), commit
+- [x] M7 — REST surface mounted flag-gated on src/api.py (0 routes off / 9 on, verified)
+- [x] M8 — flag-gated graph: agent.py EOF swap verified (off=linear 11-node / on=orchestrator 4-node) + types.ts mirrored
+- [x] M9 — seed (`seed.py`, live-verified) + `.cursor/rules/atlas-orchestration.mdc` + CLAUDE.md docs
+- [~] Infra+verify — Redis Stack up ✓, seeded ✓; flag-on graph E2E running; preflight + commit pending
 
 ## Log
 - **M0 done**: `__init__.py`, `namespace.py` (atlas:orch:* key map, pure/offline-safe), PROGRESS.md.
@@ -83,5 +83,18 @@ the strict live-only contract and without clobbering the sibling editing
   checkpoints + POST /plan). Compiles. Wiring into src/api.py (flag-gated include_router) pending.
 - **M8 module done**: `graph.py` — flag-gated orchestration graph (intake→conduct→debate→persist) over a
   lazily-defined DebateState subclass (adds `orchestration` key); streams onto existing DebateState keys +
-  checkpoints/trace/memory/bus to Redis. Builds (CompiledStateGraph, 4 nodes). E2E flag-on run verifying;
-  agent.py EOF swap + types.ts optional field pending.
+  checkpoints/trace/memory/bus to Redis. Builds (CompiledStateGraph, 4 nodes).
+- **Wiring done (additive, flag-gated, fresh-read; sibling files unchanged since 20:41)**:
+  - `src/api.py` flag-gated `include_router(orchestration_router)` — verified 0 routes off / 9 on.
+  - `src/agent.py` EOF flag-gated graph swap (try/except fallback) — verified off=linear (11 nodes) /
+    on=orchestrator (4 nodes), with activation log line.
+  - `src/data/seed.py` flag-gated `seed_orchestration()` + summary key.
+  - `frontend/src/lib/types.ts` optional `orchestration?: OrchestrationView` + interfaces.
+  - `CLAUDE.md` orchestration subsystem section.
+- **M9 done**: `seed.py` (4 baseline topologies + 3 precedents; idempotent; live recall verified) +
+  `.cursor/rules/atlas-orchestration.mdc`.
+- **FLAG-ON GRAPH E2E (live) OK**: Datadog renewal → Conductor seated 5 seats (incl. legal specialist),
+  3-round red-team topology → 3 rounds → CONDITIONAL (CFO @84); trace+memory+bus persisted
+  (run-85eb…, 3 checkpoints); episodic recall after run OK. All sponsors exercised through one flag.
+- **DEMO GREEN (flag off)**: `scripts/live-preflight.sh` PASSED — env keys, OpenAI models, Redis Stack
+  (JSON/Search/TS), financial-OS indices, scenario branch — unaffected by the additive flag-off wiring.

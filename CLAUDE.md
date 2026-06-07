@@ -147,3 +147,41 @@ App Router under `frontend/src/app/`, four routes wrapped by `AppShell`: `/` (Ex
 `/decisions` (the live AI Council / Decision Room — the centerpiece), `/department` (org chart),
 `/activity` (decision log). Tailwind v4, Recharts for the runway chart, semantic color tokens
 (`positive`/`risk`/`warning`/`info`) defined in `globals.css`.
+
+## Orchestration engine (optional — `ATLAS_ORCHESTRATOR`, default OFF)
+
+A deep, **opt-in** agent-orchestration layer in `agent/src/orchestration/` that takes the committee
+beyond the fixed linear graph. With the flag off the demo is byte-for-byte unchanged; with it on,
+`agent.py`'s EOF swaps `graph` for `orchestration.graph.build_orchestrator_graph()` (same `DebateState`,
+so the AG-UI bridge + frontend are unchanged), and `api.py`/`data/seed.py` additively mount/seed it.
+
+- **`namespace.py`** — owns the `atlas:orch:*` Redis subtree ONLY (pure/offline-safe key map + guard).
+- **`models.py`** — strict structured-output schemas (`ConductorPlan`, `RedTeamReport`, `SeatPosition`,
+  `VoteBallot`, `NegotiationOutcome`) + tolerant records (`Topology`, `DebateRound`, `VoteTally`,
+  `EpisodicMemoryRecord`, `OrchestrationTrace`, eval types).
+- **`store.py`** — on `redis_layer`'s public API: durable/branchable/time-travelable **checkpointer**,
+  episodic-**memory** vector index (HNSW/COSINE/1536, hybrid filter+KNN), topology/run JSON stores +
+  RediSearch indices, an event **stream** + consumer-group **bus**, pub/sub fan-out, migrations.
+- **`conductor.py`** — `@weave.op orch_conductor`: a structured OpenAI call designs the debate **topology**
+  per decision (seats incl. on-demand specialists, rounds, fan-out, red-team, loops, convergence
+  threshold) → compiled `Topology` (nodes+edges); deterministic fallback on failure.
+- **`registry.py`** — base committee reused from `agent.ROSTER` + on-demand specialists (tax/legal/
+  hedging/mna).
+- **`debate.py`** (+`llm_io.py`) — `@weave.op orch_debate`: multi-round adaptive debate (stance
+  migration), deterministic convergence detection, adversarial **red-team** gate with bounded loop-back,
+  conflict negotiation, **reliability-weighted voting** + minority reports, CFO synthesis (reuses
+  `agent.Recommendation`).
+- **`eval.py`** — the **topology is the evaluatable unit**: scorers (grounding/decisiveness/convergence/
+  red-team/cost/latency), `evaluate_topology`, pure `gate_decision`, and `promote_if_better` — a
+  **promotion gate** so a worse (or insufficiently-better) orchestrator never ships.
+- **`graph.py`** — the flag-gated `finance_department` graph: `intake → conduct → debate → persist`,
+  streaming onto existing `DebateState` keys + a new `orchestration` key (mirrored in
+  `frontend/src/lib/types.ts`); persists checkpoints/trace/episodic-memory/bus to `atlas:orch:*`.
+- **`api.py`** — read-mostly `/api/orchestration/*` router (map/topologies/runs/memory/evals/checkpoints
+  + POST `/plan`), mounted additively + flag-gated onto `src.api.router`.
+- **`seed.py`** — idempotent baseline topologies + episodic precedents:
+  `uv run --directory agent python -m src.orchestration.seed` (also wired into `seed()` behind the flag).
+
+Same strict rules as the rest of the repo, plus `.cursor/rules/atlas-orchestration.mdc`: live-only (no
+fakes), `atlas:orch:*`-only ownership, reuse `agent` contracts via lazy imports, every model step a
+`@weave.op`. Run with the engine on: `ATLAS_ORCHESTRATOR=1 scripts/dev-live.sh`.
