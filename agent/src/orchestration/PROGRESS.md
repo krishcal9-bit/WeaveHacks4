@@ -104,6 +104,8 @@ the strict live-only contract and without clobbering the sibling editing
   wired through `graph._debate_node` + POST/GET `/api/orchestration/control/{thread}`. Verified offline
   (apply_seats, one-shot force) + LIVE (operator injected `risk` + forced +1 round → 2 rounds, risk seated).
   Also: the debate node now returns final positions/transcript for a rich end-state snapshot.
+- **Regression guard**: `selftest.py` — 23 offline pure-logic checks (models, topology compile, convergence,
+  weighted tally, eval scoring + gate, seat control); zero model/Redis cost. `python -m src.orchestration.selftest` → 23/23.
 
 ## Status: every explicit goal bullet delivered + live-verified; demo green with the flag off.
 All 11 modules (namespace, models, store, conductor, registry, debate, llm_io, eval, graph, api, control, seed)
