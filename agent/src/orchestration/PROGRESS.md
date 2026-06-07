@@ -40,9 +40,9 @@ the strict live-only contract and without clobbering the sibling editing
 - [x] M0 — scaffold package + `namespace.py` + PROGRESS.md
 - [x] M1 — typed Pydantic models (`models.py`)
 - [x] M2 — Redis store: checkpointer + episodic memory + streams/bus (`store.py`)
-- [~] M3 — Conductor topology planner (`conductor.py`)   (in progress)
-- [ ] M4 — dynamic specialist registry (`registry.py`)
-- [ ] M5 — debate engine: rounds/convergence/red-team/voting (`debate.py`)
+- [x] M3 — Conductor topology planner (`conductor.py`)
+- [x] M4 — dynamic specialist registry (`registry.py`)
+- [~] M5 — debate engine: rounds/convergence/red-team/voting (`debate.py`)   (in progress)
 - [ ] M6 — Weave eval + promotion gate (`eval.py`)
 - [ ] M7 — REST surface mounted on `api.py` (`api.py`)
 - [ ] M8 — flag-gated graph integration + AG-UI streaming (`graph.py` + agent.py EOF)
@@ -60,4 +60,13 @@ the strict live-only contract and without clobbering the sibling editing
   pub/sub fan-out, migrations, overview. Verified LIVE against Redis Stack (recall score 0.64; filter excludes
   non-matching decision_type). Gotcha fixed: RediSearch `Document` reserves field name `payload` → renamed to
   `record_json`.
-- **M3 start**: Conductor topology planner.
+- **M3 done**: `conductor.py` — structured OpenAI call (reuses src.agent.llm, lazy) → ConductorPlan →
+  compiled Topology (conductor→seats→[red_team(+loop)]→vote→synthesis). @weave.op `orch_conductor`.
+  Verified LIVE: cross-border M&A → 5 rounds, red-team, loop-back, threshold 0.78, seated all 4 specialists
+  (mna/legal/tax/hedging) + base committee; rationale grounded in real figures; real Weave span logged.
+  Known weave-side warning (LegacyAPIResponse.model_dump in weave's OpenAI responses/v1 capture) — pre-exists
+  in main app's llm(); does not affect correctness.
+- **M4 done**: `registry.py` — base committee reused from src.agent.ROSTER (lazy + offline mirror) +
+  on-demand specialists (tax/legal/hedging/mna) with mandates & system prompts. seat_persona/resolve_seats
+  (dedup, drop-unknown)/suggest_specialists. Verified offline + live ROSTER reuse.
+- **M5 start**: debate engine.
