@@ -155,6 +155,7 @@ export interface HealthCheck {
   model?: string;
   reasoning_effort?: string;
   verbosity?: string;
+  service_tier?: string;
 }
 
 export interface HealthPayload {
@@ -194,6 +195,7 @@ export interface SponsorView {
   model?: string;
   reasoning_effort?: string;
   verbosity?: string;
+  service_tier?: string;
 }
 
 export type TimelineStatus = "complete" | "active" | "pending" | "blocked";
@@ -257,6 +259,7 @@ export function getSponsorRows(health: HealthView): SponsorView[] {
       model: source?.model,
       reasoning_effort: source?.reasoning_effort,
       verbosity: source?.verbosity,
+      service_tier: source?.service_tier,
     } satisfies SponsorView;
   });
 }

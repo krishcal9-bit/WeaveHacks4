@@ -1145,6 +1145,7 @@ def _narrative_llm():
             reasoning_effort=os.getenv("LLM_REASONING_EFFORT", "xhigh"),
             verbosity=os.getenv("LLM_TEXT_VERBOSITY", "low"),
             output_version="responses/v1",
+            service_tier=os.getenv("OPENAI_SERVICE_TIER", "priority"),
         ), f"{provider}:{model}"
     from langchain.chat_models import init_chat_model
 

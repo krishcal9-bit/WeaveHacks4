@@ -833,6 +833,7 @@ export interface TraceSummary {
   model?: string;
   reasoning_effort?: string;
   text_verbosity?: string;
+  service_tier?: string;
   realtime_model?: string;
   realtime_reasoning_effort?: string;
   model_calls?: number;

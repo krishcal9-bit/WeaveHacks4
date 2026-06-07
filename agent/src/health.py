@@ -20,6 +20,7 @@ load_env()
 
 _REASONING_EFFORTS = {"none", "low", "medium", "high", "xhigh"}
 _TEXT_VERBOSITIES = {"low", "medium", "high"}
+_SERVICE_TIERS = {"auto", "default", "priority", "flex"}
 
 _weave_status: dict[str, Any] = {
     "configured": bool(os.getenv("WANDB_API_KEY") and os.getenv("WANDB_PROJECT")),
@@ -259,6 +260,7 @@ def _llm_status() -> dict[str, Any]:
     model = os.getenv("LLM_MODEL")
     reasoning_effort = os.getenv("LLM_REASONING_EFFORT")
     verbosity = os.getenv("LLM_TEXT_VERBOSITY")
+    service_tier = os.getenv("OPENAI_SERVICE_TIER", "priority")
     realtime_model = os.getenv("OPENAI_REALTIME_MODEL")
     realtime_reasoning_effort = os.getenv("OPENAI_REALTIME_REASONING_EFFORT")
     realtime_voice = os.getenv("OPENAI_REALTIME_VOICE")
@@ -285,6 +287,11 @@ def _llm_status() -> dict[str, Any]:
             "detail": verbosity or "LLM_TEXT_VERBOSITY missing",
         },
         {
+            "label": "Service tier",
+            "ready": service_tier in _SERVICE_TIERS and service_tier == "priority",
+            "detail": service_tier or "OPENAI_SERVICE_TIER missing",
+        },
+        {
             "label": "Realtime model",
             "ready": realtime_model == "gpt-realtime-2",
             "detail": realtime_model or "OPENAI_REALTIME_MODEL missing",
@@ -307,7 +314,7 @@ def _llm_status() -> dict[str, Any]:
     ]
     ready = all(check["ready"] for check in checks)
     detail = (
-        f"{provider}:{model} · {reasoning_effort} reasoning · {realtime_model} voice"
+        f"{provider}:{model} · {reasoning_effort} reasoning · {service_tier} tier · {realtime_model} voice"
         if provider and model
         else "OpenAI model configuration missing"
     )
@@ -320,6 +327,7 @@ def _llm_status() -> dict[str, Any]:
         "model": model,
         "reasoning_effort": reasoning_effort,
         "verbosity": verbosity,
+        "service_tier": service_tier,
         "realtime": {
             "model": realtime_model,
             "reasoning_effort": realtime_reasoning_effort,
@@ -330,6 +338,7 @@ def _llm_status() -> dict[str, Any]:
             "structured_outputs",
             "function_calling",
             "reasoning_xhigh",
+            "priority_processing",
             "realtime_voice",
             "webrtc_session_secret",
         ],

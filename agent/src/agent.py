@@ -102,6 +102,7 @@ LLM_PROVIDER = os.getenv("LLM_PROVIDER", "openai")
 LLM_MODEL = os.getenv("LLM_MODEL", "gpt-5.5")
 LLM_REASONING_EFFORT = os.getenv("LLM_REASONING_EFFORT", "xhigh")
 LLM_TEXT_VERBOSITY = os.getenv("LLM_TEXT_VERBOSITY", "low")
+OPENAI_SERVICE_TIER = os.getenv("OPENAI_SERVICE_TIER", "priority")
 OPENAI_REALTIME_MODEL = os.getenv("OPENAI_REALTIME_MODEL", "gpt-realtime-2")
 OPENAI_REALTIME_REASONING_EFFORT = os.getenv("OPENAI_REALTIME_REASONING_EFFORT", "xhigh")
 
@@ -122,6 +123,7 @@ def llm(temperature: float = 0.3):
             reasoning_effort=LLM_REASONING_EFFORT,
             verbosity=LLM_TEXT_VERBOSITY,
             output_version="responses/v1",
+            service_tier=OPENAI_SERVICE_TIER,
         )
     return init_chat_model(LLM_MODEL, model_provider=LLM_PROVIDER, temperature=temperature)
 

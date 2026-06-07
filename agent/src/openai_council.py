@@ -92,6 +92,7 @@ LLM_DEBATE_REASONING_EFFORT = os.getenv("LLM_DEBATE_REASONING_EFFORT", "low")
 LLM_PLANNER_REASONING_EFFORT = os.getenv("LLM_PLANNER_REASONING_EFFORT", "low")
 LLM_SYNTHESIS_REASONING_EFFORT = os.getenv("LLM_SYNTHESIS_REASONING_EFFORT", "low")
 LLM_TEXT_VERBOSITY = os.getenv("LLM_TEXT_VERBOSITY", "low")
+OPENAI_SERVICE_TIER = os.getenv("OPENAI_SERVICE_TIER", "priority")
 
 # Cost is only reported when real per-token pricing is configured in the
 # environment — we never fabricate a dollar figure. Values are USD per 1M tokens.
@@ -109,6 +110,7 @@ def llm(temperature: float = 0.3, *, reasoning_effort: str | None = None) -> Any
             reasoning_effort=effort,
             verbosity=LLM_TEXT_VERBOSITY,
             output_version="responses/v1",
+            service_tier=OPENAI_SERVICE_TIER,
         )
     return init_chat_model(LLM_MODEL, model_provider=LLM_PROVIDER, temperature=temperature)
 

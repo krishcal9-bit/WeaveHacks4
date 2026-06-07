@@ -22,6 +22,7 @@ for key in \
   LLM_MODEL \
   LLM_REASONING_EFFORT \
   LLM_TEXT_VERBOSITY \
+  OPENAI_SERVICE_TIER \
   OPENAI_REALTIME_MODEL \
   OPENAI_REALTIME_REASONING_EFFORT \
   OPENAI_REALTIME_VOICE \
@@ -76,6 +77,8 @@ client.execute_command("JSON.GET", "__atlas:missing__")
 client.execute_command("FT._LIST")
 OpenAI().models.retrieve(os.environ["LLM_MODEL"])
 OpenAI().models.retrieve(os.environ["OPENAI_REALTIME_MODEL"])
+if os.environ["OPENAI_SERVICE_TIER"] != "priority":
+    raise SystemExit(f"OPENAI_SERVICE_TIER must be priority for the live council demo, got {os.environ['OPENAI_SERVICE_TIER']!r}")
 print("Sponsor network preflight passed: api.openai.com and api.wandb.ai resolve.")
 print("OpenAI model preflight passed: reasoning and realtime models are resolvable.")
 print("Redis Stack preflight passed: PING, RedisJSON, RediSearch.")

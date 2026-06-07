@@ -99,7 +99,7 @@ The required live environment keys are loaded from the workspace root `.env`:
 - `REDIS_URL`
 
 Optional live configuration includes `WANDB_PROJECT`, `WANDB_ENTITY`, `LLM_PROVIDER`,
-`LLM_MODEL`, `EMBED_MODEL`, `PORT`, `AGENT_URL`, and `NEXT_PUBLIC_AGENT_URL`. Never commit or
+`LLM_MODEL`, `OPENAI_SERVICE_TIER`, `EMBED_MODEL`, `PORT`, `AGENT_URL`, and `NEXT_PUBLIC_AGENT_URL`. Never commit or
 print secret values. `agent/.env.example` lists the expected names; the repeatable scripts use
 the root `.env` so the backend and frontend share one local configuration source.
 
