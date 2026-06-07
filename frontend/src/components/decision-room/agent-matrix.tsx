@@ -51,6 +51,7 @@ export function AgentMatrix({
     <Panel
       id="council-matrix"
       icon={Users}
+      visualIcon="council"
       title="Council"
       action={
         running ? (

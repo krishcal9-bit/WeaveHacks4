@@ -5,7 +5,8 @@ import { Workflow } from "lucide-react";
 import { ROSTER, ROSTER_BY_ID } from "@/lib/agents";
 import { api } from "@/lib/api";
 import type { CompanyFinancials, RosterMember } from "@/lib/types";
-import { cx, Card, Monogram } from "@/components/ui";
+import { AtlasIcon, type AtlasIconName } from "@/components/atlas-icon";
+import { cx, Card } from "@/components/ui";
 
 interface PromptVersion {
   agent: string;
@@ -17,6 +18,15 @@ interface TrackRecord {
   count: number;
   avg: number;
 }
+
+const MEMBER_ICONS: Record<string, AtlasIconName> = {
+  cfo: "memo",
+  treasury: "runway",
+  fpna: "scenario",
+  risk: "risk",
+  procurement: "evidence",
+  reliability: "health",
+};
 
 export default function DepartmentPage() {
   const [co, setCo] = useState<CompanyFinancials | null>(null);
@@ -43,11 +53,16 @@ export default function DepartmentPage() {
 
   return (
     <div className="mx-auto w-full max-w-[1180px] px-4 py-5 sm:px-6">
-      <div className="flex items-center gap-1.5 text-[10px] font-medium uppercase tracking-[0.08em] text-subtle-foreground">
-        <Workflow className="h-3.5 w-3.5" strokeWidth={1.85} />
-        Council memory
+      <div className="flex items-center gap-3">
+        <AtlasIcon name="council" size="sm" className="atlas-icon-badge--quiet" />
+        <div className="min-w-0">
+          <div className="flex items-center gap-1.5 text-[10px] font-medium uppercase tracking-[0.08em] text-subtle-foreground">
+            <Workflow className="h-3.5 w-3.5" strokeWidth={1.85} />
+            Council memory
+          </div>
+          <h1 className="mt-1 text-[20px] font-semibold tracking-tight text-foreground">Your finance team</h1>
+        </div>
       </div>
-      <h1 className="mt-1 text-[20px] font-semibold tracking-tight text-foreground">Your finance team</h1>
       <p className="mt-0.5 text-[12px] text-muted-foreground">
         A standing committee of finance functions. Each reviews every decision from its own mandate before the CFO rules
         — with a reliability track record and prompt-promotion gate.
@@ -92,12 +107,10 @@ function MemberCard({
   return (
     <Card className={cx("flex flex-col p-4", highlight ? "w-full max-w-sm border-border-strong" : "")}>
       <div className="flex items-center gap-3">
-        <Monogram
-          text={member.monogram}
-          className={cx(
-            "h-10 w-10 text-[13px]",
-            highlight ? "bg-accent text-accent-foreground" : "bg-foreground/[0.06] text-foreground",
-          )}
+        <AtlasIcon
+          name={MEMBER_ICONS[member.id] ?? "council"}
+          size={highlight ? "md" : "sm"}
+          className={cx(!highlight && "atlas-icon-badge--quiet")}
         />
         <div className="min-w-0">
           <div className="truncate text-[14px] font-semibold leading-tight text-foreground">{member.label}</div>

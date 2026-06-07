@@ -52,8 +52,9 @@ def realtime_config() -> dict[str, Any]:
         "ttl_seconds": _ttl_seconds(),
         "turn_detection": {
             "type": "semantic_vad",
-            "eagerness": os.getenv("OPENAI_REALTIME_EAGERNESS", "medium"),
-            "interrupt_response": True,
+            "eagerness": os.getenv("OPENAI_REALTIME_EAGERNESS", "low"),
+            "create_response": True,
+            "interrupt_response": False,
         },
         "output_modalities": ["audio"],
         "endpoint": "v1/realtime",
@@ -140,6 +141,7 @@ def _session_payload(config: dict[str, Any]) -> dict[str, Any]:
                 "input": {
                     "turn_detection": config["turn_detection"],
                     "transcription": {"model": "whisper-1"},
+                    "noise_reduction": {"type": "far_field"},
                 },
                 "output": {"voice": config["voice"]},
             },

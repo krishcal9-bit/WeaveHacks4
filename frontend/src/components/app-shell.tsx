@@ -9,11 +9,21 @@ import { cx } from "@/components/ui";
 import { useAppNavShortcuts } from "@/hooks/use-app-nav-shortcuts";
 import { PageTransition } from "@/components/motion/page-transition";
 import { ThemeToggle } from "@/components/theme-toggle";
+import { APP_NAME } from "@/lib/branding";
 import { APP_NAV } from "@/lib/app-nav";
+import { useMounted } from "@/lib/use-mounted";
+
+const EDITION_FMT = new Intl.DateTimeFormat("en-US", {
+  weekday: "long",
+  month: "long",
+  day: "numeric",
+  year: "numeric",
+});
 
 export function AppShell({ children }: { children: ReactNode }) {
   const pathname = usePathname();
   const isLanding = pathname === "/";
+  const mounted = useMounted();
 
   useAppNavShortcuts();
 
@@ -22,16 +32,30 @@ export function AppShell({ children }: { children: ReactNode }) {
   }
 
   return (
-    <div className="flex min-h-dvh flex-col bg-background md:h-dvh md:overflow-hidden">
-      <header className="sticky top-0 z-20 border-b border-border bg-surface/95 px-3 py-2 backdrop-blur md:px-4">
-        <div className="flex min-h-12 flex-wrap items-center gap-2.5">
-          <motion.div whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}>
-            <Link href="/" className="flex items-center gap-2 transition-opacity hover:opacity-80">
+    <div className="relative flex min-h-dvh flex-col bg-background md:h-dvh md:overflow-hidden">
+      <div className="app-grain pointer-events-none fixed inset-0 z-50" aria-hidden />
+
+      <header className="editorial-masthead sticky top-0 z-20 bg-surface/95 backdrop-blur">
+        {/* Top dateline strip — the newspaper's edition line. */}
+        <div className="flex items-center justify-between gap-3 border-b border-border/70 px-3 py-1 md:px-5">
+          <span className="kicker kicker--bare text-[9.5px] tracking-[0.22em] text-subtle-foreground">
+            {APP_NAME}
+          </span>
+          <span className="truncate font-mono text-[9.5px] uppercase tracking-[0.2em] text-subtle-foreground">
+            {mounted ? EDITION_FMT.format(new Date()) : "\u00a0"} · Live edition
+          </span>
+        </div>
+
+        <div className="flex min-h-[3.25rem] flex-wrap items-center gap-3 px-3 py-2 md:px-5">
+          <motion.div whileHover={{ scale: 1.01 }} whileTap={{ scale: 0.99 }}>
+            <Link href="/" className="flex items-baseline gap-2.5 transition-opacity hover:opacity-80">
               <AtlasMark />
-              <div className="min-w-0 leading-tight">
-                <div className="truncate font-display text-[16px] font-medium tracking-tight">Atlas</div>
-                <div className="hidden truncate font-mono text-[10px] text-subtle-foreground sm:block">finance os</div>
-              </div>
+              <span className="font-display text-[26px] font-medium leading-none tracking-[-0.02em] text-foreground">
+                {APP_NAME}
+              </span>
+              <span className="hidden font-mono text-[9.5px] uppercase tracking-[0.24em] text-accent sm:inline">
+                The Council
+              </span>
             </Link>
           </motion.div>
 
@@ -78,7 +102,7 @@ export function AppShell({ children }: { children: ReactNode }) {
         </div>
       </header>
 
-      <main className="min-w-0 flex-1 overflow-y-auto bg-background md:h-full">
+      <main className="relative min-w-0 flex-1 overflow-y-auto bg-background md:h-full">
         <PageTransition pathname={pathname}>{children}</PageTransition>
       </main>
     </div>

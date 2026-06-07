@@ -1,67 +1,355 @@
-entity,export_id,close_period,source_system,prepared_by,control_status,txn_id,date,account,description,amount,currency,category,vendor_id,vendor_name,department,memo
-Northwind Robotics,NR-CLOUDLEDGER-GL-2026-04,2026-04,CloudLedger GL Detail,Finance Operations,Closed,NR-GL-00001,2026-04-01,6000 Payroll,Northwind Robotics payroll run,-535600,USD,payroll,,,People,Payroll provider summary import
-Northwind Robotics,NR-CLOUDLEDGER-GL-2026-04,2026-04,CloudLedger GL Detail,Finance Operations,Closed,NR-GL-00002,2026-04-28,4000 Revenue,Northwind Robotics recurring revenue,388000,USD,revenue,,,Revenue,Monthly recurring revenue close entry
-Northwind Robotics,NR-CLOUDLEDGER-GL-2026-04,2026-04,CloudLedger GL Detail,Finance Operations,Closed,NR-GL-00003,2026-04-06,6500 Software,FleetPulse Telemetry April services,-16000,USD,fleet ops,fleetpulse,FleetPulse Telemetry,Platform,Usage true-up posted from vendor portal
-Northwind Robotics,NR-CLOUDLEDGER-GL-2026-04,2026-04,CloudLedger GL Detail,Finance Operations,Closed,NR-GL-00004,2026-04-09,6510 Infrastructure,NorthRelay Cloud April services,-4000,USD,infrastructure,northrelay,NorthRelay Cloud,Finance Ops,Monthly vendor bill
-Northwind Robotics,NR-CLOUDLEDGER-GL-2026-04,2026-04,CloudLedger GL Detail,Finance Operations,Closed,NR-GL-00005,2026-04-12,6520 Data,MotionGrid Observability April services,-4900,USD,monitoring,motiongrid,MotionGrid Observability,Security,Monthly vendor bill
-Northwind Robotics,NR-CLOUDLEDGER-GL-2026-04,2026-04,CloudLedger GL Detail,Finance Operations,Closed,NR-GL-00006,2026-04-15,6530 Security,Armature Lab Systems April services,-4600,USD,hardware,armature,Armature Lab Systems,Operations,Monthly vendor bill
-Northwind Robotics,NR-CLOUDLEDGER-GL-2026-04,2026-04,CloudLedger GL Detail,Finance Operations,Closed,NR-GL-00007,2026-04-18,6600 Recruiting,PickPath Warehouse AI April services,-5400,USD,warehouse,pickpath,PickPath Warehouse AI,Revenue,Monthly vendor bill
-Northwind Robotics,NR-CLOUDLEDGER-GL-2026-04,2026-04,CloudLedger GL Detail,Finance Operations,Closed,NR-GL-00008,2026-04-21,7100 Operations,VectorNest Data Store April services,-6300,USD,data,vectornest,VectorNest Data Store,Data,Monthly vendor bill
-Northwind Robotics,NR-CLOUDLEDGER-GL-2026-04,2026-04,CloudLedger GL Detail,Finance Operations,Closed,NR-GL-00009,2026-04-24,7200 Professional Services,OrbitDesk CRM April services,-24900,USD,sales,orbitdesk,OrbitDesk CRM,People,Usage true-up posted from vendor portal
-Northwind Robotics,NR-CLOUDLEDGER-GL-2026-04,2026-04,CloudLedger GL Detail,Finance Operations,Closed,NR-GL-00010,2026-04-02,6500 Software,TrustLoom Security April services,-8200,USD,security,trustloom,TrustLoom Security,Platform,Monthly vendor bill
-Northwind Robotics,NR-CLOUDLEDGER-GL-2026-04,2026-04,CloudLedger GL Detail,Finance Operations,Closed,NR-GL-00011,2026-04-05,6510 Infrastructure,DockPilot Integration April services,-9300,USD,integration,dockpilot,DockPilot Integration,Finance Ops,Monthly vendor bill
-Northwind Robotics,NR-CLOUDLEDGER-GL-2026-04,2026-04,CloudLedger GL Detail,Finance Operations,Closed,NR-GL-00012,2026-04-08,6520 Data,GearForge Parts April services,-32900,USD,materials,gearforge,GearForge Parts,Security,Monthly vendor bill
-Northwind Robotics,NR-CLOUDLEDGER-GL-2026-04,2026-04,CloudLedger GL Detail,Finance Operations,Closed,NR-GL-00013,2026-04-11,6530 Security,RouteWell Field Ops April services,-9000,USD,field ops,routewell,RouteWell Field Ops,Operations,Monthly vendor bill
-Northwind Robotics,NR-CLOUDLEDGER-GL-2026-04,2026-04,CloudLedger GL Detail,Finance Operations,Closed,NR-GL-00014,2026-04-14,6600 Recruiting,SafetyRail Compliance April services,-10000,USD,compliance,safetyrail,SafetyRail Compliance,Revenue,Monthly vendor bill
-Northwind Robotics,NR-CLOUDLEDGER-GL-2026-04,2026-04,CloudLedger GL Detail,Finance Operations,Closed,NR-GL-00015,2026-04-17,7100 Operations,BrightBay Recruiting April services,-33200,USD,recruiting,brightbay,BrightBay Recruiting,Data,Usage true-up posted from vendor portal
-Northwind Robotics,NR-CLOUDLEDGER-GL-2026-04,2026-04,CloudLedger GL Detail,Finance Operations,Closed,NR-GL-00016,2026-04-20,7200 Professional Services,CopperKite Consulting April services,-12200,USD,advisory,copperkite,CopperKite Consulting,People,Monthly vendor bill
-Northwind Robotics,NR-CLOUDLEDGER-GL-2026-04,2026-04,CloudLedger GL Detail,Finance Operations,Closed,NR-GL-00017,2026-04-23,6500 Software,SignalCrate Analytics April services,-13400,USD,analytics,signalcrate,SignalCrate Analytics,Platform,Monthly vendor bill
-Northwind Robotics,NR-CLOUDLEDGER-GL-2026-04,2026-04,CloudLedger GL Detail,Finance Operations,Closed,NR-GL-00018,2026-04-26,6510 Infrastructure,FulfillWise EDI April services,-14600,USD,operations,fulfillwise,FulfillWise EDI,Finance Ops,Monthly vendor bill
-Northwind Robotics,NR-CLOUDLEDGER-GL-2026-04,2026-04,CloudLedger GL Detail,Finance Operations,Closed,NR-GL-00019,2026-04-04,6520 Data,MapleBench QA April services,-15900,USD,quality,maplebench,MapleBench QA,Security,Monthly vendor bill
-Northwind Robotics,NR-CLOUDLEDGER-GL-2026-04,2026-04,CloudLedger GL Detail,Finance Operations,Closed,NR-GL-00020,2026-04-07,6530 Security,PalletPath Support April services,-13400,USD,support,palletpath,PalletPath Support,Operations,Monthly vendor bill
-Northwind Robotics,NR-CLOUDLEDGER-GL-2026-04,2026-04,CloudLedger GL Detail,Finance Operations,Closed,NR-GL-00021,2026-04-10,6600 Recruiting,ClearSprocket Finance April services,-40700,USD,finance ops,clearsprocket,ClearSprocket Finance,Revenue,Usage true-up posted from vendor portal
-Northwind Robotics,NR-CLOUDLEDGER-GL-2026-04,2026-04,CloudLedger GL Detail,Finance Operations,Closed,NR-GL-00022,2026-04-13,7100 Operations,Calibria Model Lab April services,-15900,USD,ml tooling,calibria,Calibria Model Lab,Data,Monthly vendor bill
-Northwind Robotics,NR-CLOUDLEDGER-GL-2026-05,2026-05,CloudLedger GL Detail,Finance Operations,Closed,NR-GL-00023,2026-05-01,6000 Payroll,Northwind Robotics payroll run,-590000,USD,payroll,,,People,Payroll provider summary import
-Northwind Robotics,NR-CLOUDLEDGER-GL-2026-05,2026-05,CloudLedger GL Detail,Finance Operations,Closed,NR-GL-00024,2026-05-28,4000 Revenue,Northwind Robotics recurring revenue,435400,USD,revenue,,,Revenue,Monthly recurring revenue close entry
-Northwind Robotics,NR-CLOUDLEDGER-GL-2026-05,2026-05,CloudLedger GL Detail,Finance Operations,Closed,NR-GL-00025,2026-05-07,6500 Software,FleetPulse Telemetry May services,-16500,USD,fleet ops,fleetpulse,FleetPulse Telemetry,Platform,Usage true-up posted from vendor portal
-Northwind Robotics,NR-CLOUDLEDGER-GL-2026-05,2026-05,CloudLedger GL Detail,Finance Operations,Closed,NR-GL-00026,2026-05-10,6510 Infrastructure,NorthRelay Cloud May services,-4100,USD,infrastructure,northrelay,NorthRelay Cloud,Finance Ops,Monthly vendor bill
-Northwind Robotics,NR-CLOUDLEDGER-GL-2026-05,2026-05,CloudLedger GL Detail,Finance Operations,Closed,NR-GL-00027,2026-05-13,6520 Data,MotionGrid Observability May services,-3900,USD,monitoring,motiongrid,MotionGrid Observability,Security,Monthly vendor bill
-Northwind Robotics,NR-CLOUDLEDGER-GL-2026-05,2026-05,CloudLedger GL Detail,Finance Operations,Closed,NR-GL-00028,2026-05-16,6530 Security,Armature Lab Systems May services,-4700,USD,hardware,armature,Armature Lab Systems,Operations,Monthly vendor bill
-Northwind Robotics,NR-CLOUDLEDGER-GL-2026-05,2026-05,CloudLedger GL Detail,Finance Operations,Closed,NR-GL-00029,2026-05-19,6600 Recruiting,PickPath Warehouse AI May services,-5600,USD,warehouse,pickpath,PickPath Warehouse AI,Revenue,Monthly vendor bill
-Northwind Robotics,NR-CLOUDLEDGER-GL-2026-05,2026-05,CloudLedger GL Detail,Finance Operations,Closed,NR-GL-00030,2026-05-22,7100 Operations,VectorNest Data Store May services,-6500,USD,data,vectornest,VectorNest Data Store,Data,Monthly vendor bill
-Northwind Robotics,NR-CLOUDLEDGER-GL-2026-05,2026-05,CloudLedger GL Detail,Finance Operations,Closed,NR-GL-00031,2026-05-25,7200 Professional Services,OrbitDesk CRM May services,-25800,USD,sales,orbitdesk,OrbitDesk CRM,People,Usage true-up posted from vendor portal
-Northwind Robotics,NR-CLOUDLEDGER-GL-2026-05,2026-05,CloudLedger GL Detail,Finance Operations,Closed,NR-GL-00032,2026-05-03,6500 Software,TrustLoom Security May services,-8500,USD,security,trustloom,TrustLoom Security,Platform,Monthly vendor bill
-Northwind Robotics,NR-CLOUDLEDGER-GL-2026-05,2026-05,CloudLedger GL Detail,Finance Operations,Closed,NR-GL-00033,2026-05-06,6510 Infrastructure,DockPilot Integration May services,-9600,USD,integration,dockpilot,DockPilot Integration,Finance Ops,Monthly vendor bill
-Northwind Robotics,NR-CLOUDLEDGER-GL-2026-05,2026-05,CloudLedger GL Detail,Finance Operations,Closed,NR-GL-00034,2026-05-09,6520 Data,GearForge Parts May services,-26400,USD,materials,gearforge,GearForge Parts,Security,Monthly vendor bill
-Northwind Robotics,NR-CLOUDLEDGER-GL-2026-05,2026-05,CloudLedger GL Detail,Finance Operations,Closed,NR-GL-00035,2026-05-12,6530 Security,RouteWell Field Ops May services,-9300,USD,field ops,routewell,RouteWell Field Ops,Operations,Monthly vendor bill
-Northwind Robotics,NR-CLOUDLEDGER-GL-2026-05,2026-05,CloudLedger GL Detail,Finance Operations,Closed,NR-GL-00036,2026-05-15,6600 Recruiting,SafetyRail Compliance May services,-10400,USD,compliance,safetyrail,SafetyRail Compliance,Revenue,Monthly vendor bill
-Northwind Robotics,NR-CLOUDLEDGER-GL-2026-05,2026-05,CloudLedger GL Detail,Finance Operations,Closed,NR-GL-00037,2026-05-18,7100 Operations,BrightBay Recruiting May services,-34400,USD,recruiting,brightbay,BrightBay Recruiting,Data,Usage true-up posted from vendor portal
-Northwind Robotics,NR-CLOUDLEDGER-GL-2026-05,2026-05,CloudLedger GL Detail,Finance Operations,Closed,NR-GL-00038,2026-05-21,7200 Professional Services,CopperKite Consulting May services,-12700,USD,advisory,copperkite,CopperKite Consulting,People,Monthly vendor bill
-Northwind Robotics,NR-CLOUDLEDGER-GL-2026-05,2026-05,CloudLedger GL Detail,Finance Operations,Closed,NR-GL-00039,2026-05-24,6500 Software,SignalCrate Analytics May services,-13900,USD,analytics,signalcrate,SignalCrate Analytics,Platform,Monthly vendor bill
-Northwind Robotics,NR-CLOUDLEDGER-GL-2026-05,2026-05,CloudLedger GL Detail,Finance Operations,Closed,NR-GL-00040,2026-05-02,6510 Infrastructure,FulfillWise EDI May services,-15100,USD,operations,fulfillwise,FulfillWise EDI,Finance Ops,Monthly vendor bill
-Northwind Robotics,NR-CLOUDLEDGER-GL-2026-05,2026-05,CloudLedger GL Detail,Finance Operations,Closed,NR-GL-00041,2026-05-05,6520 Data,MapleBench QA May services,-12800,USD,quality,maplebench,MapleBench QA,Security,Monthly vendor bill
-Northwind Robotics,NR-CLOUDLEDGER-GL-2026-05,2026-05,CloudLedger GL Detail,Finance Operations,Closed,NR-GL-00042,2026-05-08,6530 Security,PalletPath Support May services,-13900,USD,support,palletpath,PalletPath Support,Operations,Monthly vendor bill
-Northwind Robotics,NR-CLOUDLEDGER-GL-2026-05,2026-05,CloudLedger GL Detail,Finance Operations,Closed,NR-GL-00043,2026-05-11,6600 Recruiting,ClearSprocket Finance May services,-42300,USD,finance ops,clearsprocket,ClearSprocket Finance,Revenue,Usage true-up posted from vendor portal
-Northwind Robotics,NR-CLOUDLEDGER-GL-2026-05,2026-05,CloudLedger GL Detail,Finance Operations,Closed,NR-GL-00044,2026-05-14,7100 Operations,Calibria Model Lab May services,-16500,USD,ml tooling,calibria,Calibria Model Lab,Data,Monthly vendor bill
-Northwind Robotics,NR-CLOUDLEDGER-GL-2026-06,2026-06,CloudLedger GL Detail,Finance Operations,Controller reviewed,NR-GL-00045,2026-06-01,6000 Payroll,Northwind Robotics payroll run,-646900,USD,payroll,,,People,Payroll provider summary import
-Northwind Robotics,NR-CLOUDLEDGER-GL-2026-06,2026-06,CloudLedger GL Detail,Finance Operations,Controller reviewed,NR-GL-00046,2026-06-28,4000 Revenue,Northwind Robotics recurring revenue,485100,USD,revenue,,,Revenue,Monthly recurring revenue close entry
-Northwind Robotics,NR-CLOUDLEDGER-GL-2026-06,2026-06,CloudLedger GL Detail,Finance Operations,Controller reviewed,NR-GL-00047,2026-06-08,6500 Software,FleetPulse Telemetry June services,-17100,USD,fleet ops,fleetpulse,FleetPulse Telemetry,Platform,Usage true-up posted from vendor portal
-Northwind Robotics,NR-CLOUDLEDGER-GL-2026-06,2026-06,CloudLedger GL Detail,Finance Operations,Controller reviewed,NR-GL-00048,2026-06-11,6510 Infrastructure,NorthRelay Cloud June services,-3300,USD,infrastructure,northrelay,NorthRelay Cloud,Finance Ops,Monthly vendor bill
-Northwind Robotics,NR-CLOUDLEDGER-GL-2026-06,2026-06,CloudLedger GL Detail,Finance Operations,Controller reviewed,NR-GL-00049,2026-06-14,6520 Data,MotionGrid Observability June services,-4100,USD,monitoring,motiongrid,MotionGrid Observability,Security,Monthly vendor bill
-Northwind Robotics,NR-CLOUDLEDGER-GL-2026-06,2026-06,CloudLedger GL Detail,Finance Operations,Controller reviewed,NR-GL-00050,2026-06-17,6530 Security,Armature Lab Systems June services,-4900,USD,hardware,armature,Armature Lab Systems,Operations,Monthly vendor bill
-Northwind Robotics,NR-CLOUDLEDGER-GL-2026-06,2026-06,CloudLedger GL Detail,Finance Operations,Controller reviewed,NR-GL-00051,2026-06-20,6600 Recruiting,PickPath Warehouse AI June services,-5800,USD,warehouse,pickpath,PickPath Warehouse AI,Revenue,Monthly vendor bill
-Northwind Robotics,NR-CLOUDLEDGER-GL-2026-06,2026-06,CloudLedger GL Detail,Finance Operations,Controller reviewed,NR-GL-00052,2026-06-23,7100 Operations,VectorNest Data Store June services,-6800,USD,data,vectornest,VectorNest Data Store,Data,Monthly vendor bill
-Northwind Robotics,NR-CLOUDLEDGER-GL-2026-06,2026-06,CloudLedger GL Detail,Finance Operations,Controller reviewed,NR-GL-00053,2026-06-26,7200 Professional Services,OrbitDesk CRM June services,-26700,USD,sales,orbitdesk,OrbitDesk CRM,People,Usage true-up posted from vendor portal
-Northwind Robotics,NR-CLOUDLEDGER-GL-2026-06,2026-06,CloudLedger GL Detail,Finance Operations,Controller reviewed,NR-GL-00054,2026-06-04,6500 Software,TrustLoom Security June services,-8800,USD,security,trustloom,TrustLoom Security,Platform,Monthly vendor bill
-Northwind Robotics,NR-CLOUDLEDGER-GL-2026-06,2026-06,CloudLedger GL Detail,Finance Operations,Controller reviewed,NR-GL-00055,2026-06-07,6510 Infrastructure,DockPilot Integration June services,-7700,USD,integration,dockpilot,DockPilot Integration,Finance Ops,Monthly vendor bill
-Northwind Robotics,NR-CLOUDLEDGER-GL-2026-06,2026-06,CloudLedger GL Detail,Finance Operations,Controller reviewed,NR-GL-00056,2026-06-10,6520 Data,GearForge Parts June services,-27500,USD,materials,gearforge,GearForge Parts,Security,Monthly vendor bill
-Northwind Robotics,NR-CLOUDLEDGER-GL-2026-06,2026-06,CloudLedger GL Detail,Finance Operations,Controller reviewed,NR-GL-00057,2026-06-13,6530 Security,RouteWell Field Ops June services,-9700,USD,field ops,routewell,RouteWell Field Ops,Operations,Monthly vendor bill
-Northwind Robotics,NR-CLOUDLEDGER-GL-2026-06,2026-06,CloudLedger GL Detail,Finance Operations,Controller reviewed,NR-GL-00058,2026-06-16,6600 Recruiting,SafetyRail Compliance June services,-10800,USD,compliance,safetyrail,SafetyRail Compliance,Revenue,Monthly vendor bill
-Northwind Robotics,NR-CLOUDLEDGER-GL-2026-06,2026-06,CloudLedger GL Detail,Finance Operations,Controller reviewed,NR-GL-00059,2026-06-19,7100 Operations,BrightBay Recruiting June services,-35700,USD,recruiting,brightbay,BrightBay Recruiting,Data,Usage true-up posted from vendor portal
-Northwind Robotics,NR-CLOUDLEDGER-GL-2026-06,2026-06,CloudLedger GL Detail,Finance Operations,Controller reviewed,NR-GL-00060,2026-06-22,7200 Professional Services,CopperKite Consulting June services,-13100,USD,advisory,copperkite,CopperKite Consulting,People,Monthly vendor bill
-Northwind Robotics,NR-CLOUDLEDGER-GL-2026-06,2026-06,CloudLedger GL Detail,Finance Operations,Controller reviewed,NR-GL-00061,2026-06-25,6500 Software,SignalCrate Analytics June services,-14300,USD,analytics,signalcrate,SignalCrate Analytics,Platform,Monthly vendor bill
-Northwind Robotics,NR-CLOUDLEDGER-GL-2026-06,2026-06,CloudLedger GL Detail,Finance Operations,Controller reviewed,NR-GL-00062,2026-06-03,6510 Infrastructure,FulfillWise EDI June services,-12100,USD,operations,fulfillwise,FulfillWise EDI,Finance Ops,Monthly vendor bill
-Northwind Robotics,NR-CLOUDLEDGER-GL-2026-06,2026-06,CloudLedger GL Detail,Finance Operations,Controller reviewed,NR-GL-00063,2026-06-06,6520 Data,MapleBench QA June services,-13300,USD,quality,maplebench,MapleBench QA,Security,Monthly vendor bill
-Northwind Robotics,NR-CLOUDLEDGER-GL-2026-06,2026-06,CloudLedger GL Detail,Finance Operations,Controller reviewed,NR-GL-00064,2026-06-09,6530 Security,PalletPath Support June services,-14500,USD,support,palletpath,PalletPath Support,Operations,Monthly vendor bill
-Northwind Robotics,NR-CLOUDLEDGER-GL-2026-06,2026-06,CloudLedger GL Detail,Finance Operations,Controller reviewed,NR-GL-00065,2026-06-12,6600 Recruiting,ClearSprocket Finance June services,-43900,USD,finance ops,clearsprocket,ClearSprocket Finance,Revenue,Usage true-up posted from vendor portal
-Northwind Robotics,NR-CLOUDLEDGER-GL-2026-06,2026-06,CloudLedger GL Detail,Finance Operations,Controller reviewed,NR-GL-00066,2026-06-15,7100 Operations,Calibria Model Lab June services,-17100,USD,ml tooling,calibria,Calibria Model Lab,Data,Monthly vendor bill
+txn_id,date,account,description,amount,currency,category,vendor_id,vendor_name,source_system,department,cost_center
+NR-GL-00001,2026-01-06,4000 Revenue,Northwind Robotics customer receipt - BriarWorks Automation North region,75600,USD,revenue,,,CloudLedger,Revenue,NR-REV
+NR-GL-00002,2026-01-09,4000 Revenue,Northwind Robotics customer receipt - Keystone Assembly Group North region,90300,USD,revenue,,,CloudLedger,Revenue,NR-REV
+NR-GL-00003,2026-01-12,4000 Revenue,Northwind Robotics customer receipt - Mason & Vale Manufacturing North region,105000,USD,revenue,,,CloudLedger,Revenue,NR-REV
+NR-GL-00004,2026-01-15,4000 Revenue,Northwind Robotics customer receipt - Juniper Field Systems North region,119700,USD,revenue,,,CloudLedger,Revenue,NR-REV
+NR-GL-00005,2026-01-18,4000 Revenue,Northwind Robotics customer receipt - Arcadia Warehouse Network North region,134400,USD,revenue,,,CloudLedger,Revenue,NR-REV
+NR-GL-00006,2026-01-09,6000 Payroll,Northwind Robotics payroll batch 1,-128800,USD,payroll,,,CloudLedger,People,NR-PAY
+NR-GL-00007,2026-01-12,6000 Payroll,Northwind Robotics payroll batch 2,-138880,USD,payroll,,,CloudLedger,People,NR-PAY
+NR-GL-00008,2026-01-15,6000 Payroll,Northwind Robotics payroll batch 3,-148960,USD,payroll,,,CloudLedger,People,NR-PAY
+NR-GL-00009,2026-01-18,6000 Payroll,Northwind Robotics payroll batch 4,-159040,USD,payroll,,,CloudLedger,People,NR-PAY
+NR-GL-00010,2026-01-12,6510 Infrastructure,FleetPulse Telemetry payment for 2026-01,-13363.2,USD,Fleet Operations,NR-VEN-001,FleetPulse Telemetry,CloudLedger,Fleet Operations,NR-200
+NR-GL-00011,2026-01-15,6520 Professional Services,NorthRelay Cloud payment for 2026-01,-13895,USD,Robotics Platform,NR-VEN-002,NorthRelay Cloud,CloudLedger,Robotics Platform,NR-201
+NR-GL-00012,2026-01-18,6530 Security,MotionGrid Observability payment for 2026-01,-17603,USD,Customer Success,NR-VEN-003,MotionGrid Observability,CloudLedger,Customer Success,NR-202
+NR-GL-00013,2026-01-21,6540 Operations,Armature Lab Systems payment for 2026-01,-21564,USD,Finance,NR-VEN-004,Armature Lab Systems,CloudLedger,Finance,NR-203
+NR-GL-00014,2026-01-24,6550 Software,VectorDock Simulation payment for 2026-01,-25778,USD,Security,NR-VEN-005,VectorDock Simulation,CloudLedger,Security,NR-204
+NR-GL-00015,2026-01-27,6510 Infrastructure,Aster Route Planning payment for 2026-01,-25870,USD,Manufacturing Ops,NR-VEN-006,Aster Route Planning,CloudLedger,Manufacturing Ops,NR-205
+NR-GL-00016,2026-01-03,6520 Professional Services,BrightBeam Hosting payment for 2026-01,-20300,USD,Cloud,NR-VEN-007,BrightBeam Hosting,CloudLedger,Fleet Operations,NR-206
+NR-GL-00017,2026-01-06,6530 Security,PortKey Identity payment for 2026-01,-9706,USD,Identity,NR-VEN-008,PortKey Identity,CloudLedger,Robotics Platform,NR-207
+NR-GL-00018,2026-01-09,6540 Operations,Cedarline Legal payment for 2026-01,-18865,USD,Legal,NR-VEN-009,Cedarline Legal,CloudLedger,Customer Success,NR-208
+NR-GL-00019,2026-01-12,6550 Software,BlueTable Analytics payment for 2026-01,-10196,USD,Data,NR-VEN-010,BlueTable Analytics,CloudLedger,Finance,NR-209
+NR-GL-00020,2026-01-15,6510 Infrastructure,Riverbend Recruiting payment for 2026-01,-11705.6,USD,Recruiting,NR-VEN-011,Riverbend Recruiting,CloudLedger,Security,NR-210
+NR-GL-00021,2026-01-18,6520 Professional Services,AxisWorks Facilities payment for 2026-01,-6602,USD,Facilities,NR-VEN-012,AxisWorks Facilities,CloudLedger,Manufacturing Ops,NR-211
+NR-GL-00022,2026-01-21,6530 Security,SlateFox Insurance payment for 2026-01,-9538,USD,Insurance,NR-VEN-013,SlateFox Insurance,CloudLedger,Fleet Operations,NR-212
+NR-GL-00023,2026-01-24,6540 Operations,SignalPeak AppSec payment for 2026-01,-14375,USD,Security,NR-VEN-014,SignalPeak AppSec,CloudLedger,Robotics Platform,NR-213
+NR-GL-00024,2026-01-27,6550 Software,HelpHarbor Desk payment for 2026-01,-7579.5,USD,Support,NR-VEN-015,HelpHarbor Desk,CloudLedger,Customer Success,NR-214
+NR-GL-00025,2026-01-03,6510 Infrastructure,CloseFrame Accounting payment for 2026-01,-7980,USD,Finance,NR-VEN-016,CloseFrame Accounting,CloudLedger,Finance,NR-215
+NR-GL-00026,2026-01-06,6520 Professional Services,SkillHarbor Learning payment for 2026-01,-4853,USD,Training,NR-VEN-017,SkillHarbor Learning,CloudLedger,Security,NR-216
+NR-GL-00027,2026-01-09,6530 Security,Waypost Travel Desk payment for 2026-01,-7782,USD,Travel,NR-VEN-018,Waypost Travel Desk,CloudLedger,Manufacturing Ops,NR-217
+NR-GL-00028,2026-01-12,6540 Operations,Tundra Test Labs payment for 2026-01,-9609,USD,Device,NR-VEN-019,Tundra Test Labs,CloudLedger,Fleet Operations,NR-218
+NR-GL-00029,2026-01-15,6550 Software,VectorPoint Research payment for 2026-01,-13730,USD,Research,NR-VEN-020,VectorPoint Research,CloudLedger,Robotics Platform,NR-219
+NR-GL-00030,2026-01-18,6510 Infrastructure,Linebird Communications payment for 2026-01,-4993.28,USD,Comms,NR-VEN-021,Linebird Communications,CloudLedger,Customer Success,NR-220
+NR-GL-00031,2026-01-21,6520 Professional Services,Pinehook Operations payment for 2026-01,-14504,USD,Ops,NR-VEN-022,Pinehook Operations,CloudLedger,Finance,NR-221
+NR-GL-00032,2026-01-24,6530 Security,Mossbank Data Exchange payment for 2026-01,-9364,USD,Data,NR-VEN-023,Mossbank Data Exchange,CloudLedger,Security,NR-222
+NR-GL-00033,2026-01-27,6540 Operations,Ironleaf GRC payment for 2026-01,-8794,USD,Security,NR-VEN-024,Ironleaf GRC,CloudLedger,Manufacturing Ops,NR-223
+NR-GL-00034,2026-01-03,6550 Software,QuartzPay Services payment for 2026-01,-10535,USD,Payments,NR-VEN-025,QuartzPay Services,CloudLedger,Fleet Operations,NR-224
+NR-GL-00035,2026-01-06,6510 Infrastructure,HarborDesk Workplace payment for 2026-01,-5967,USD,Facilities,NR-VEN-026,HarborDesk Workplace,CloudLedger,Robotics Platform,NR-225
+NR-GL-00036,2026-01-09,6520 Professional Services,Northstar Design Office payment for 2026-01,-11315,USD,Design,NR-VEN-027,Northstar Design Office,CloudLedger,Customer Success,NR-226
+NR-GL-00037,2026-01-12,6530 Security,Watchtower Metrics payment for 2026-01,-5926,USD,Monitoring,NR-VEN-028,Watchtower Metrics,CloudLedger,Finance,NR-227
+NR-GL-00038,2026-01-15,6540 Operations,SafeCask Backups payment for 2026-01,-5957.5,USD,Backup,NR-VEN-029,SafeCask Backups,CloudLedger,Security,NR-228
+NR-GL-00039,2026-01-18,6550 Software,KeelWorks Procurement payment for 2026-01,-10057,USD,Procurement,NR-VEN-030,KeelWorks Procurement,CloudLedger,Manufacturing Ops,NR-229
+NR-GL-00040,2026-01-21,6510 Infrastructure,Alder QA Studio payment for 2026-01,-12687.36,USD,QA,NR-VEN-031,Alder QA Studio,CloudLedger,Fleet Operations,NR-230
+NR-GL-00041,2026-01-24,6520 Professional Services,BridgeLoop Integrations payment for 2026-01,-12719,USD,Integration,NR-VEN-032,BridgeLoop Integrations,CloudLedger,Robotics Platform,NR-231
+NR-GL-00042,2026-01-27,6530 Security,Covefront Success Ops payment for 2026-01,-11799.5,USD,Customer,NR-VEN-033,Covefront Success Ops,CloudLedger,Customer Success,NR-232
+NR-GL-00043,2026-01-03,6540 Operations,PeopleField Systems payment for 2026-01,-9345,USD,HR,NR-VEN-034,PeopleField Systems,CloudLedger,Finance,NR-233
+NR-GL-00044,2026-01-15,6100 Rent,Office and lab rent,-42000,USD,rent,,,CloudLedger,Fleet Operations,NR-240
+NR-GL-00045,2026-01-18,6110 Benefits,Benefits clearing,-68500,USD,benefits,,,CloudLedger,Robotics Platform,NR-241
+NR-GL-00046,2026-01-21,6120 Taxes,Payroll taxes,-38200,USD,taxes,,,CloudLedger,Customer Success,NR-242
+NR-GL-00047,2026-01-24,6600 Travel,Customer travel,-14800,USD,travel,,,CloudLedger,Finance,NR-243
+NR-GL-00048,2026-01-27,6610 Meals,Team meals and meetings,-6200,USD,meals,,,CloudLedger,Security,NR-244
+NR-GL-00049,2026-01-03,6620 Equipment,Laptop and device purchases,-24800,USD,equipment,,,CloudLedger,Manufacturing Ops,NR-245
+NR-GL-00050,2026-01-06,6630 Fees,Bank and payment fees,-7300,USD,fees,,,CloudLedger,Fleet Operations,NR-246
+NR-GL-00051,2026-01-09,6640 Refunds,Customer credit memo,-9600,USD,refunds,,,CloudLedger,Robotics Platform,NR-247
+NR-GL-00052,2026-01-12,6650 Training,Training and enablement,-5400,USD,training,,,CloudLedger,Customer Success,NR-248
+NR-GL-00053,2026-01-15,6660 Contractors,Short-term contractor pool,-31800,USD,contractors,,,CloudLedger,Finance,NR-249
+NR-GL-00054,2026-01-18,6670 Data,External dataset purchase,-15800,USD,data,,,CloudLedger,Security,NR-250
+NR-GL-00055,2026-01-21,6680 Events,Field workshop expense,-17600,USD,events,,,CloudLedger,Manufacturing Ops,NR-251
+NR-GL-00056,2026-01-24,6690 FX,Foreign exchange adjustment,1800,USD,fx,,,CloudLedger,Fleet Operations,NR-252
+NR-GL-00057,2026-01-27,6700 Accrual,Month-end accrual reversal,-11200,USD,accrual,,,CloudLedger,Robotics Platform,NR-253
+NR-GL-00058,2026-01-03,6710 Tax Credit,Research credit receipt,22500,USD,tax credit,,,CloudLedger,Customer Success,NR-254
+NR-GL-00059,2026-01-06,6720 Interest,Bank interest,1900,USD,interest,,,CloudLedger,Finance,NR-255
+NR-GL-00060,2026-02-06,4000 Revenue,Northwind Robotics customer receipt - Keystone Assembly Group North region,78540,USD,revenue,,,CloudLedger,Revenue,NR-REV
+NR-GL-00061,2026-02-09,4000 Revenue,Northwind Robotics customer receipt - Mason & Vale Manufacturing North region,93240,USD,revenue,,,CloudLedger,Revenue,NR-REV
+NR-GL-00062,2026-02-12,4000 Revenue,Northwind Robotics customer receipt - Juniper Field Systems North region,107940,USD,revenue,,,CloudLedger,Revenue,NR-REV
+NR-GL-00063,2026-02-15,4000 Revenue,Northwind Robotics customer receipt - Arcadia Warehouse Network North region,122640,USD,revenue,,,CloudLedger,Revenue,NR-REV
+NR-GL-00064,2026-02-18,4000 Revenue,Northwind Robotics customer receipt - BriarWorks Automation Enterprise,137340,USD,revenue,,,CloudLedger,Revenue,NR-REV
+NR-GL-00065,2026-02-09,6000 Payroll,Northwind Robotics payroll batch 1,-132160,USD,payroll,,,CloudLedger,People,NR-PAY
+NR-GL-00066,2026-02-12,6000 Payroll,Northwind Robotics payroll batch 2,-142240,USD,payroll,,,CloudLedger,People,NR-PAY
+NR-GL-00067,2026-02-15,6000 Payroll,Northwind Robotics payroll batch 3,-152320,USD,payroll,,,CloudLedger,People,NR-PAY
+NR-GL-00068,2026-02-18,6000 Payroll,Northwind Robotics payroll batch 4,-162400,USD,payroll,,,CloudLedger,People,NR-PAY
+NR-GL-00069,2026-02-12,6510 Infrastructure,Armature Lab Systems payment for 2026-02,-27601.92,USD,Finance,NR-VEN-004,Armature Lab Systems,CloudLedger,Robotics Platform,NR-201
+NR-GL-00070,2026-02-15,6520 Professional Services,VectorDock Simulation payment for 2026-02,-26551.34,USD,Security,NR-VEN-005,VectorDock Simulation,CloudLedger,Customer Success,NR-202
+NR-GL-00071,2026-02-18,6530 Security,Aster Route Planning payment for 2026-02,-26646.1,USD,Manufacturing Ops,NR-VEN-006,Aster Route Planning,CloudLedger,Finance,NR-203
+NR-GL-00072,2026-02-21,6540 Operations,BrightBeam Hosting payment for 2026-02,-20909,USD,Cloud,NR-VEN-007,BrightBeam Hosting,CloudLedger,Security,NR-204
+NR-GL-00073,2026-02-24,6550 Software,PortKey Identity payment for 2026-02,-9997.18,USD,Identity,NR-VEN-008,PortKey Identity,CloudLedger,Manufacturing Ops,NR-205
+NR-GL-00074,2026-02-27,6510 Infrastructure,Cedarline Legal payment for 2026-02,-19430.95,USD,Legal,NR-VEN-009,Cedarline Legal,CloudLedger,Fleet Operations,NR-206
+NR-GL-00075,2026-02-03,6520 Professional Services,BlueTable Analytics payment for 2026-02,-10501.88,USD,Data,NR-VEN-010,BlueTable Analytics,CloudLedger,Robotics Platform,NR-207
+NR-GL-00076,2026-02-06,6530 Security,Riverbend Recruiting payment for 2026-02,-9419.35,USD,Recruiting,NR-VEN-011,Riverbend Recruiting,CloudLedger,Customer Success,NR-208
+NR-GL-00077,2026-02-09,6540 Operations,AxisWorks Facilities payment for 2026-02,-6800.06,USD,Facilities,NR-VEN-012,AxisWorks Facilities,CloudLedger,Finance,NR-209
+NR-GL-00078,2026-02-12,6550 Software,SlateFox Insurance payment for 2026-02,-9824.14,USD,Insurance,NR-VEN-013,SlateFox Insurance,CloudLedger,Security,NR-210
+NR-GL-00079,2026-02-15,6510 Infrastructure,SignalPeak AppSec payment for 2026-02,-18400,USD,Security,NR-VEN-014,SignalPeak AppSec,CloudLedger,Manufacturing Ops,NR-211
+NR-GL-00080,2026-02-18,6520 Professional Services,HelpHarbor Desk payment for 2026-02,-7806.88,USD,Support,NR-VEN-015,HelpHarbor Desk,CloudLedger,Fleet Operations,NR-212
+NR-GL-00081,2026-02-21,6530 Security,CloseFrame Accounting payment for 2026-02,-8219.4,USD,Finance,NR-VEN-016,CloseFrame Accounting,CloudLedger,Robotics Platform,NR-213
+NR-GL-00082,2026-02-24,6540 Operations,SkillHarbor Learning payment for 2026-02,-4998.59,USD,Training,NR-VEN-017,SkillHarbor Learning,CloudLedger,Customer Success,NR-214
+NR-GL-00083,2026-02-27,6550 Software,Waypost Travel Desk payment for 2026-02,-8015.46,USD,Travel,NR-VEN-018,Waypost Travel Desk,CloudLedger,Finance,NR-215
+NR-GL-00084,2026-02-03,6510 Infrastructure,Tundra Test Labs payment for 2026-02,-9897.27,USD,Device,NR-VEN-019,Tundra Test Labs,CloudLedger,Security,NR-216
+NR-GL-00085,2026-02-06,6520 Professional Services,VectorPoint Research payment for 2026-02,-14141.9,USD,Research,NR-VEN-020,VectorPoint Research,CloudLedger,Manufacturing Ops,NR-217
+NR-GL-00086,2026-02-09,6530 Security,Linebird Communications payment for 2026-02,-4018.03,USD,Comms,NR-VEN-021,Linebird Communications,CloudLedger,Fleet Operations,NR-218
+NR-GL-00087,2026-02-12,6540 Operations,Pinehook Operations payment for 2026-02,-14939.12,USD,Ops,NR-VEN-022,Pinehook Operations,CloudLedger,Robotics Platform,NR-219
+NR-GL-00088,2026-02-15,6550 Software,Mossbank Data Exchange payment for 2026-02,-9644.92,USD,Data,NR-VEN-023,Mossbank Data Exchange,CloudLedger,Customer Success,NR-220
+NR-GL-00089,2026-02-18,6510 Infrastructure,Ironleaf GRC payment for 2026-02,-11256.32,USD,Security,NR-VEN-024,Ironleaf GRC,CloudLedger,Finance,NR-221
+NR-GL-00090,2026-02-21,6520 Professional Services,QuartzPay Services payment for 2026-02,-10851.05,USD,Payments,NR-VEN-025,QuartzPay Services,CloudLedger,Security,NR-222
+NR-GL-00091,2026-02-24,6530 Security,HarborDesk Workplace payment for 2026-02,-6146.01,USD,Facilities,NR-VEN-026,HarborDesk Workplace,CloudLedger,Manufacturing Ops,NR-223
+NR-GL-00092,2026-02-27,6540 Operations,Northstar Design Office payment for 2026-02,-11654.45,USD,Design,NR-VEN-027,Northstar Design Office,CloudLedger,Fleet Operations,NR-224
+NR-GL-00093,2026-02-03,6550 Software,Watchtower Metrics payment for 2026-02,-6103.78,USD,Monitoring,NR-VEN-028,Watchtower Metrics,CloudLedger,Robotics Platform,NR-225
+NR-GL-00094,2026-02-06,6510 Infrastructure,SafeCask Backups payment for 2026-02,-6136.22,USD,Backup,NR-VEN-029,SafeCask Backups,CloudLedger,Customer Success,NR-226
+NR-GL-00095,2026-02-09,6520 Professional Services,KeelWorks Procurement payment for 2026-02,-10358.71,USD,Procurement,NR-VEN-030,KeelWorks Procurement,CloudLedger,Finance,NR-227
+NR-GL-00096,2026-02-12,6530 Security,Alder QA Studio payment for 2026-02,-10209.36,USD,QA,NR-VEN-031,Alder QA Studio,CloudLedger,Security,NR-228
+NR-GL-00097,2026-02-15,6540 Operations,BridgeLoop Integrations payment for 2026-02,-13100.57,USD,Integration,NR-VEN-032,BridgeLoop Integrations,CloudLedger,Manufacturing Ops,NR-229
+NR-GL-00098,2026-02-18,6550 Software,Covefront Success Ops payment for 2026-02,-12153.48,USD,Customer,NR-VEN-033,Covefront Success Ops,CloudLedger,Fleet Operations,NR-230
+NR-GL-00099,2026-02-21,6510 Infrastructure,PeopleField Systems payment for 2026-02,-11961.6,USD,HR,NR-VEN-034,PeopleField Systems,CloudLedger,Robotics Platform,NR-231
+NR-GL-00100,2026-02-24,6520 Professional Services,PayRun Office payment for 2026-02,-7588.52,USD,Payroll,NR-VEN-035,PayRun Office,CloudLedger,Customer Success,NR-232
+NR-GL-00101,2026-02-27,6530 Security,Northgate Audit Partners payment for 2026-02,-17922,USD,Audit,NR-VEN-036,Northgate Audit Partners,CloudLedger,Finance,NR-233
+NR-GL-00102,2026-02-03,6540 Operations,RelayStack Compute payment for 2026-02,-9874.61,USD,Hosting,NR-VEN-037,RelayStack Compute,CloudLedger,Security,NR-234
+NR-GL-00103,2026-02-15,6100 Rent,Office and lab rent,-42630,USD,rent,,,CloudLedger,Fleet Operations,NR-240
+NR-GL-00104,2026-02-18,6110 Benefits,Benefits clearing,-69527.5,USD,benefits,,,CloudLedger,Robotics Platform,NR-241
+NR-GL-00105,2026-02-21,6120 Taxes,Payroll taxes,-38773,USD,taxes,,,CloudLedger,Customer Success,NR-242
+NR-GL-00106,2026-02-24,6600 Travel,Customer travel,-15022,USD,travel,,,CloudLedger,Finance,NR-243
+NR-GL-00107,2026-02-27,6610 Meals,Team meals and meetings,-6293,USD,meals,,,CloudLedger,Security,NR-244
+NR-GL-00108,2026-02-03,6620 Equipment,Laptop and device purchases,-25172,USD,equipment,,,CloudLedger,Manufacturing Ops,NR-245
+NR-GL-00109,2026-02-06,6630 Fees,Bank and payment fees,-7409.5,USD,fees,,,CloudLedger,Fleet Operations,NR-246
+NR-GL-00110,2026-02-09,6640 Refunds,Customer credit memo,-9744,USD,refunds,,,CloudLedger,Robotics Platform,NR-247
+NR-GL-00111,2026-02-12,6650 Training,Training and enablement,-5481,USD,training,,,CloudLedger,Customer Success,NR-248
+NR-GL-00112,2026-02-15,6660 Contractors,Short-term contractor pool,-32277,USD,contractors,,,CloudLedger,Finance,NR-249
+NR-GL-00113,2026-02-18,6670 Data,External dataset purchase,-16037,USD,data,,,CloudLedger,Security,NR-250
+NR-GL-00114,2026-02-21,6680 Events,Field workshop expense,-17864,USD,events,,,CloudLedger,Manufacturing Ops,NR-251
+NR-GL-00115,2026-02-24,6690 FX,Foreign exchange adjustment,-2639,USD,fx,,,CloudLedger,Fleet Operations,NR-252
+NR-GL-00116,2026-02-27,6700 Accrual,Month-end accrual reversal,11368,USD,accrual,,,CloudLedger,Robotics Platform,NR-253
+NR-GL-00117,2026-02-03,6710 Tax Credit,Research credit receipt,22837.5,USD,tax credit,,,CloudLedger,Customer Success,NR-254
+NR-GL-00118,2026-02-06,6720 Interest,Bank interest,1928.5,USD,interest,,,CloudLedger,Finance,NR-255
+NR-GL-00119,2026-03-06,4000 Revenue,Northwind Robotics customer receipt - Mason & Vale Manufacturing North region,81480,USD,revenue,,,CloudLedger,Revenue,NR-REV
+NR-GL-00120,2026-03-09,4000 Revenue,Northwind Robotics customer receipt - Juniper Field Systems North region,96180,USD,revenue,,,CloudLedger,Revenue,NR-REV
+NR-GL-00121,2026-03-12,4000 Revenue,Northwind Robotics customer receipt - Arcadia Warehouse Network North region,110880,USD,revenue,,,CloudLedger,Revenue,NR-REV
+NR-GL-00122,2026-03-15,4000 Revenue,Northwind Robotics customer receipt - BriarWorks Automation Enterprise,125580,USD,revenue,,,CloudLedger,Revenue,NR-REV
+NR-GL-00123,2026-03-18,4000 Revenue,Northwind Robotics customer receipt - Keystone Assembly Group Enterprise,140280,USD,revenue,,,CloudLedger,Revenue,NR-REV
+NR-GL-00124,2026-03-09,6000 Payroll,Northwind Robotics payroll batch 1,-135520,USD,payroll,,,CloudLedger,People,NR-PAY
+NR-GL-00125,2026-03-12,6000 Payroll,Northwind Robotics payroll batch 2,-145600,USD,payroll,,,CloudLedger,People,NR-PAY
+NR-GL-00126,2026-03-15,6000 Payroll,Northwind Robotics payroll batch 3,-155680,USD,payroll,,,CloudLedger,People,NR-PAY
+NR-GL-00127,2026-03-18,6000 Payroll,Northwind Robotics payroll batch 4,-165760,USD,payroll,,,CloudLedger,People,NR-PAY
+NR-GL-00128,2026-03-12,6510 Infrastructure,BrightBeam Hosting payment for 2026-03,-25984,USD,Cloud,NR-VEN-007,BrightBeam Hosting,CloudLedger,Customer Success,NR-202
+NR-GL-00129,2026-03-15,6520 Professional Services,PortKey Identity payment for 2026-03,-9706,USD,Identity,NR-VEN-008,PortKey Identity,CloudLedger,Finance,NR-203
+NR-GL-00130,2026-03-18,6530 Security,Cedarline Legal payment for 2026-03,-18865,USD,Legal,NR-VEN-009,Cedarline Legal,CloudLedger,Security,NR-204
+NR-GL-00131,2026-03-21,6540 Operations,BlueTable Analytics payment for 2026-03,-10196,USD,Data,NR-VEN-010,BlueTable Analytics,CloudLedger,Manufacturing Ops,NR-205
+NR-GL-00132,2026-03-24,6550 Software,Riverbend Recruiting payment for 2026-03,-9145,USD,Recruiting,NR-VEN-011,Riverbend Recruiting,CloudLedger,Fleet Operations,NR-206
+NR-GL-00133,2026-03-27,6510 Infrastructure,AxisWorks Facilities payment for 2026-03,-6602,USD,Facilities,NR-VEN-012,AxisWorks Facilities,CloudLedger,Robotics Platform,NR-207
+NR-GL-00134,2026-03-03,6520 Professional Services,SlateFox Insurance payment for 2026-03,-9538,USD,Insurance,NR-VEN-013,SlateFox Insurance,CloudLedger,Customer Success,NR-208
+NR-GL-00135,2026-03-06,6530 Security,SignalPeak AppSec payment for 2026-03,-14375,USD,Security,NR-VEN-014,SignalPeak AppSec,CloudLedger,Finance,NR-209
+NR-GL-00136,2026-03-09,6540 Operations,HelpHarbor Desk payment for 2026-03,-7579.5,USD,Support,NR-VEN-015,HelpHarbor Desk,CloudLedger,Security,NR-210
+NR-GL-00137,2026-03-12,6550 Software,CloseFrame Accounting payment for 2026-03,-7980,USD,Finance,NR-VEN-016,CloseFrame Accounting,CloudLedger,Manufacturing Ops,NR-211
+NR-GL-00138,2026-03-15,6510 Infrastructure,SkillHarbor Learning payment for 2026-03,-6211.84,USD,Training,NR-VEN-017,SkillHarbor Learning,CloudLedger,Fleet Operations,NR-212
+NR-GL-00139,2026-03-18,6520 Professional Services,Waypost Travel Desk payment for 2026-03,-7782,USD,Travel,NR-VEN-018,Waypost Travel Desk,CloudLedger,Robotics Platform,NR-213
+NR-GL-00140,2026-03-21,6530 Security,Tundra Test Labs payment for 2026-03,-9609,USD,Device,NR-VEN-019,Tundra Test Labs,CloudLedger,Customer Success,NR-214
+NR-GL-00141,2026-03-24,6540 Operations,VectorPoint Research payment for 2026-03,-13730,USD,Research,NR-VEN-020,VectorPoint Research,CloudLedger,Finance,NR-215
+NR-GL-00142,2026-03-27,6550 Software,Linebird Communications payment for 2026-03,-3901,USD,Comms,NR-VEN-021,Linebird Communications,CloudLedger,Security,NR-216
+NR-GL-00143,2026-03-03,6510 Infrastructure,Pinehook Operations payment for 2026-03,-14504,USD,Ops,NR-VEN-022,Pinehook Operations,CloudLedger,Manufacturing Ops,NR-217
+NR-GL-00144,2026-03-06,6520 Professional Services,Mossbank Data Exchange payment for 2026-03,-9364,USD,Data,NR-VEN-023,Mossbank Data Exchange,CloudLedger,Fleet Operations,NR-218
+NR-GL-00145,2026-03-09,6530 Security,Ironleaf GRC payment for 2026-03,-8794,USD,Security,NR-VEN-024,Ironleaf GRC,CloudLedger,Robotics Platform,NR-219
+NR-GL-00146,2026-03-12,6540 Operations,QuartzPay Services payment for 2026-03,-10535,USD,Payments,NR-VEN-025,QuartzPay Services,CloudLedger,Customer Success,NR-220
+NR-GL-00147,2026-03-15,6550 Software,HarborDesk Workplace payment for 2026-03,-5967,USD,Facilities,NR-VEN-026,HarborDesk Workplace,CloudLedger,Finance,NR-221
+NR-GL-00148,2026-03-18,6510 Infrastructure,Northstar Design Office payment for 2026-03,-14483.2,USD,Design,NR-VEN-027,Northstar Design Office,CloudLedger,Security,NR-222
+NR-GL-00149,2026-03-21,6520 Professional Services,Watchtower Metrics payment for 2026-03,-5926,USD,Monitoring,NR-VEN-028,Watchtower Metrics,CloudLedger,Manufacturing Ops,NR-223
+NR-GL-00150,2026-03-24,6530 Security,SafeCask Backups payment for 2026-03,-5957.5,USD,Backup,NR-VEN-029,SafeCask Backups,CloudLedger,Fleet Operations,NR-224
+NR-GL-00151,2026-03-27,6540 Operations,KeelWorks Procurement payment for 2026-03,-10057,USD,Procurement,NR-VEN-030,KeelWorks Procurement,CloudLedger,Robotics Platform,NR-225
+NR-GL-00152,2026-03-03,6550 Software,Alder QA Studio payment for 2026-03,-9912,USD,QA,NR-VEN-031,Alder QA Studio,CloudLedger,Customer Success,NR-226
+NR-GL-00153,2026-03-06,6510 Infrastructure,BridgeLoop Integrations payment for 2026-03,-12719,USD,Integration,NR-VEN-032,BridgeLoop Integrations,CloudLedger,Finance,NR-227
+NR-GL-00154,2026-03-09,6520 Professional Services,Covefront Success Ops payment for 2026-03,-11799.5,USD,Customer,NR-VEN-033,Covefront Success Ops,CloudLedger,Security,NR-228
+NR-GL-00155,2026-03-12,6530 Security,PeopleField Systems payment for 2026-03,-9345,USD,HR,NR-VEN-034,PeopleField Systems,CloudLedger,Manufacturing Ops,NR-229
+NR-GL-00156,2026-03-15,6540 Operations,PayRun Office payment for 2026-03,-7367.5,USD,Payroll,NR-VEN-035,PayRun Office,CloudLedger,Fleet Operations,NR-230
+NR-GL-00157,2026-03-18,6550 Software,Northgate Audit Partners payment for 2026-03,-17400,USD,Audit,NR-VEN-036,Northgate Audit Partners,CloudLedger,Robotics Platform,NR-231
+NR-GL-00158,2026-03-21,6510 Infrastructure,RelayStack Compute payment for 2026-03,-12271.36,USD,Hosting,NR-VEN-037,RelayStack Compute,CloudLedger,Customer Success,NR-232
+NR-GL-00159,2026-03-24,6520 Professional Services,Oakline Data Rooms payment for 2026-03,-4772.5,USD,Data,NR-VEN-038,Oakline Data Rooms,CloudLedger,Finance,NR-233
+NR-GL-00160,2026-03-27,6530 Security,PaperTrail Systems payment for 2026-03,-4866,USD,Docs,NR-VEN-039,PaperTrail Systems,CloudLedger,Security,NR-234
+NR-GL-00161,2026-03-03,6540 Operations,BeaconRisk Advisory payment for 2026-03,-12173,USD,Risk,NR-VEN-040,BeaconRisk Advisory,CloudLedger,Manufacturing Ops,NR-235
+NR-GL-00162,2026-03-15,6100 Rent,Office and lab rent,-43260,USD,rent,,,CloudLedger,Fleet Operations,NR-240
+NR-GL-00163,2026-03-18,6110 Benefits,Benefits clearing,-70555,USD,benefits,,,CloudLedger,Robotics Platform,NR-241
+NR-GL-00164,2026-03-21,6120 Taxes,Payroll taxes,-39346,USD,taxes,,,CloudLedger,Customer Success,NR-242
+NR-GL-00165,2026-03-24,6600 Travel,Customer travel,-15244,USD,travel,,,CloudLedger,Finance,NR-243
+NR-GL-00166,2026-03-27,6610 Meals,Team meals and meetings,-6386,USD,meals,,,CloudLedger,Security,NR-244
+NR-GL-00167,2026-03-03,6620 Equipment,Laptop and device purchases,-25544,USD,equipment,,,CloudLedger,Manufacturing Ops,NR-245
+NR-GL-00168,2026-03-06,6630 Fees,Bank and payment fees,-7519,USD,fees,,,CloudLedger,Fleet Operations,NR-246
+NR-GL-00169,2026-03-09,6640 Refunds,Customer credit memo,-9888,USD,refunds,,,CloudLedger,Robotics Platform,NR-247
+NR-GL-00170,2026-03-12,6650 Training,Training and enablement,-5562,USD,training,,,CloudLedger,Customer Success,NR-248
+NR-GL-00171,2026-03-15,6660 Contractors,Short-term contractor pool,-32754,USD,contractors,,,CloudLedger,Finance,NR-249
+NR-GL-00172,2026-03-18,6670 Data,External dataset purchase,-16274,USD,data,,,CloudLedger,Security,NR-250
+NR-GL-00173,2026-03-21,6680 Events,Field workshop expense,-18128,USD,events,,,CloudLedger,Manufacturing Ops,NR-251
+NR-GL-00174,2026-03-24,6690 FX,Foreign exchange adjustment,1854,USD,fx,,,CloudLedger,Fleet Operations,NR-252
+NR-GL-00175,2026-03-27,6700 Accrual,Month-end accrual reversal,-11536,USD,accrual,,,CloudLedger,Robotics Platform,NR-253
+NR-GL-00176,2026-03-03,6710 Tax Credit,Research credit receipt,23175,USD,tax credit,,,CloudLedger,Customer Success,NR-254
+NR-GL-00177,2026-03-06,6720 Interest,Bank interest,1957,USD,interest,,,CloudLedger,Finance,NR-255
+NR-GL-00178,2026-04-06,4000 Revenue,Northwind Robotics customer receipt - Juniper Field Systems North region,84420,USD,revenue,,,CloudLedger,Revenue,NR-REV
+NR-GL-00179,2026-04-09,4000 Revenue,Northwind Robotics customer receipt - Arcadia Warehouse Network North region,99120,USD,revenue,,,CloudLedger,Revenue,NR-REV
+NR-GL-00180,2026-04-12,4000 Revenue,Northwind Robotics customer receipt - BriarWorks Automation Enterprise,113820,USD,revenue,,,CloudLedger,Revenue,NR-REV
+NR-GL-00181,2026-04-15,4000 Revenue,Northwind Robotics customer receipt - Keystone Assembly Group Enterprise,128520,USD,revenue,,,CloudLedger,Revenue,NR-REV
+NR-GL-00182,2026-04-18,4000 Revenue,Northwind Robotics customer receipt - Mason & Vale Manufacturing Enterprise,143220,USD,revenue,,,CloudLedger,Revenue,NR-REV
+NR-GL-00183,2026-04-09,6000 Payroll,Northwind Robotics payroll batch 1,-138880,USD,payroll,,,CloudLedger,People,NR-PAY
+NR-GL-00184,2026-04-12,6000 Payroll,Northwind Robotics payroll batch 2,-148960,USD,payroll,,,CloudLedger,People,NR-PAY
+NR-GL-00185,2026-04-15,6000 Payroll,Northwind Robotics payroll batch 3,-159040,USD,payroll,,,CloudLedger,People,NR-PAY
+NR-GL-00186,2026-04-18,6000 Payroll,Northwind Robotics payroll batch 4,-169120,USD,payroll,,,CloudLedger,People,NR-PAY
+NR-GL-00187,2026-04-12,6510 Infrastructure,BlueTable Analytics payment for 2026-04,-13050.88,USD,Data,NR-VEN-010,BlueTable Analytics,CloudLedger,Finance,NR-203
+NR-GL-00188,2026-04-15,6520 Professional Services,Riverbend Recruiting payment for 2026-04,-9419.35,USD,Recruiting,NR-VEN-011,Riverbend Recruiting,CloudLedger,Security,NR-204
+NR-GL-00189,2026-04-18,6530 Security,AxisWorks Facilities payment for 2026-04,-6800.06,USD,Facilities,NR-VEN-012,AxisWorks Facilities,CloudLedger,Manufacturing Ops,NR-205
+NR-GL-00190,2026-04-21,6540 Operations,SlateFox Insurance payment for 2026-04,-9824.14,USD,Insurance,NR-VEN-013,SlateFox Insurance,CloudLedger,Fleet Operations,NR-206
+NR-GL-00191,2026-04-24,6550 Software,SignalPeak AppSec payment for 2026-04,-14806.25,USD,Security,NR-VEN-014,SignalPeak AppSec,CloudLedger,Robotics Platform,NR-207
+NR-GL-00192,2026-04-27,6510 Infrastructure,HelpHarbor Desk payment for 2026-04,-7806.88,USD,Support,NR-VEN-015,HelpHarbor Desk,CloudLedger,Customer Success,NR-208
+NR-GL-00193,2026-04-03,6520 Professional Services,CloseFrame Accounting payment for 2026-04,-8219.4,USD,Finance,NR-VEN-016,CloseFrame Accounting,CloudLedger,Finance,NR-209
+NR-GL-00194,2026-04-06,6530 Security,SkillHarbor Learning payment for 2026-04,-4998.59,USD,Training,NR-VEN-017,SkillHarbor Learning,CloudLedger,Security,NR-210
+NR-GL-00195,2026-04-09,6540 Operations,Waypost Travel Desk payment for 2026-04,-8015.46,USD,Travel,NR-VEN-018,Waypost Travel Desk,CloudLedger,Manufacturing Ops,NR-211
+NR-GL-00196,2026-04-12,6550 Software,Tundra Test Labs payment for 2026-04,-9897.27,USD,Device,NR-VEN-019,Tundra Test Labs,CloudLedger,Fleet Operations,NR-212
+NR-GL-00197,2026-04-15,6510 Infrastructure,VectorPoint Research payment for 2026-04,-17574.4,USD,Research,NR-VEN-020,VectorPoint Research,CloudLedger,Robotics Platform,NR-213
+NR-GL-00198,2026-04-18,6520 Professional Services,Linebird Communications payment for 2026-04,-4018.03,USD,Comms,NR-VEN-021,Linebird Communications,CloudLedger,Customer Success,NR-214
+NR-GL-00199,2026-04-21,6530 Security,Pinehook Operations payment for 2026-04,-14939.12,USD,Ops,NR-VEN-022,Pinehook Operations,CloudLedger,Finance,NR-215
+NR-GL-00200,2026-04-24,6540 Operations,Mossbank Data Exchange payment for 2026-04,-9644.92,USD,Data,NR-VEN-023,Mossbank Data Exchange,CloudLedger,Security,NR-216
+NR-GL-00201,2026-04-27,6550 Software,Ironleaf GRC payment for 2026-04,-9057.82,USD,Security,NR-VEN-024,Ironleaf GRC,CloudLedger,Manufacturing Ops,NR-217
+NR-GL-00202,2026-04-03,6510 Infrastructure,QuartzPay Services payment for 2026-04,-10851.05,USD,Payments,NR-VEN-025,QuartzPay Services,CloudLedger,Fleet Operations,NR-218
+NR-GL-00203,2026-04-06,6520 Professional Services,HarborDesk Workplace payment for 2026-04,-6146.01,USD,Facilities,NR-VEN-026,HarborDesk Workplace,CloudLedger,Robotics Platform,NR-219
+NR-GL-00204,2026-04-09,6530 Security,Northstar Design Office payment for 2026-04,-11654.45,USD,Design,NR-VEN-027,Northstar Design Office,CloudLedger,Customer Success,NR-220
+NR-GL-00205,2026-04-12,6540 Operations,Watchtower Metrics payment for 2026-04,-6103.78,USD,Monitoring,NR-VEN-028,Watchtower Metrics,CloudLedger,Finance,NR-221
+NR-GL-00206,2026-04-15,6550 Software,SafeCask Backups payment for 2026-04,-6136.22,USD,Backup,NR-VEN-029,SafeCask Backups,CloudLedger,Security,NR-222
+NR-GL-00207,2026-04-18,6510 Infrastructure,KeelWorks Procurement payment for 2026-04,-12872.96,USD,Procurement,NR-VEN-030,KeelWorks Procurement,CloudLedger,Manufacturing Ops,NR-223
+NR-GL-00208,2026-04-21,6520 Professional Services,Alder QA Studio payment for 2026-04,-10209.36,USD,QA,NR-VEN-031,Alder QA Studio,CloudLedger,Fleet Operations,NR-224
+NR-GL-00209,2026-04-24,6530 Security,BridgeLoop Integrations payment for 2026-04,-13100.57,USD,Integration,NR-VEN-032,BridgeLoop Integrations,CloudLedger,Robotics Platform,NR-225
+NR-GL-00210,2026-04-27,6540 Operations,Covefront Success Ops payment for 2026-04,-12153.48,USD,Customer,NR-VEN-033,Covefront Success Ops,CloudLedger,Customer Success,NR-226
+NR-GL-00211,2026-04-03,6550 Software,PeopleField Systems payment for 2026-04,-9625.35,USD,HR,NR-VEN-034,PeopleField Systems,CloudLedger,Finance,NR-227
+NR-GL-00212,2026-04-06,6510 Infrastructure,PayRun Office payment for 2026-04,-7588.52,USD,Payroll,NR-VEN-035,PayRun Office,CloudLedger,Security,NR-228
+NR-GL-00213,2026-04-09,6520 Professional Services,Northgate Audit Partners payment for 2026-04,-17922,USD,Audit,NR-VEN-036,Northgate Audit Partners,CloudLedger,Manufacturing Ops,NR-229
+NR-GL-00214,2026-04-12,6530 Security,RelayStack Compute payment for 2026-04,-9874.61,USD,Hosting,NR-VEN-037,RelayStack Compute,CloudLedger,Fleet Operations,NR-230
+NR-GL-00215,2026-04-15,6540 Operations,Oakline Data Rooms payment for 2026-04,-4915.67,USD,Data,NR-VEN-038,Oakline Data Rooms,CloudLedger,Robotics Platform,NR-231
+NR-GL-00216,2026-04-18,6550 Software,PaperTrail Systems payment for 2026-04,-5011.98,USD,Docs,NR-VEN-039,PaperTrail Systems,CloudLedger,Customer Success,NR-232
+NR-GL-00217,2026-04-21,6510 Infrastructure,BeaconRisk Advisory payment for 2026-04,-15581.44,USD,Risk,NR-VEN-040,BeaconRisk Advisory,CloudLedger,Finance,NR-233
+NR-GL-00218,2026-04-24,6520 Professional Services,Fieldstone Research payment for 2026-04,-8423.34,USD,Market,NR-VEN-041,Fieldstone Research,CloudLedger,Security,NR-234
+NR-GL-00219,2026-04-27,6530 Security,Brightling Locale payment for 2026-04,-5103.13,USD,Localization,NR-VEN-042,Brightling Locale,CloudLedger,Manufacturing Ops,NR-235
+NR-GL-00220,2026-04-03,6540 Operations,SummitFloor Events payment for 2026-04,-9697.45,USD,Events,NR-VEN-043,SummitFloor Events,CloudLedger,Fleet Operations,NR-200
+NR-GL-00221,2026-04-15,6100 Rent,Office and lab rent,-43890,USD,rent,,,CloudLedger,Fleet Operations,NR-240
+NR-GL-00222,2026-04-18,6110 Benefits,Benefits clearing,-71582.5,USD,benefits,,,CloudLedger,Robotics Platform,NR-241
+NR-GL-00223,2026-04-21,6120 Taxes,Payroll taxes,-39919,USD,taxes,,,CloudLedger,Customer Success,NR-242
+NR-GL-00224,2026-04-24,6600 Travel,Customer travel,-15466,USD,travel,,,CloudLedger,Finance,NR-243
+NR-GL-00225,2026-04-27,6610 Meals,Team meals and meetings,-6479,USD,meals,,,CloudLedger,Security,NR-244
+NR-GL-00226,2026-04-03,6620 Equipment,Laptop and device purchases,-25916,USD,equipment,,,CloudLedger,Manufacturing Ops,NR-245
+NR-GL-00227,2026-04-06,6630 Fees,Bank and payment fees,-7628.5,USD,fees,,,CloudLedger,Fleet Operations,NR-246
+NR-GL-00228,2026-04-09,6640 Refunds,Customer credit memo,-10032,USD,refunds,,,CloudLedger,Robotics Platform,NR-247
+NR-GL-00229,2026-04-12,6650 Training,Training and enablement,-5643,USD,training,,,CloudLedger,Customer Success,NR-248
+NR-GL-00230,2026-04-15,6660 Contractors,Short-term contractor pool,-33231,USD,contractors,,,CloudLedger,Finance,NR-249
+NR-GL-00231,2026-04-18,6670 Data,External dataset purchase,-16511,USD,data,,,CloudLedger,Security,NR-250
+NR-GL-00232,2026-04-21,6680 Events,Field workshop expense,-18392,USD,events,,,CloudLedger,Manufacturing Ops,NR-251
+NR-GL-00233,2026-04-24,6690 FX,Foreign exchange adjustment,-2717,USD,fx,,,CloudLedger,Fleet Operations,NR-252
+NR-GL-00234,2026-04-27,6700 Accrual,Month-end accrual reversal,11704,USD,accrual,,,CloudLedger,Robotics Platform,NR-253
+NR-GL-00235,2026-04-03,6710 Tax Credit,Research credit receipt,23512.5,USD,tax credit,,,CloudLedger,Customer Success,NR-254
+NR-GL-00236,2026-04-06,6720 Interest,Bank interest,1985.5,USD,interest,,,CloudLedger,Finance,NR-255
+NR-GL-00237,2026-05-06,4000 Revenue,Northwind Robotics customer receipt - Arcadia Warehouse Network North region,87360,USD,revenue,,,CloudLedger,Revenue,NR-REV
+NR-GL-00238,2026-05-09,4000 Revenue,Northwind Robotics customer receipt - BriarWorks Automation Enterprise,102060,USD,revenue,,,CloudLedger,Revenue,NR-REV
+NR-GL-00239,2026-05-12,4000 Revenue,Northwind Robotics customer receipt - Keystone Assembly Group Enterprise,116760,USD,revenue,,,CloudLedger,Revenue,NR-REV
+NR-GL-00240,2026-05-15,4000 Revenue,Northwind Robotics customer receipt - Mason & Vale Manufacturing Enterprise,131460,USD,revenue,,,CloudLedger,Revenue,NR-REV
+NR-GL-00241,2026-05-18,4000 Revenue,Northwind Robotics customer receipt - Juniper Field Systems Enterprise,146160,USD,revenue,,,CloudLedger,Revenue,NR-REV
+NR-GL-00242,2026-05-09,6000 Payroll,Northwind Robotics payroll batch 1,-142240,USD,payroll,,,CloudLedger,People,NR-PAY
+NR-GL-00243,2026-05-12,6000 Payroll,Northwind Robotics payroll batch 2,-152320,USD,payroll,,,CloudLedger,People,NR-PAY
+NR-GL-00244,2026-05-15,6000 Payroll,Northwind Robotics payroll batch 3,-162400,USD,payroll,,,CloudLedger,People,NR-PAY
+NR-GL-00245,2026-05-18,6000 Payroll,Northwind Robotics payroll batch 4,-172480,USD,payroll,,,CloudLedger,People,NR-PAY
+NR-GL-00246,2026-05-12,6510 Infrastructure,SlateFox Insurance payment for 2026-05,-12208.64,USD,Insurance,NR-VEN-013,SlateFox Insurance,CloudLedger,Security,NR-204
+NR-GL-00247,2026-05-15,6520 Professional Services,SignalPeak AppSec payment for 2026-05,-14375,USD,Security,NR-VEN-014,SignalPeak AppSec,CloudLedger,Manufacturing Ops,NR-205
+NR-GL-00248,2026-05-18,6530 Security,HelpHarbor Desk payment for 2026-05,-7579.5,USD,Support,NR-VEN-015,HelpHarbor Desk,CloudLedger,Fleet Operations,NR-206
+NR-GL-00249,2026-05-21,6540 Operations,CloseFrame Accounting payment for 2026-05,-7980,USD,Finance,NR-VEN-016,CloseFrame Accounting,CloudLedger,Robotics Platform,NR-207
+NR-GL-00250,2026-05-24,6550 Software,SkillHarbor Learning payment for 2026-05,-4853,USD,Training,NR-VEN-017,SkillHarbor Learning,CloudLedger,Customer Success,NR-208
+NR-GL-00251,2026-05-27,6510 Infrastructure,Waypost Travel Desk payment for 2026-05,-7782,USD,Travel,NR-VEN-018,Waypost Travel Desk,CloudLedger,Finance,NR-209
+NR-GL-00252,2026-05-03,6520 Professional Services,Tundra Test Labs payment for 2026-05,-9609,USD,Device,NR-VEN-019,Tundra Test Labs,CloudLedger,Security,NR-210
+NR-GL-00253,2026-05-06,6530 Security,VectorPoint Research payment for 2026-05,-13730,USD,Research,NR-VEN-020,VectorPoint Research,CloudLedger,Manufacturing Ops,NR-211
+NR-GL-00254,2026-05-09,6540 Operations,Linebird Communications payment for 2026-05,-3901,USD,Comms,NR-VEN-021,Linebird Communications,CloudLedger,Fleet Operations,NR-212
+NR-GL-00255,2026-05-12,6550 Software,Pinehook Operations payment for 2026-05,-14504,USD,Ops,NR-VEN-022,Pinehook Operations,CloudLedger,Robotics Platform,NR-213
+NR-GL-00256,2026-05-15,6510 Infrastructure,Mossbank Data Exchange payment for 2026-05,-11985.92,USD,Data,NR-VEN-023,Mossbank Data Exchange,CloudLedger,Customer Success,NR-214
+NR-GL-00257,2026-05-18,6520 Professional Services,Ironleaf GRC payment for 2026-05,-8794,USD,Security,NR-VEN-024,Ironleaf GRC,CloudLedger,Finance,NR-215
+NR-GL-00258,2026-05-21,6530 Security,QuartzPay Services payment for 2026-05,-10535,USD,Payments,NR-VEN-025,QuartzPay Services,CloudLedger,Security,NR-216
+NR-GL-00259,2026-05-24,6540 Operations,HarborDesk Workplace payment for 2026-05,-5967,USD,Facilities,NR-VEN-026,HarborDesk Workplace,CloudLedger,Manufacturing Ops,NR-217
+NR-GL-00260,2026-05-27,6550 Software,Northstar Design Office payment for 2026-05,-11315,USD,Design,NR-VEN-027,Northstar Design Office,CloudLedger,Fleet Operations,NR-218
+NR-GL-00261,2026-05-03,6510 Infrastructure,Watchtower Metrics payment for 2026-05,-5926,USD,Monitoring,NR-VEN-028,Watchtower Metrics,CloudLedger,Robotics Platform,NR-219
+NR-GL-00262,2026-05-06,6520 Professional Services,SafeCask Backups payment for 2026-05,-5957.5,USD,Backup,NR-VEN-029,SafeCask Backups,CloudLedger,Customer Success,NR-220
+NR-GL-00263,2026-05-09,6530 Security,KeelWorks Procurement payment for 2026-05,-10057,USD,Procurement,NR-VEN-030,KeelWorks Procurement,CloudLedger,Finance,NR-221
+NR-GL-00264,2026-05-12,6540 Operations,Alder QA Studio payment for 2026-05,-9912,USD,QA,NR-VEN-031,Alder QA Studio,CloudLedger,Security,NR-222
+NR-GL-00265,2026-05-15,6550 Software,BridgeLoop Integrations payment for 2026-05,-12719,USD,Integration,NR-VEN-032,BridgeLoop Integrations,CloudLedger,Manufacturing Ops,NR-223
+NR-GL-00266,2026-05-18,6510 Infrastructure,Covefront Success Ops payment for 2026-05,-15103.36,USD,Customer,NR-VEN-033,Covefront Success Ops,CloudLedger,Fleet Operations,NR-224
+NR-GL-00267,2026-05-21,6520 Professional Services,PeopleField Systems payment for 2026-05,-9345,USD,HR,NR-VEN-034,PeopleField Systems,CloudLedger,Robotics Platform,NR-225
+NR-GL-00268,2026-05-24,6530 Security,PayRun Office payment for 2026-05,-7367.5,USD,Payroll,NR-VEN-035,PayRun Office,CloudLedger,Customer Success,NR-226
+NR-GL-00269,2026-05-27,6540 Operations,Northgate Audit Partners payment for 2026-05,-17400,USD,Audit,NR-VEN-036,Northgate Audit Partners,CloudLedger,Finance,NR-227
+NR-GL-00270,2026-05-03,6550 Software,RelayStack Compute payment for 2026-05,-9587,USD,Hosting,NR-VEN-037,RelayStack Compute,CloudLedger,Security,NR-228
+NR-GL-00271,2026-05-06,6510 Infrastructure,Oakline Data Rooms payment for 2026-05,-4772.5,USD,Data,NR-VEN-038,Oakline Data Rooms,CloudLedger,Manufacturing Ops,NR-229
+NR-GL-00272,2026-05-09,6520 Professional Services,PaperTrail Systems payment for 2026-05,-4866,USD,Docs,NR-VEN-039,PaperTrail Systems,CloudLedger,Fleet Operations,NR-230
+NR-GL-00273,2026-05-12,6530 Security,BeaconRisk Advisory payment for 2026-05,-12173,USD,Risk,NR-VEN-040,BeaconRisk Advisory,CloudLedger,Robotics Platform,NR-231
+NR-GL-00274,2026-05-15,6540 Operations,Fieldstone Research payment for 2026-05,-8178,USD,Market,NR-VEN-041,Fieldstone Research,CloudLedger,Customer Success,NR-232
+NR-GL-00275,2026-05-18,6550 Software,Brightling Locale payment for 2026-05,-4954.5,USD,Localization,NR-VEN-042,Brightling Locale,CloudLedger,Finance,NR-233
+NR-GL-00276,2026-05-21,6510 Infrastructure,SummitFloor Events payment for 2026-05,-12051.2,USD,Events,NR-VEN-043,SummitFloor Events,CloudLedger,Security,NR-234
+NR-GL-00277,2026-05-24,6520 Professional Services,Warehouse Nine Services payment for 2026-05,-17763.5,USD,Ops,NR-VEN-044,Warehouse Nine Services,CloudLedger,Manufacturing Ops,NR-235
+NR-GL-00278,2026-05-27,6530 Security,NorthFork ETL payment for 2026-05,-12664,USD,Data,NR-VEN-045,NorthFork ETL,CloudLedger,Fleet Operations,NR-200
+NR-GL-00279,2026-05-03,6540 Operations,PatchHarbor Response payment for 2026-05,-8568,USD,Security,NR-VEN-046,PatchHarbor Response,CloudLedger,Robotics Platform,NR-201
+NR-GL-00280,2026-05-15,6100 Rent,Office and lab rent,-44520,USD,rent,,,CloudLedger,Fleet Operations,NR-240
+NR-GL-00281,2026-05-18,6110 Benefits,Benefits clearing,-72610,USD,benefits,,,CloudLedger,Robotics Platform,NR-241
+NR-GL-00282,2026-05-21,6120 Taxes,Payroll taxes,-40492,USD,taxes,,,CloudLedger,Customer Success,NR-242
+NR-GL-00283,2026-05-24,6600 Travel,Customer travel,-15688,USD,travel,,,CloudLedger,Finance,NR-243
+NR-GL-00284,2026-05-27,6610 Meals,Team meals and meetings,-6572,USD,meals,,,CloudLedger,Security,NR-244
+NR-GL-00285,2026-05-03,6620 Equipment,Laptop and device purchases,-26288,USD,equipment,,,CloudLedger,Manufacturing Ops,NR-245
+NR-GL-00286,2026-05-06,6630 Fees,Bank and payment fees,-7738,USD,fees,,,CloudLedger,Fleet Operations,NR-246
+NR-GL-00287,2026-05-09,6640 Refunds,Customer credit memo,-10176,USD,refunds,,,CloudLedger,Robotics Platform,NR-247
+NR-GL-00288,2026-05-12,6650 Training,Training and enablement,-5724,USD,training,,,CloudLedger,Customer Success,NR-248
+NR-GL-00289,2026-05-15,6660 Contractors,Short-term contractor pool,-33708,USD,contractors,,,CloudLedger,Finance,NR-249
+NR-GL-00290,2026-05-18,6670 Data,External dataset purchase,-16748,USD,data,,,CloudLedger,Security,NR-250
+NR-GL-00291,2026-05-21,6680 Events,Field workshop expense,-18656,USD,events,,,CloudLedger,Manufacturing Ops,NR-251
+NR-GL-00292,2026-05-24,6690 FX,Foreign exchange adjustment,1908,USD,fx,,,CloudLedger,Fleet Operations,NR-252
+NR-GL-00293,2026-05-27,6700 Accrual,Month-end accrual reversal,-11872,USD,accrual,,,CloudLedger,Robotics Platform,NR-253
+NR-GL-00294,2026-05-03,6710 Tax Credit,Research credit receipt,23850,USD,tax credit,,,CloudLedger,Customer Success,NR-254
+NR-GL-00295,2026-05-06,6720 Interest,Bank interest,2014,USD,interest,,,CloudLedger,Finance,NR-255
+NR-GL-00296,2026-06-06,4000 Revenue,Northwind Robotics customer receipt - BriarWorks Automation Enterprise,90300,USD,revenue,,,CloudLedger,Revenue,NR-REV
+NR-GL-00297,2026-06-09,4000 Revenue,Northwind Robotics customer receipt - Keystone Assembly Group Enterprise,105000,USD,revenue,,,CloudLedger,Revenue,NR-REV
+NR-GL-00298,2026-06-12,4000 Revenue,Northwind Robotics customer receipt - Mason & Vale Manufacturing Enterprise,119700,USD,revenue,,,CloudLedger,Revenue,NR-REV
+NR-GL-00299,2026-06-15,4000 Revenue,Northwind Robotics customer receipt - Juniper Field Systems Enterprise,134400,USD,revenue,,,CloudLedger,Revenue,NR-REV
+NR-GL-00300,2026-06-18,4000 Revenue,Northwind Robotics customer receipt - Arcadia Warehouse Network Enterprise,149100,USD,revenue,,,CloudLedger,Revenue,NR-REV
+NR-GL-00301,2026-06-09,6000 Payroll,Northwind Robotics payroll batch 1,-145600,USD,payroll,,,CloudLedger,People,NR-PAY
+NR-GL-00302,2026-06-12,6000 Payroll,Northwind Robotics payroll batch 2,-155680,USD,payroll,,,CloudLedger,People,NR-PAY
+NR-GL-00303,2026-06-15,6000 Payroll,Northwind Robotics payroll batch 3,-165760,USD,payroll,,,CloudLedger,People,NR-PAY
+NR-GL-00304,2026-06-18,6000 Payroll,Northwind Robotics payroll batch 4,-175840,USD,payroll,,,CloudLedger,People,NR-PAY
+NR-GL-00305,2026-06-12,6510 Infrastructure,CloseFrame Accounting payment for 2026-06,-10214.4,USD,Finance,NR-VEN-016,CloseFrame Accounting,CloudLedger,Manufacturing Ops,NR-205
+NR-GL-00306,2026-06-15,6520 Professional Services,SkillHarbor Learning payment for 2026-06,-4998.59,USD,Training,NR-VEN-017,SkillHarbor Learning,CloudLedger,Fleet Operations,NR-206
+NR-GL-00307,2026-06-18,6530 Security,Waypost Travel Desk payment for 2026-06,-8015.46,USD,Travel,NR-VEN-018,Waypost Travel Desk,CloudLedger,Robotics Platform,NR-207
+NR-GL-00308,2026-06-21,6540 Operations,Tundra Test Labs payment for 2026-06,-9897.27,USD,Device,NR-VEN-019,Tundra Test Labs,CloudLedger,Customer Success,NR-208
+NR-GL-00309,2026-06-24,6550 Software,VectorPoint Research payment for 2026-06,-14141.9,USD,Research,NR-VEN-020,VectorPoint Research,CloudLedger,Finance,NR-209
+NR-GL-00310,2026-06-27,6510 Infrastructure,Linebird Communications payment for 2026-06,-4018.03,USD,Comms,NR-VEN-021,Linebird Communications,CloudLedger,Security,NR-210
+NR-GL-00311,2026-06-03,6520 Professional Services,Pinehook Operations payment for 2026-06,-14939.12,USD,Ops,NR-VEN-022,Pinehook Operations,CloudLedger,Manufacturing Ops,NR-211
+NR-GL-00312,2026-06-06,6530 Security,Mossbank Data Exchange payment for 2026-06,-9644.92,USD,Data,NR-VEN-023,Mossbank Data Exchange,CloudLedger,Fleet Operations,NR-212
+NR-GL-00313,2026-06-09,6540 Operations,Ironleaf GRC payment for 2026-06,-9057.82,USD,Security,NR-VEN-024,Ironleaf GRC,CloudLedger,Robotics Platform,NR-213
+NR-GL-00314,2026-06-12,6550 Software,QuartzPay Services payment for 2026-06,-10851.05,USD,Payments,NR-VEN-025,QuartzPay Services,CloudLedger,Customer Success,NR-214
+NR-GL-00315,2026-06-15,6510 Infrastructure,HarborDesk Workplace payment for 2026-06,-7637.76,USD,Facilities,NR-VEN-026,HarborDesk Workplace,CloudLedger,Finance,NR-215
+NR-GL-00316,2026-06-18,6520 Professional Services,Northstar Design Office payment for 2026-06,-11654.45,USD,Design,NR-VEN-027,Northstar Design Office,CloudLedger,Security,NR-216
+NR-GL-00317,2026-06-21,6530 Security,Watchtower Metrics payment for 2026-06,-6103.78,USD,Monitoring,NR-VEN-028,Watchtower Metrics,CloudLedger,Manufacturing Ops,NR-217
+NR-GL-00318,2026-06-24,6540 Operations,SafeCask Backups payment for 2026-06,-6136.22,USD,Backup,NR-VEN-029,SafeCask Backups,CloudLedger,Fleet Operations,NR-218
+NR-GL-00319,2026-06-27,6550 Software,KeelWorks Procurement payment for 2026-06,-10358.71,USD,Procurement,NR-VEN-030,KeelWorks Procurement,CloudLedger,Robotics Platform,NR-219
+NR-GL-00320,2026-06-03,6510 Infrastructure,Alder QA Studio payment for 2026-06,-10209.36,USD,QA,NR-VEN-031,Alder QA Studio,CloudLedger,Customer Success,NR-220
+NR-GL-00321,2026-06-06,6520 Professional Services,BridgeLoop Integrations payment for 2026-06,-13100.57,USD,Integration,NR-VEN-032,BridgeLoop Integrations,CloudLedger,Finance,NR-221
+NR-GL-00322,2026-06-09,6530 Security,Covefront Success Ops payment for 2026-06,-12153.48,USD,Customer,NR-VEN-033,Covefront Success Ops,CloudLedger,Security,NR-222
+NR-GL-00323,2026-06-12,6540 Operations,PeopleField Systems payment for 2026-06,-9625.35,USD,HR,NR-VEN-034,PeopleField Systems,CloudLedger,Manufacturing Ops,NR-223
+NR-GL-00324,2026-06-15,6550 Software,PayRun Office payment for 2026-06,-7588.52,USD,Payroll,NR-VEN-035,PayRun Office,CloudLedger,Fleet Operations,NR-224
+NR-GL-00325,2026-06-18,6510 Infrastructure,Northgate Audit Partners payment for 2026-06,-22272,USD,Audit,NR-VEN-036,Northgate Audit Partners,CloudLedger,Robotics Platform,NR-225
+NR-GL-00326,2026-06-21,6520 Professional Services,RelayStack Compute payment for 2026-06,-9874.61,USD,Hosting,NR-VEN-037,RelayStack Compute,CloudLedger,Customer Success,NR-226
+NR-GL-00327,2026-06-24,6530 Security,Oakline Data Rooms payment for 2026-06,-4915.67,USD,Data,NR-VEN-038,Oakline Data Rooms,CloudLedger,Finance,NR-227
+NR-GL-00328,2026-06-27,6540 Operations,PaperTrail Systems payment for 2026-06,-5011.98,USD,Docs,NR-VEN-039,PaperTrail Systems,CloudLedger,Security,NR-228
+NR-GL-00329,2026-06-03,6550 Software,BeaconRisk Advisory payment for 2026-06,-12538.19,USD,Risk,NR-VEN-040,BeaconRisk Advisory,CloudLedger,Manufacturing Ops,NR-229
+NR-GL-00330,2026-06-06,6510 Infrastructure,Fieldstone Research payment for 2026-06,-8423.34,USD,Market,NR-VEN-041,Fieldstone Research,CloudLedger,Fleet Operations,NR-230
+NR-GL-00331,2026-06-09,6520 Professional Services,Brightling Locale payment for 2026-06,-5103.13,USD,Localization,NR-VEN-042,Brightling Locale,CloudLedger,Robotics Platform,NR-231
+NR-GL-00332,2026-06-12,6530 Security,SummitFloor Events payment for 2026-06,-9697.45,USD,Events,NR-VEN-043,SummitFloor Events,CloudLedger,Customer Success,NR-232
+NR-GL-00333,2026-06-15,6540 Operations,Warehouse Nine Services payment for 2026-06,-18296.4,USD,Ops,NR-VEN-044,Warehouse Nine Services,CloudLedger,Finance,NR-233
+NR-GL-00334,2026-06-18,6550 Software,NorthFork ETL payment for 2026-06,-13043.92,USD,Data,NR-VEN-045,NorthFork ETL,CloudLedger,Security,NR-234
+NR-GL-00335,2026-06-21,6510 Infrastructure,PatchHarbor Response payment for 2026-06,-10967.04,USD,Security,NR-VEN-046,PatchHarbor Response,CloudLedger,Manufacturing Ops,NR-235
+NR-GL-00336,2026-06-24,6520 Professional Services,LeadMesa Studio payment for 2026-06,-9522.35,USD,Sales,NR-VEN-047,LeadMesa Studio,CloudLedger,Fleet Operations,NR-200
+NR-GL-00337,2026-06-27,6530 Security,ChartRiver BI payment for 2026-06,-6589.94,USD,BI,NR-VEN-048,ChartRiver BI,CloudLedger,Robotics Platform,NR-201
+NR-GL-00338,2026-06-03,6540 Operations,CrateBridge Storage payment for 2026-06,-6805.72,USD,Storage,NR-VEN-049,CrateBridge Storage,CloudLedger,Customer Success,NR-202
+NR-GL-00339,2026-06-15,6100 Rent,Office and lab rent,-45150,USD,rent,,,CloudLedger,Fleet Operations,NR-240
+NR-GL-00340,2026-06-18,6110 Benefits,Benefits clearing,-73637.5,USD,benefits,,,CloudLedger,Robotics Platform,NR-241
+NR-GL-00341,2026-06-21,6120 Taxes,Payroll taxes,-41065,USD,taxes,,,CloudLedger,Customer Success,NR-242
+NR-GL-00342,2026-06-24,6600 Travel,Customer travel,-15910,USD,travel,,,CloudLedger,Finance,NR-243
+NR-GL-00343,2026-06-27,6610 Meals,Team meals and meetings,-6665,USD,meals,,,CloudLedger,Security,NR-244
+NR-GL-00344,2026-06-03,6620 Equipment,Laptop and device purchases,-26660,USD,equipment,,,CloudLedger,Manufacturing Ops,NR-245
+NR-GL-00345,2026-06-06,6630 Fees,Bank and payment fees,-7847.5,USD,fees,,,CloudLedger,Fleet Operations,NR-246
+NR-GL-00346,2026-06-09,6640 Refunds,Customer credit memo,-10320,USD,refunds,,,CloudLedger,Robotics Platform,NR-247
+NR-GL-00347,2026-06-12,6650 Training,Training and enablement,-5805,USD,training,,,CloudLedger,Customer Success,NR-248
+NR-GL-00348,2026-06-15,6660 Contractors,Short-term contractor pool,-34185,USD,contractors,,,CloudLedger,Finance,NR-249
+NR-GL-00349,2026-06-18,6670 Data,External dataset purchase,-16985,USD,data,,,CloudLedger,Security,NR-250
+NR-GL-00350,2026-06-21,6680 Events,Field workshop expense,-18920,USD,events,,,CloudLedger,Manufacturing Ops,NR-251
+NR-GL-00351,2026-06-24,6690 FX,Foreign exchange adjustment,-2795,USD,fx,,,CloudLedger,Fleet Operations,NR-252
+NR-GL-00352,2026-06-27,6700 Accrual,Month-end accrual reversal,12040,USD,accrual,,,CloudLedger,Robotics Platform,NR-253
+NR-GL-00353,2026-06-03,6710 Tax Credit,Research credit receipt,24187.5,USD,tax credit,,,CloudLedger,Customer Success,NR-254
+NR-GL-00354,2026-06-06,6720 Interest,Bank interest,2042.5,USD,interest,,,CloudLedger,Finance,NR-255

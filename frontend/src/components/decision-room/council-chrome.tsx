@@ -1,6 +1,8 @@
 "use client";
 
 import { AlertTriangle, Loader2, Radio, ShieldAlert, XCircle } from "lucide-react";
+import { AnimatePresence, motion, useReducedMotion } from "motion/react";
+import { AtlasIcon } from "@/components/atlas-icon";
 import { cx } from "@/components/ui";
 import {
   averageReliability,
@@ -10,7 +12,8 @@ import {
   type SponsorView,
   type TimelineStep,
 } from "@/lib/council";
-import type { LearningReport, ReliabilityScore } from "@/lib/types";
+import { ROSTER_BY_ID } from "@/lib/agents";
+import type { CouncilInfluenceReport, LearningReport, ReliabilityScore } from "@/lib/types";
 import { PhaseTimeline } from "./phase-timeline";
 import { StatusBadge } from "./primitives";
 
@@ -18,19 +21,23 @@ import { StatusBadge } from "./primitives";
 // Council status bar — live sponsor/system signals. Holds the #settings anchor.
 // --------------------------------------------------------------------------- //
 export function CouncilStatusBar({
+  councilInfluence,
   healthReady,
   learningReport,
   nowLabel,
   reliabilityScores,
   sponsorRows,
 }: {
+  councilInfluence?: CouncilInfluenceReport;
   healthReady: boolean;
   learningReport?: LearningReport;
   nowLabel: string;
   reliabilityScores: ReliabilityScore[];
   sponsorRows: SponsorView[];
 }) {
+  const reduced = useReducedMotion();
   const avgReliability = averageReliability(reliabilityScores);
+  const leader = councilInfluence?.leader;
   const weave = sponsorRows.find((row) => row.id === "weave");
   const redis = sponsorRows.find((row) => row.id === "redis");
   const openai = sponsorRows.find((row) => row.id === "openai");
@@ -52,6 +59,22 @@ export function CouncilStatusBar({
       <SignalChip label="W&B" row={weave} fallback={learningReport?.eval_dataset ?? "Weave"} />
       <SignalChip label="OpenAI" row={openai} fallback={openai?.model ?? "Model"} />
       <SignalChip label="Redis" row={redis} fallback="Memory" />
+      <AnimatePresence mode="wait">
+        {leader && (
+          <motion.span
+            key={`${leader.agent_id}-${leader.influence_weight}`}
+            initial={reduced ? false : { opacity: 0, x: -8, scale: 0.94 }}
+            animate={{ opacity: 1, x: 0, scale: 1 }}
+            exit={{ opacity: 0, x: 8, scale: 0.96 }}
+            transition={{ type: "spring", stiffness: 380, damping: 28 }}
+            className="shrink-0"
+          >
+            <StatusBadge tone="info">
+              {ROSTER_BY_ID[leader.agent_id]?.label ?? leader.agent_id} · {leader.influence_weight}% influence
+            </StatusBadge>
+          </motion.span>
+        )}
+      </AnimatePresence>
       <StatusBadge tone={avgReliability ? "positive" : "warning"} className="shrink-0">
         Reliability {avgReliability ? `${avgReliability}%` : "pending"}
       </StatusBadge>
@@ -99,17 +122,18 @@ export function CouncilHeader({
     <section className="border-b border-border bg-surface px-4 py-3 lg:px-5">
       <div className="grid gap-3 lg:grid-cols-[minmax(0,1fr)_minmax(300px,440px)] lg:items-center">
         <div className="min-w-0">
-          <div className="flex items-center gap-2">
-            <h2 className="text-[20px] font-semibold tracking-tight">AI Council Room</h2>
+          <div className="flex items-center gap-2.5">
+            <AtlasIcon name={running ? "council" : healthReady ? "health" : "risk"} size="sm" className="atlas-icon-badge--quiet" />
+            <h2 className="font-display text-[23px] font-medium leading-none tracking-[-0.015em]">AI Council Room</h2>
             <StatusBadge tone={liveTone} pulse={running}>
               {liveLabel}
             </StatusBadge>
           </div>
-          <p className="mt-1.5 line-clamp-2 break-words text-[14px] font-semibold leading-snug">
+          <p className="mt-2 line-clamp-2 break-words font-serif text-[17px] font-medium leading-snug text-foreground">
             {decision || "What should the council decide?"}
           </p>
-          <div className="mt-1 text-[12px] text-muted-foreground">
-            <span className="font-semibold text-info">{currentPhase}</span>
+          <div className="mt-1.5">
+            <span className="font-mono text-[10px] font-semibold uppercase tracking-[0.16em] text-info">{currentPhase}</span>
           </div>
         </div>
 
@@ -134,6 +158,7 @@ export function PreflightPanel({ health, onRefresh }: { health: HealthView; onRe
   return (
     <section className="rounded-lg border border-risk/25 bg-risk-bg px-4 py-3.5 text-risk shadow-sm">
       <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
+        <AtlasIcon name={health.status === "loading" ? "health" : "risk"} size="lg" className="hidden sm:inline-grid" />
         <div className="min-w-0">
           <div className="flex items-center gap-2">
             {health.status === "loading" ? (

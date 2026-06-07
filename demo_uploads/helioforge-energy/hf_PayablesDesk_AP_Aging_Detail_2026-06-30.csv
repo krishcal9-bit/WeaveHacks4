@@ -1,58 +1,241 @@
-entity,export_id,ap_batch,source_system,approval_route,invoice_id,vendor_id,vendor_name,issue_date,due_date,amount,currency,status,period,po_number,cost_center,aging_bucket
-HelioForge Energy Systems,HF-PAYABLESDESK-AP-2026-04,AP-HF-2026-04,PayablesDesk AP Aging Export,Controller desk,HF-INV-00001,tensorgrid,TensorGrid Compute,2026-04-07,2026-05-07,24800,USD,paid,2026-04,,ENG,current
-HelioForge Energy Systems,HF-PAYABLESDESK-AP-2026-04,AP-HF-2026-04,PayablesDesk AP Aging Export,Department owner,HF-INV-00002,signalnest,SignalNest Observability,2026-04-09,2026-05-09,4000,USD,paid,2026-04,HF-PO-08001,GTM,current
-HelioForge Energy Systems,HF-PAYABLESDESK-AP-2026-04,AP-HF-2026-04,PayablesDesk AP Aging Export,Controller desk,HF-INV-00003,protolab,PrototypeLab Systems,2026-04-13,2026-05-13,4600,USD,paid,2026-04,HF-PO-08003,SEC,current
-HelioForge Energy Systems,HF-PAYABLESDESK-AP-2026-04,AP-HF-2026-04,PayablesDesk AP Aging Export,Department owner,HF-INV-00004,kitebase,Kitebase Warehouse,2026-04-15,2026-05-15,6600,USD,paid,2026-04,,FIN,current
-HelioForge Energy Systems,HF-PAYABLESDESK-AP-2026-04,AP-HF-2026-04,PayablesDesk AP Aging Export,CFO desk,HF-INV-00005,solarwisp,SolarWisp Materials,2026-04-17,2026-05-17,6300,USD,paid,2026-04,HF-PO-08005,ENG,current
-HelioForge Energy Systems,HF-PAYABLESDESK-AP-2026-04,AP-HF-2026-04,PayablesDesk AP Aging Export,Controller desk,HF-INV-00006,skybridge,Skybridge Advisory,2026-04-19,2026-05-19,38600,USD,paid,2026-04,HF-PO-08006,GTM,current
-HelioForge Energy Systems,HF-PAYABLESDESK-AP-2026-04,AP-HF-2026-04,PayablesDesk AP Aging Export,CFO desk,HF-INV-00007,meterloop,MeterLoop Telemetry,2026-04-23,2026-05-23,11300,USD,paid,2026-04,,SEC,current
-HelioForge Energy Systems,HF-PAYABLESDESK-AP-2026-04,AP-HF-2026-04,PayablesDesk AP Aging Export,Controller desk,HF-INV-00008,gridledger,GridLedger Billing,2026-04-25,2026-05-25,32900,USD,paid,2026-04,HF-PO-08009,FIN,current
-HelioForge Energy Systems,HF-PAYABLESDESK-AP-2026-04,AP-HF-2026-04,PayablesDesk AP Aging Export,Department owner,HF-INV-00009,sunharbor,SunHarbor Logistics,2026-04-03,2026-05-03,9000,USD,paid,2026-04,HF-PO-08010,ENG,current
-HelioForge Energy Systems,HF-PAYABLESDESK-AP-2026-04,AP-HF-2026-04,PayablesDesk AP Aging Export,CFO desk,HF-INV-00010,relayfox,RelayFox Security,2026-04-05,2026-05-05,10000,USD,paid,2026-04,HF-PO-08011,GTM,current
-HelioForge Energy Systems,HF-PAYABLESDESK-AP-2026-04,AP-HF-2026-04,PayablesDesk AP Aging Export,Department owner,HF-INV-00011,plantline,PlantLine Support,2026-04-09,2026-05-09,12200,USD,paid,2026-04,HF-PO-08013,SEC,current
-HelioForge Energy Systems,HF-PAYABLESDESK-AP-2026-04,AP-HF-2026-04,PayablesDesk AP Aging Export,CFO desk,HF-INV-00012,canopycalc,CanopyCalc Forecasting,2026-04-11,2026-05-11,7400,USD,paid,2026-04,HF-PO-08014,FIN,current
-HelioForge Energy Systems,HF-PAYABLESDESK-AP-2026-04,AP-HF-2026-04,PayablesDesk AP Aging Export,Controller desk,HF-INV-00013,arraydesk,ArrayDesk CRM,2026-04-13,2026-05-13,14600,USD,paid,2026-04,HF-PO-08015,ENG,current
-HelioForge Energy Systems,HF-PAYABLESDESK-AP-2026-04,AP-HF-2026-04,PayablesDesk AP Aging Export,Department owner,HF-INV-00014,terraedge,TerraEdge Integrations,2026-04-15,2026-05-15,19400,USD,paid,2026-04,,GTM,current
-HelioForge Energy Systems,HF-PAYABLESDESK-AP-2026-04,AP-HF-2026-04,PayablesDesk AP Aging Export,Controller desk,HF-INV-00015,chargewell,ChargeWell Field Ops,2026-04-19,2026-05-19,63100,USD,paid,2026-04,HF-PO-08018,SEC,current
-HelioForge Energy Systems,HF-PAYABLESDESK-AP-2026-04,AP-HF-2026-04,PayablesDesk AP Aging Export,Department owner,HF-INV-00016,reliantnest,ReliantNest Compliance,2026-04-21,2026-05-21,15900,USD,paid,2026-04,HF-PO-08019,FIN,current
-HelioForge Energy Systems,HF-PAYABLESDESK-AP-2026-04,AP-HF-2026-04,PayablesDesk AP Aging Export,Department owner,HF-INV-00017,hf-misc-4-0,Cedar Ridge Advisory,2026-04-12,2026-05-12,7400,USD,paid,2026-04,,OPS,0-30
-HelioForge Energy Systems,HF-PAYABLESDESK-AP-2026-04,AP-HF-2026-04,PayablesDesk AP Aging Export,Department owner,HF-INV-00018,hf-misc-4-1,Pine Lantern Systems,2026-04-16,2026-05-16,9800,USD,paid,2026-04,,GTM,0-30
-HelioForge Energy Systems,HF-PAYABLESDESK-AP-2026-04,AP-HF-2026-04,PayablesDesk AP Aging Export,Department owner,HF-INV-00019,hf-misc-4-2,Blue Mesa Services,2026-04-20,2026-05-20,12200,USD,paid,2026-04,,FIN,0-30
-HelioForge Energy Systems,HF-PAYABLESDESK-AP-2026-05,AP-HF-2026-05,PayablesDesk AP Aging Export,Controller desk,HF-INV-00020,tensorgrid,TensorGrid Compute,2026-05-08,2026-06-08,25600,USD,paid,2026-05,,ENG,current
-HelioForge Energy Systems,HF-PAYABLESDESK-AP-2026-05,AP-HF-2026-05,PayablesDesk AP Aging Export,CFO desk,HF-INV-00021,fieldroute,FieldRoute Mobile,2026-05-12,2026-06-12,3900,USD,paid,2026-05,HF-PO-08002,OPS,current
-HelioForge Energy Systems,HF-PAYABLESDESK-AP-2026-05,AP-HF-2026-05,PayablesDesk AP Aging Export,Controller desk,HF-INV-00022,protolab,PrototypeLab Systems,2026-05-14,2026-06-14,4700,USD,paid,2026-05,HF-PO-08003,SEC,current
-HelioForge Energy Systems,HF-PAYABLESDESK-AP-2026-05,AP-HF-2026-05,PayablesDesk AP Aging Export,Department owner,HF-INV-00023,kitebase,Kitebase Warehouse,2026-05-16,2026-06-16,6900,USD,paid,2026-05,,FIN,current
-HelioForge Energy Systems,HF-PAYABLESDESK-AP-2026-05,AP-HF-2026-05,PayablesDesk AP Aging Export,CFO desk,HF-INV-00024,solarwisp,SolarWisp Materials,2026-05-18,2026-06-18,6500,USD,paid,2026-05,HF-PO-08005,ENG,current
-HelioForge Energy Systems,HF-PAYABLESDESK-AP-2026-05,AP-HF-2026-05,PayablesDesk AP Aging Export,Department owner,HF-INV-00025,voltagebay,VoltageBay QA,2026-05-22,2026-06-22,4700,USD,paid,2026-05,HF-PO-08007,OPS,current
-HelioForge Energy Systems,HF-PAYABLESDESK-AP-2026-05,AP-HF-2026-05,PayablesDesk AP Aging Export,CFO desk,HF-INV-00026,meterloop,MeterLoop Telemetry,2026-05-24,2026-06-24,11700,USD,paid,2026-05,,SEC,current
-HelioForge Energy Systems,HF-PAYABLESDESK-AP-2026-05,AP-HF-2026-05,PayablesDesk AP Aging Export,Controller desk,HF-INV-00027,gridledger,GridLedger Billing,2026-05-26,2026-06-26,26400,USD,paid,2026-05,HF-PO-08009,FIN,current
-HelioForge Energy Systems,HF-PAYABLESDESK-AP-2026-05,AP-HF-2026-05,PayablesDesk AP Aging Export,Department owner,HF-INV-00028,sunharbor,SunHarbor Logistics,2026-05-04,2026-06-04,9300,USD,paid,2026-05,HF-PO-08010,ENG,current
-HelioForge Energy Systems,HF-PAYABLESDESK-AP-2026-05,AP-HF-2026-05,PayablesDesk AP Aging Export,Controller desk,HF-INV-00029,workvine,WorkVine Recruiting,2026-05-08,2026-06-08,53300,USD,paid,2026-05,,OPS,current
-HelioForge Energy Systems,HF-PAYABLESDESK-AP-2026-05,AP-HF-2026-05,PayablesDesk AP Aging Export,Department owner,HF-INV-00030,plantline,PlantLine Support,2026-05-10,2026-06-10,12700,USD,paid,2026-05,HF-PO-08013,SEC,current
-HelioForge Energy Systems,HF-PAYABLESDESK-AP-2026-05,AP-HF-2026-05,PayablesDesk AP Aging Export,CFO desk,HF-INV-00031,canopycalc,CanopyCalc Forecasting,2026-05-12,2026-06-12,7600,USD,paid,2026-05,HF-PO-08014,FIN,current
-HelioForge Energy Systems,HF-PAYABLESDESK-AP-2026-05,AP-HF-2026-05,PayablesDesk AP Aging Export,Controller desk,HF-INV-00032,arraydesk,ArrayDesk CRM,2026-05-14,2026-06-14,15100,USD,paid,2026-05,HF-PO-08015,ENG,current
-HelioForge Energy Systems,HF-PAYABLESDESK-AP-2026-05,AP-HF-2026-05,PayablesDesk AP Aging Export,CFO desk,HF-INV-00033,brightcell,BrightCell Supply,2026-05-18,2026-06-18,13900,USD,paid,2026-05,HF-PO-08017,OPS,current
-HelioForge Energy Systems,HF-PAYABLESDESK-AP-2026-05,AP-HF-2026-05,PayablesDesk AP Aging Export,Controller desk,HF-INV-00034,chargewell,ChargeWell Field Ops,2026-05-20,2026-06-20,65600,USD,paid,2026-05,HF-PO-08018,SEC,current
-HelioForge Energy Systems,HF-PAYABLESDESK-AP-2026-05,AP-HF-2026-05,PayablesDesk AP Aging Export,Department owner,HF-INV-00035,reliantnest,ReliantNest Compliance,2026-05-22,2026-06-22,16500,USD,paid,2026-05,HF-PO-08019,FIN,current
-HelioForge Energy Systems,HF-PAYABLESDESK-AP-2026-05,AP-HF-2026-05,PayablesDesk AP Aging Export,Department owner,HF-INV-00036,hf-misc-5-0,Cedar Ridge Advisory,2026-05-12,2026-06-12,8300,USD,paid,2026-05,,OPS,0-30
-HelioForge Energy Systems,HF-PAYABLESDESK-AP-2026-05,AP-HF-2026-05,PayablesDesk AP Aging Export,Department owner,HF-INV-00037,hf-misc-5-1,Pine Lantern Systems,2026-05-16,2026-06-16,10700,USD,paid,2026-05,,GTM,0-30
-HelioForge Energy Systems,HF-PAYABLESDESK-AP-2026-05,AP-HF-2026-05,PayablesDesk AP Aging Export,Department owner,HF-INV-00038,hf-misc-5-2,Blue Mesa Services,2026-05-20,2026-06-20,13100,USD,paid,2026-05,,FIN,0-30
-HelioForge Energy Systems,HF-PAYABLESDESK-AP-2026-06,AP-HF-2026-06,PayablesDesk AP Aging Export,Department owner,HF-INV-00039,signalnest,SignalNest Observability,2026-06-11,2026-07-11,3300,USD,approved,2026-06,HF-PO-08001,GTM,0-30
-HelioForge Energy Systems,HF-PAYABLESDESK-AP-2026-06,AP-HF-2026-06,PayablesDesk AP Aging Export,CFO desk,HF-INV-00040,fieldroute,FieldRoute Mobile,2026-06-13,2026-07-13,4100,USD,approved,2026-06,HF-PO-08002,OPS,0-30
-HelioForge Energy Systems,HF-PAYABLESDESK-AP-2026-06,AP-HF-2026-06,PayablesDesk AP Aging Export,Controller desk,HF-INV-00041,protolab,PrototypeLab Systems,2026-06-15,2026-07-15,4900,USD,open,2026-06,HF-PO-08003,SEC,0-30
-HelioForge Energy Systems,HF-PAYABLESDESK-AP-2026-06,AP-HF-2026-06,PayablesDesk AP Aging Export,Department owner,HF-INV-00042,kitebase,Kitebase Warehouse,2026-06-17,2026-07-17,7100,USD,approved,2026-06,,FIN,31-60
-HelioForge Energy Systems,HF-PAYABLESDESK-AP-2026-06,AP-HF-2026-06,PayablesDesk AP Aging Export,Controller desk,HF-INV-00043,skybridge,Skybridge Advisory,2026-06-21,2026-07-21,41500,USD,open,2026-06,HF-PO-08006,GTM,0-30
-HelioForge Energy Systems,HF-PAYABLESDESK-AP-2026-06,AP-HF-2026-06,PayablesDesk AP Aging Export,Department owner,HF-INV-00044,voltagebay,VoltageBay QA,2026-06-23,2026-07-23,4900,USD,approved,2026-06,HF-PO-08007,OPS,0-30
-HelioForge Energy Systems,HF-PAYABLESDESK-AP-2026-06,AP-HF-2026-06,PayablesDesk AP Aging Export,CFO desk,HF-INV-00045,meterloop,MeterLoop Telemetry,2026-06-25,2026-07-25,9400,USD,approved,2026-06,,SEC,31-60
-HelioForge Energy Systems,HF-PAYABLESDESK-AP-2026-06,AP-HF-2026-06,PayablesDesk AP Aging Export,Controller desk,HF-INV-00046,gridledger,GridLedger Billing,2026-06-03,2026-07-03,27500,USD,open,2026-06,HF-PO-08009,FIN,0-30
-HelioForge Energy Systems,HF-PAYABLESDESK-AP-2026-06,AP-HF-2026-06,PayablesDesk AP Aging Export,CFO desk,HF-INV-00047,relayfox,RelayFox Security,2026-06-07,2026-07-07,10800,USD,approved,2026-06,HF-PO-08011,GTM,0-30
-HelioForge Energy Systems,HF-PAYABLESDESK-AP-2026-06,AP-HF-2026-06,PayablesDesk AP Aging Export,Controller desk,HF-INV-00048,workvine,WorkVine Recruiting,2026-06-09,2026-07-09,55300,USD,open,2026-06,,OPS,31-60
-HelioForge Energy Systems,HF-PAYABLESDESK-AP-2026-06,AP-HF-2026-06,PayablesDesk AP Aging Export,Department owner,HF-INV-00049,plantline,PlantLine Support,2026-06-11,2026-07-11,13100,USD,approved,2026-06,HF-PO-08013,SEC,0-30
-HelioForge Energy Systems,HF-PAYABLESDESK-AP-2026-06,AP-HF-2026-06,PayablesDesk AP Aging Export,CFO desk,HF-INV-00050,canopycalc,CanopyCalc Forecasting,2026-06-13,2026-07-13,7900,USD,approved,2026-06,HF-PO-08014,FIN,0-30
-HelioForge Energy Systems,HF-PAYABLESDESK-AP-2026-06,AP-HF-2026-06,PayablesDesk AP Aging Export,Department owner,HF-INV-00051,terraedge,TerraEdge Integrations,2026-06-17,2026-07-17,16200,USD,approved,2026-06,,GTM,31-60
-HelioForge Energy Systems,HF-PAYABLESDESK-AP-2026-06,AP-HF-2026-06,PayablesDesk AP Aging Export,CFO desk,HF-INV-00052,brightcell,BrightCell Supply,2026-06-19,2026-07-19,14500,USD,approved,2026-06,HF-PO-08017,OPS,0-30
-HelioForge Energy Systems,HF-PAYABLESDESK-AP-2026-06,AP-HF-2026-06,PayablesDesk AP Aging Export,Controller desk,HF-INV-00053,chargewell,ChargeWell Field Ops,2026-06-21,2026-07-21,68100,USD,open,2026-06,HF-PO-08018,SEC,0-30
-HelioForge Energy Systems,HF-PAYABLESDESK-AP-2026-06,AP-HF-2026-06,PayablesDesk AP Aging Export,Department owner,HF-INV-00054,reliantnest,ReliantNest Compliance,2026-06-23,2026-07-23,17100,USD,approved,2026-06,HF-PO-08019,FIN,0-30
-HelioForge Energy Systems,HF-PAYABLESDESK-AP-2026-06,AP-HF-2026-06,PayablesDesk AP Aging Export,Department owner,HF-INV-00055,hf-misc-6-0,Cedar Ridge Advisory,2026-06-12,2026-07-12,9200,USD,open,2026-06,,OPS,0-30
-HelioForge Energy Systems,HF-PAYABLESDESK-AP-2026-06,AP-HF-2026-06,PayablesDesk AP Aging Export,Department owner,HF-INV-00056,hf-misc-6-1,Pine Lantern Systems,2026-06-16,2026-07-16,11600,USD,open,2026-06,,GTM,0-30
-HelioForge Energy Systems,HF-PAYABLESDESK-AP-2026-06,AP-HF-2026-06,PayablesDesk AP Aging Export,Department owner,HF-INV-00057,hf-misc-6-2,Blue Mesa Services,2026-06-20,2026-07-20,14000,USD,open,2026-06,,FIN,0-30
+invoice_id,vendor_name,vendor_id,issue_date,due_date,amount,currency,status,po_number,period,department,cost_center,approver,source_system
+HF-AP-00001,ArrayPoint Calibration,HF-VEN-001,2026-01-03,2026-02-10,14824.8,USD,in review,,2026-01,Field Operations,HF-100,Controller,PayablesDesk
+HF-AP-00002,WattBridge Telemetry,HF-VEN-002,2026-01-06,2026-02-11,13339.2,USD,approved,HF-PO-07103,2026-01,Energy Platform,HF-101,VP Operations,PayablesDesk
+HF-AP-00003,FieldNest Dispatch,HF-VEN-003,2026-01-09,2026-02-12,16898.88,USD,approved,HF-PO-07104,2026-01,Hardware,HF-102,Security Lead,PayablesDesk
+HF-AP-00004,HelioCore Components,HF-VEN-004,2026-01-12,2026-02-13,20701.44,USD,approved,HF-PO-07105,2026-01,Finance,HF-103,Revenue Ops,PayablesDesk
+HF-AP-00005,TurbineDesk Analytics,HF-VEN-005,2026-01-15,2026-02-14,24746.88,USD,approved,HF-PO-07106,2026-01,Security,HF-104,Controller,PayablesDesk
+HF-AP-00006,FuseLine Security,HF-VEN-006,2026-01-18,2026-02-15,24835.2,USD,approved,HF-PO-07107,2026-01,Market Expansion,HF-105,VP Operations,PayablesDesk
+HF-AP-00007,BrightBeam Hosting,HF-VEN-007,2026-01-21,2026-02-16,19488,USD,approved,HF-PO-07108,2026-01,Field Operations,HF-106,Security Lead,PayablesDesk
+HF-AP-00008,PortKey Identity,HF-VEN-008,2026-01-24,2026-02-17,9317.76,USD,approved,,2026-01,Energy Platform,HF-107,Revenue Ops,PayablesDesk
+HF-AP-00009,Cedarline Legal,HF-VEN-009,2026-01-27,2026-02-18,18110.4,USD,approved,HF-PO-07110,2026-01,Hardware,HF-108,Controller,PayablesDesk
+HF-AP-00010,BlueTable Analytics,HF-VEN-010,2026-01-03,2026-02-19,9788.16,USD,approved,HF-PO-07111,2026-01,Finance,HF-109,VP Operations,PayablesDesk
+HF-AP-00011,Riverbend Recruiting,HF-VEN-011,2026-01-06,2026-02-20,12985.9,USD,approved,HF-PO-07112,2026-01,Security,HF-110,Security Lead,PayablesDesk
+HF-AP-00012,AxisWorks Facilities,HF-VEN-012,2026-01-09,2026-02-21,6337.92,USD,approved,HF-PO-07113,2026-01,Market Expansion,HF-111,Revenue Ops,PayablesDesk
+HF-AP-00013,SlateFox Insurance,HF-VEN-013,2026-01-12,2026-02-22,9156.48,USD,approved,HF-PO-07114,2026-01,Field Operations,HF-112,Controller,PayablesDesk
+HF-AP-00014,SignalPeak AppSec,HF-VEN-014,2026-01-15,2026-02-23,9200,USD,approved,HF-PO-07115,2026-01,Energy Platform,HF-113,VP Operations,PayablesDesk
+HF-AP-00015,HelpHarbor Desk,HF-VEN-015,2026-01-18,2026-02-10,7276.32,USD,approved,,2026-01,Hardware,HF-114,Security Lead,PayablesDesk
+HF-AP-00016,CloseFrame Accounting,HF-VEN-016,2026-01-21,2026-02-11,7660.8,USD,approved,HF-PO-07117,2026-01,Finance,HF-115,Revenue Ops,PayablesDesk
+HF-AP-00017,SkillHarbor Learning,HF-VEN-017,2026-01-24,2026-02-12,4658.88,USD,approved,HF-PO-07118,2026-01,Security,HF-116,Controller,PayablesDesk
+HF-AP-00018,Waypost Travel Desk,HF-VEN-018,2026-01-27,2026-02-13,7470.72,USD,in review,HF-PO-07119,2026-01,Market Expansion,HF-117,VP Operations,PayablesDesk
+HF-AP-00019,Tundra Test Labs,HF-VEN-019,2026-01-03,2026-02-14,9224.64,USD,approved,HF-PO-07120,2026-01,Field Operations,HF-118,Security Lead,PayablesDesk
+HF-AP-00020,VectorPoint Research,HF-VEN-020,2026-01-06,2026-02-15,13180.8,USD,approved,HF-PO-07121,2026-01,Energy Platform,HF-119,Revenue Ops,PayablesDesk
+HF-AP-00021,Linebird Communications,HF-VEN-021,2026-01-09,2026-02-16,5539.42,USD,approved,HF-PO-07122,2026-01,Hardware,HF-120,Controller,PayablesDesk
+HF-AP-00022,Pinehook Operations,HF-VEN-022,2026-01-12,2026-02-17,13923.84,USD,approved,,2026-01,Finance,HF-121,VP Operations,PayablesDesk
+HF-AP-00023,Mossbank Data Exchange,HF-VEN-023,2026-01-15,2026-02-18,8989.44,USD,approved,HF-PO-07124,2026-01,Security,HF-122,Security Lead,PayablesDesk
+HF-AP-00024,Ironleaf GRC,HF-VEN-024,2026-01-18,2026-02-19,8442.24,USD,approved,HF-PO-07125,2026-01,Market Expansion,HF-123,Revenue Ops,PayablesDesk
+HF-AP-00025,QuartzPay Services,HF-VEN-025,2026-01-21,2026-02-20,10113.6,USD,approved,HF-PO-07126,2026-01,Field Operations,HF-124,Controller,PayablesDesk
+HF-AP-00026,HarborDesk Workplace,HF-VEN-026,2026-01-24,2026-02-21,5728.32,USD,approved,HF-PO-07127,2026-01,Energy Platform,HF-125,VP Operations,PayablesDesk
+HF-AP-00027,Northstar Design Office,HF-VEN-027,2026-01-27,2026-02-22,7241.6,USD,approved,HF-PO-07128,2026-01,Hardware,HF-126,Security Lead,PayablesDesk
+HF-AP-00028,Watchtower Metrics,HF-VEN-028,2026-01-03,2026-02-23,5688.96,USD,approved,HF-PO-07129,2026-01,Finance,HF-127,Revenue Ops,PayablesDesk
+HF-AP-00029,SafeCask Backups,HF-VEN-029,2026-01-06,2026-02-10,5719.2,USD,approved,,2026-01,Security,HF-100,Controller,PayablesDesk
+HF-AP-00030,KeelWorks Procurement,HF-VEN-030,2026-01-09,2026-02-11,9654.72,USD,approved,HF-PO-07131,2026-01,Market Expansion,HF-101,VP Operations,PayablesDesk
+HF-AP-00031,Alder QA Studio,HF-VEN-031,2026-01-12,2026-02-12,14075.04,USD,approved,HF-PO-07132,2026-01,Field Operations,HF-102,Security Lead,PayablesDesk
+HF-AP-00032,BridgeLoop Integrations,HF-VEN-032,2026-01-15,2026-02-13,12210.24,USD,approved,HF-PO-07133,2026-01,Energy Platform,HF-103,Revenue Ops,PayablesDesk
+HF-AP-00033,Covefront Success Ops,HF-VEN-033,2026-01-18,2026-02-14,11327.52,USD,approved,HF-PO-07134,2026-01,Hardware,HF-104,Controller,PayablesDesk
+HF-AP-00034,PeopleField Systems,HF-VEN-034,2026-01-21,2026-02-15,8971.2,USD,approved,HF-PO-07135,2026-01,Finance,HF-105,VP Operations,PayablesDesk
+HF-AP-00035,HelioCore Components,HF-VEN-004,2026-02-03,2026-03-10,30620.88,USD,in review,,2026-02,Energy Platform,HF-101,Controller,PayablesDesk
+HF-AP-00036,TurbineDesk Analytics,HF-VEN-005,2026-02-06,2026-03-11,25778,USD,approved,HF-PO-07137,2026-02,Hardware,HF-102,VP Operations,PayablesDesk
+HF-AP-00037,FuseLine Security,HF-VEN-006,2026-02-09,2026-03-12,25870,USD,approved,HF-PO-07138,2026-02,Finance,HF-103,Security Lead,PayablesDesk
+HF-AP-00038,BrightBeam Hosting,HF-VEN-007,2026-02-12,2026-03-13,20300,USD,approved,HF-PO-07139,2026-02,Security,HF-104,Revenue Ops,PayablesDesk
+HF-AP-00039,PortKey Identity,HF-VEN-008,2026-02-15,2026-03-14,9706,USD,approved,HF-PO-07140,2026-02,Market Expansion,HF-105,Controller,PayablesDesk
+HF-AP-00040,Cedarline Legal,HF-VEN-009,2026-02-18,2026-03-15,18865,USD,approved,HF-PO-07141,2026-02,Field Operations,HF-106,VP Operations,PayablesDesk
+HF-AP-00041,BlueTable Analytics,HF-VEN-010,2026-02-21,2026-03-16,10196,USD,approved,HF-PO-07142,2026-02,Energy Platform,HF-107,Security Lead,PayablesDesk
+HF-AP-00042,Riverbend Recruiting,HF-VEN-011,2026-02-24,2026-03-17,9145,USD,approved,,2026-02,Hardware,HF-108,Revenue Ops,PayablesDesk
+HF-AP-00043,AxisWorks Facilities,HF-VEN-012,2026-02-27,2026-03-18,6602,USD,approved,HF-PO-07144,2026-02,Finance,HF-109,Controller,PayablesDesk
+HF-AP-00044,SlateFox Insurance,HF-VEN-013,2026-02-03,2026-03-19,9538,USD,approved,HF-PO-07145,2026-02,Security,HF-110,VP Operations,PayablesDesk
+HF-AP-00045,SignalPeak AppSec,HF-VEN-014,2026-02-06,2026-03-20,20412.5,USD,approved,HF-PO-07146,2026-02,Market Expansion,HF-111,Security Lead,PayablesDesk
+HF-AP-00046,HelpHarbor Desk,HF-VEN-015,2026-02-09,2026-03-21,7579.5,USD,approved,HF-PO-07147,2026-02,Field Operations,HF-112,Revenue Ops,PayablesDesk
+HF-AP-00047,CloseFrame Accounting,HF-VEN-016,2026-02-12,2026-03-22,7980,USD,approved,HF-PO-07148,2026-02,Energy Platform,HF-113,Controller,PayablesDesk
+HF-AP-00048,SkillHarbor Learning,HF-VEN-017,2026-02-15,2026-03-23,3105.92,USD,approved,HF-PO-07149,2026-02,Hardware,HF-114,VP Operations,PayablesDesk
+HF-AP-00049,Waypost Travel Desk,HF-VEN-018,2026-02-18,2026-03-10,7782,USD,approved,,2026-02,Finance,HF-115,Security Lead,PayablesDesk
+HF-AP-00050,Tundra Test Labs,HF-VEN-019,2026-02-21,2026-03-11,9609,USD,approved,HF-PO-07151,2026-02,Security,HF-116,Revenue Ops,PayablesDesk
+HF-AP-00051,VectorPoint Research,HF-VEN-020,2026-02-24,2026-03-12,13730,USD,approved,HF-PO-07152,2026-02,Market Expansion,HF-117,Controller,PayablesDesk
+HF-AP-00052,Linebird Communications,HF-VEN-021,2026-02-27,2026-03-13,3901,USD,in review,HF-PO-07153,2026-02,Field Operations,HF-118,VP Operations,PayablesDesk
+HF-AP-00053,Pinehook Operations,HF-VEN-022,2026-02-03,2026-03-14,14504,USD,approved,HF-PO-07154,2026-02,Energy Platform,HF-119,Security Lead,PayablesDesk
+HF-AP-00054,Mossbank Data Exchange,HF-VEN-023,2026-02-06,2026-03-15,9364,USD,approved,HF-PO-07155,2026-02,Hardware,HF-120,Revenue Ops,PayablesDesk
+HF-AP-00055,Ironleaf GRC,HF-VEN-024,2026-02-09,2026-03-16,12487.48,USD,approved,HF-PO-07156,2026-02,Finance,HF-121,Controller,PayablesDesk
+HF-AP-00056,QuartzPay Services,HF-VEN-025,2026-02-12,2026-03-17,10535,USD,approved,,2026-02,Security,HF-122,VP Operations,PayablesDesk
+HF-AP-00057,HarborDesk Workplace,HF-VEN-026,2026-02-15,2026-03-18,5967,USD,approved,HF-PO-07158,2026-02,Market Expansion,HF-123,Security Lead,PayablesDesk
+HF-AP-00058,Northstar Design Office,HF-VEN-027,2026-02-18,2026-03-19,11315,USD,approved,HF-PO-07159,2026-02,Field Operations,HF-124,Revenue Ops,PayablesDesk
+HF-AP-00059,Watchtower Metrics,HF-VEN-028,2026-02-21,2026-03-20,5926,USD,approved,HF-PO-07160,2026-02,Energy Platform,HF-125,Controller,PayablesDesk
+HF-AP-00060,SafeCask Backups,HF-VEN-029,2026-02-24,2026-03-21,5957.5,USD,approved,HF-PO-07161,2026-02,Hardware,HF-126,VP Operations,PayablesDesk
+HF-AP-00061,KeelWorks Procurement,HF-VEN-030,2026-02-27,2026-03-22,6436.48,USD,approved,HF-PO-07162,2026-02,Finance,HF-127,Security Lead,PayablesDesk
+HF-AP-00062,Alder QA Studio,HF-VEN-031,2026-02-03,2026-03-23,9912,USD,approved,HF-PO-07163,2026-02,Security,HF-100,Revenue Ops,PayablesDesk
+HF-AP-00063,BridgeLoop Integrations,HF-VEN-032,2026-02-06,2026-03-10,12719,USD,approved,,2026-02,Market Expansion,HF-101,Controller,PayablesDesk
+HF-AP-00064,Covefront Success Ops,HF-VEN-033,2026-02-09,2026-03-11,11799.5,USD,approved,HF-PO-07165,2026-02,Field Operations,HF-102,VP Operations,PayablesDesk
+HF-AP-00065,PeopleField Systems,HF-VEN-034,2026-02-12,2026-03-12,13269.9,USD,approved,HF-PO-07166,2026-02,Energy Platform,HF-103,Security Lead,PayablesDesk
+HF-AP-00066,PayRun Office,HF-VEN-035,2026-02-15,2026-03-13,7367.5,USD,approved,HF-PO-07167,2026-02,Hardware,HF-104,Revenue Ops,PayablesDesk
+HF-AP-00067,Northgate Audit Partners,HF-VEN-036,2026-02-18,2026-03-14,17400,USD,approved,HF-PO-07168,2026-02,Finance,HF-105,Controller,PayablesDesk
+HF-AP-00068,RelayStack Compute,HF-VEN-037,2026-02-21,2026-03-15,9587,USD,approved,HF-PO-07169,2026-02,Security,HF-106,VP Operations,PayablesDesk
+HF-AP-00069,BrightBeam Hosting,HF-VEN-007,2026-03-03,2026-04-10,28826,USD,in review,,2026-03,Hardware,HF-102,Controller,PayablesDesk
+HF-AP-00070,PortKey Identity,HF-VEN-008,2026-03-06,2026-04-11,10094.24,USD,approved,HF-PO-07171,2026-03,Finance,HF-103,VP Operations,PayablesDesk
+HF-AP-00071,Cedarline Legal,HF-VEN-009,2026-03-09,2026-04-12,19619.6,USD,approved,HF-PO-07172,2026-03,Security,HF-104,Security Lead,PayablesDesk
+HF-AP-00072,BlueTable Analytics,HF-VEN-010,2026-03-12,2026-04-13,10603.84,USD,approved,HF-PO-07173,2026-03,Market Expansion,HF-105,Revenue Ops,PayablesDesk
+HF-AP-00073,Riverbend Recruiting,HF-VEN-011,2026-03-15,2026-04-14,9510.8,USD,approved,HF-PO-07174,2026-03,Field Operations,HF-106,Controller,PayablesDesk
+HF-AP-00074,AxisWorks Facilities,HF-VEN-012,2026-03-18,2026-04-15,6866.08,USD,approved,HF-PO-07175,2026-03,Energy Platform,HF-107,VP Operations,PayablesDesk
+HF-AP-00075,SlateFox Insurance,HF-VEN-013,2026-03-21,2026-04-16,9919.52,USD,approved,HF-PO-07176,2026-03,Hardware,HF-108,Security Lead,PayablesDesk
+HF-AP-00076,SignalPeak AppSec,HF-VEN-014,2026-03-24,2026-04-17,14950,USD,approved,,2026-03,Finance,HF-109,Revenue Ops,PayablesDesk
+HF-AP-00077,HelpHarbor Desk,HF-VEN-015,2026-03-27,2026-04-18,7882.68,USD,approved,HF-PO-07178,2026-03,Security,HF-110,Controller,PayablesDesk
+HF-AP-00078,CloseFrame Accounting,HF-VEN-016,2026-03-03,2026-04-19,8299.2,USD,approved,HF-PO-07179,2026-03,Market Expansion,HF-111,VP Operations,PayablesDesk
+HF-AP-00079,SkillHarbor Learning,HF-VEN-017,2026-03-06,2026-04-20,6891.26,USD,approved,HF-PO-07180,2026-03,Field Operations,HF-112,Security Lead,PayablesDesk
+HF-AP-00080,Waypost Travel Desk,HF-VEN-018,2026-03-09,2026-04-21,8093.28,USD,approved,HF-PO-07181,2026-03,Energy Platform,HF-113,Revenue Ops,PayablesDesk
+HF-AP-00081,Tundra Test Labs,HF-VEN-019,2026-03-12,2026-04-22,9993.36,USD,approved,HF-PO-07182,2026-03,Hardware,HF-114,Controller,PayablesDesk
+HF-AP-00082,VectorPoint Research,HF-VEN-020,2026-03-15,2026-04-23,8787.2,USD,approved,HF-PO-07183,2026-03,Finance,HF-115,VP Operations,PayablesDesk
+HF-AP-00083,Linebird Communications,HF-VEN-021,2026-03-18,2026-04-10,4057.04,USD,approved,,2026-03,Security,HF-116,Security Lead,PayablesDesk
+HF-AP-00084,Pinehook Operations,HF-VEN-022,2026-03-21,2026-04-11,15084.16,USD,approved,HF-PO-07185,2026-03,Market Expansion,HF-117,Revenue Ops,PayablesDesk
+HF-AP-00085,Mossbank Data Exchange,HF-VEN-023,2026-03-24,2026-04-12,9738.56,USD,approved,HF-PO-07186,2026-03,Field Operations,HF-118,Controller,PayablesDesk
+HF-AP-00086,Ironleaf GRC,HF-VEN-024,2026-03-27,2026-04-13,9145.76,USD,in review,HF-PO-07187,2026-03,Energy Platform,HF-119,VP Operations,PayablesDesk
+HF-AP-00087,QuartzPay Services,HF-VEN-025,2026-03-03,2026-04-14,10956.4,USD,approved,HF-PO-07188,2026-03,Hardware,HF-120,Security Lead,PayablesDesk
+HF-AP-00088,HarborDesk Workplace,HF-VEN-026,2026-03-06,2026-04-15,6205.68,USD,approved,HF-PO-07189,2026-03,Finance,HF-121,Revenue Ops,PayablesDesk
+HF-AP-00089,Northstar Design Office,HF-VEN-027,2026-03-09,2026-04-16,16067.3,USD,approved,HF-PO-07190,2026-03,Security,HF-122,Controller,PayablesDesk
+HF-AP-00090,Watchtower Metrics,HF-VEN-028,2026-03-12,2026-04-17,6163.04,USD,approved,,2026-03,Market Expansion,HF-123,VP Operations,PayablesDesk
+HF-AP-00091,SafeCask Backups,HF-VEN-029,2026-03-15,2026-04-18,6195.8,USD,approved,HF-PO-07192,2026-03,Field Operations,HF-124,Security Lead,PayablesDesk
+HF-AP-00092,KeelWorks Procurement,HF-VEN-030,2026-03-18,2026-04-19,10459.28,USD,approved,HF-PO-07193,2026-03,Energy Platform,HF-125,Revenue Ops,PayablesDesk
+HF-AP-00093,Alder QA Studio,HF-VEN-031,2026-03-21,2026-04-20,10308.48,USD,approved,HF-PO-07194,2026-03,Hardware,HF-126,Controller,PayablesDesk
+HF-AP-00094,BridgeLoop Integrations,HF-VEN-032,2026-03-24,2026-04-21,13227.76,USD,approved,HF-PO-07195,2026-03,Finance,HF-127,VP Operations,PayablesDesk
+HF-AP-00095,Covefront Success Ops,HF-VEN-033,2026-03-27,2026-04-22,7551.68,USD,approved,HF-PO-07196,2026-03,Security,HF-100,Security Lead,PayablesDesk
+HF-AP-00096,PeopleField Systems,HF-VEN-034,2026-03-03,2026-04-23,9718.8,USD,approved,HF-PO-07197,2026-03,Market Expansion,HF-101,Revenue Ops,PayablesDesk
+HF-AP-00097,PayRun Office,HF-VEN-035,2026-03-06,2026-04-10,7662.2,USD,approved,,2026-03,Field Operations,HF-102,Controller,PayablesDesk
+HF-AP-00098,Northgate Audit Partners,HF-VEN-036,2026-03-09,2026-04-11,18096,USD,approved,HF-PO-07199,2026-03,Energy Platform,HF-103,VP Operations,PayablesDesk
+HF-AP-00099,RelayStack Compute,HF-VEN-037,2026-03-12,2026-04-12,13613.54,USD,approved,HF-PO-07200,2026-03,Hardware,HF-104,Security Lead,PayablesDesk
+HF-AP-00100,Oakline Data Rooms,HF-VEN-038,2026-03-15,2026-04-13,4963.4,USD,approved,HF-PO-07201,2026-03,Finance,HF-105,Revenue Ops,PayablesDesk
+HF-AP-00101,PaperTrail Systems,HF-VEN-039,2026-03-18,2026-04-14,5060.64,USD,approved,HF-PO-07202,2026-03,Security,HF-106,Controller,PayablesDesk
+HF-AP-00102,BeaconRisk Advisory,HF-VEN-040,2026-03-21,2026-04-15,12659.92,USD,approved,HF-PO-07203,2026-03,Market Expansion,HF-107,VP Operations,PayablesDesk
+HF-AP-00103,BlueTable Analytics,HF-VEN-010,2026-04-03,2026-05-10,14478.32,USD,in review,,2026-04,Finance,HF-103,Controller,PayablesDesk
+HF-AP-00104,Riverbend Recruiting,HF-VEN-011,2026-04-06,2026-05-11,8779.2,USD,approved,HF-PO-07205,2026-04,Security,HF-104,VP Operations,PayablesDesk
+HF-AP-00105,AxisWorks Facilities,HF-VEN-012,2026-04-09,2026-05-12,6337.92,USD,approved,HF-PO-07206,2026-04,Market Expansion,HF-105,Security Lead,PayablesDesk
+HF-AP-00106,SlateFox Insurance,HF-VEN-013,2026-04-12,2026-05-13,9156.48,USD,approved,HF-PO-07207,2026-04,Field Operations,HF-106,Revenue Ops,PayablesDesk
+HF-AP-00107,SignalPeak AppSec,HF-VEN-014,2026-04-15,2026-05-14,13800,USD,approved,HF-PO-07208,2026-04,Energy Platform,HF-107,Controller,PayablesDesk
+HF-AP-00108,HelpHarbor Desk,HF-VEN-015,2026-04-18,2026-05-15,7276.32,USD,approved,HF-PO-07209,2026-04,Hardware,HF-108,VP Operations,PayablesDesk
+HF-AP-00109,CloseFrame Accounting,HF-VEN-016,2026-04-21,2026-05-16,7660.8,USD,approved,HF-PO-07210,2026-04,Finance,HF-109,Security Lead,PayablesDesk
+HF-AP-00110,SkillHarbor Learning,HF-VEN-017,2026-04-24,2026-05-17,4658.88,USD,approved,,2026-04,Security,HF-110,Revenue Ops,PayablesDesk
+HF-AP-00111,Waypost Travel Desk,HF-VEN-018,2026-04-27,2026-05-18,7470.72,USD,approved,HF-PO-07212,2026-04,Market Expansion,HF-111,Controller,PayablesDesk
+HF-AP-00112,Tundra Test Labs,HF-VEN-019,2026-04-03,2026-05-19,9224.64,USD,approved,HF-PO-07213,2026-04,Field Operations,HF-112,VP Operations,PayablesDesk
+HF-AP-00113,VectorPoint Research,HF-VEN-020,2026-04-06,2026-05-20,19496.6,USD,approved,HF-PO-07214,2026-04,Energy Platform,HF-113,Security Lead,PayablesDesk
+HF-AP-00114,Linebird Communications,HF-VEN-021,2026-04-09,2026-05-21,3744.96,USD,approved,HF-PO-07215,2026-04,Hardware,HF-114,Revenue Ops,PayablesDesk
+HF-AP-00115,Pinehook Operations,HF-VEN-022,2026-04-12,2026-05-22,13923.84,USD,approved,HF-PO-07216,2026-04,Finance,HF-115,Controller,PayablesDesk
+HF-AP-00116,Mossbank Data Exchange,HF-VEN-023,2026-04-15,2026-05-23,5992.96,USD,approved,HF-PO-07217,2026-04,Security,HF-116,VP Operations,PayablesDesk
+HF-AP-00117,Ironleaf GRC,HF-VEN-024,2026-04-18,2026-05-10,8442.24,USD,approved,,2026-04,Market Expansion,HF-117,Security Lead,PayablesDesk
+HF-AP-00118,QuartzPay Services,HF-VEN-025,2026-04-21,2026-05-11,10113.6,USD,approved,HF-PO-07219,2026-04,Field Operations,HF-118,Revenue Ops,PayablesDesk
+HF-AP-00119,HarborDesk Workplace,HF-VEN-026,2026-04-24,2026-05-12,5728.32,USD,approved,HF-PO-07220,2026-04,Energy Platform,HF-119,Controller,PayablesDesk
+HF-AP-00120,Northstar Design Office,HF-VEN-027,2026-04-27,2026-05-13,10862.4,USD,in review,HF-PO-07221,2026-04,Hardware,HF-120,VP Operations,PayablesDesk
+HF-AP-00121,Watchtower Metrics,HF-VEN-028,2026-04-03,2026-05-14,5688.96,USD,approved,HF-PO-07222,2026-04,Finance,HF-121,Security Lead,PayablesDesk
+HF-AP-00122,SafeCask Backups,HF-VEN-029,2026-04-06,2026-05-15,5719.2,USD,approved,HF-PO-07223,2026-04,Security,HF-122,Revenue Ops,PayablesDesk
+HF-AP-00123,KeelWorks Procurement,HF-VEN-030,2026-04-09,2026-05-16,14280.94,USD,approved,HF-PO-07224,2026-04,Market Expansion,HF-123,Controller,PayablesDesk
+HF-AP-00124,Alder QA Studio,HF-VEN-031,2026-04-12,2026-05-17,9515.52,USD,approved,,2026-04,Field Operations,HF-124,VP Operations,PayablesDesk
+HF-AP-00125,BridgeLoop Integrations,HF-VEN-032,2026-04-15,2026-05-18,12210.24,USD,approved,HF-PO-07226,2026-04,Energy Platform,HF-125,Security Lead,PayablesDesk
+HF-AP-00126,Covefront Success Ops,HF-VEN-033,2026-04-18,2026-05-19,11327.52,USD,approved,HF-PO-07227,2026-04,Hardware,HF-126,Revenue Ops,PayablesDesk
+HF-AP-00127,PeopleField Systems,HF-VEN-034,2026-04-21,2026-05-20,8971.2,USD,approved,HF-PO-07228,2026-04,Finance,HF-127,Controller,PayablesDesk
+HF-AP-00128,PayRun Office,HF-VEN-035,2026-04-24,2026-05-21,7072.8,USD,approved,HF-PO-07229,2026-04,Security,HF-100,VP Operations,PayablesDesk
+HF-AP-00129,Northgate Audit Partners,HF-VEN-036,2026-04-27,2026-05-22,11136,USD,approved,HF-PO-07230,2026-04,Market Expansion,HF-101,Security Lead,PayablesDesk
+HF-AP-00130,RelayStack Compute,HF-VEN-037,2026-04-03,2026-05-23,9203.52,USD,approved,HF-PO-07231,2026-04,Field Operations,HF-102,Revenue Ops,PayablesDesk
+HF-AP-00131,Oakline Data Rooms,HF-VEN-038,2026-04-06,2026-05-10,4581.6,USD,approved,,2026-04,Energy Platform,HF-103,Controller,PayablesDesk
+HF-AP-00132,PaperTrail Systems,HF-VEN-039,2026-04-09,2026-05-11,4671.36,USD,approved,HF-PO-07233,2026-04,Hardware,HF-104,VP Operations,PayablesDesk
+HF-AP-00133,BeaconRisk Advisory,HF-VEN-040,2026-04-12,2026-05-12,17285.66,USD,approved,HF-PO-07234,2026-04,Finance,HF-105,Security Lead,PayablesDesk
+HF-AP-00134,Fieldstone Research,HF-VEN-041,2026-04-15,2026-05-13,7850.88,USD,approved,HF-PO-07235,2026-04,Security,HF-106,Revenue Ops,PayablesDesk
+HF-AP-00135,Brightling Locale,HF-VEN-042,2026-04-18,2026-05-14,4756.32,USD,approved,HF-PO-07236,2026-04,Market Expansion,HF-107,Controller,PayablesDesk
+HF-AP-00136,SummitFloor Events,HF-VEN-043,2026-04-21,2026-05-15,9038.4,USD,approved,HF-PO-07237,2026-04,Field Operations,HF-108,VP Operations,PayablesDesk
+HF-AP-00137,SlateFox Insurance,HF-VEN-013,2026-05-03,2026-06-10,13543.96,USD,open,,2026-05,Security,HF-104,Controller,PayablesDesk
+HF-AP-00138,SignalPeak AppSec,HF-VEN-014,2026-05-06,2026-06-11,14375,USD,approved,HF-PO-07239,2026-05,Market Expansion,HF-105,VP Operations,PayablesDesk
+HF-AP-00139,HelpHarbor Desk,HF-VEN-015,2026-05-09,2026-06-12,7579.5,USD,approved,HF-PO-07240,2026-05,Field Operations,HF-106,Security Lead,PayablesDesk
+HF-AP-00140,CloseFrame Accounting,HF-VEN-016,2026-05-12,2026-06-13,7980,USD,approved,HF-PO-07241,2026-05,Energy Platform,HF-107,Revenue Ops,PayablesDesk
+HF-AP-00141,SkillHarbor Learning,HF-VEN-017,2026-05-15,2026-06-14,4853,USD,approved,HF-PO-07242,2026-05,Hardware,HF-108,Controller,PayablesDesk
+HF-AP-00142,Waypost Travel Desk,HF-VEN-018,2026-05-18,2026-06-15,7782,USD,open,HF-PO-07243,2026-05,Finance,HF-109,VP Operations,PayablesDesk
+HF-AP-00143,Tundra Test Labs,HF-VEN-019,2026-05-21,2026-06-16,9609,USD,approved,HF-PO-07244,2026-05,Security,HF-110,Security Lead,PayablesDesk
+HF-AP-00144,VectorPoint Research,HF-VEN-020,2026-05-24,2026-06-17,13730,USD,approved,,2026-05,Market Expansion,HF-111,Revenue Ops,PayablesDesk
+HF-AP-00145,Linebird Communications,HF-VEN-021,2026-05-27,2026-06-18,3901,USD,approved,HF-PO-07246,2026-05,Field Operations,HF-112,Controller,PayablesDesk
+HF-AP-00146,Pinehook Operations,HF-VEN-022,2026-05-03,2026-06-19,14504,USD,approved,HF-PO-07247,2026-05,Energy Platform,HF-113,VP Operations,PayablesDesk
+HF-AP-00147,Mossbank Data Exchange,HF-VEN-023,2026-05-06,2026-06-20,13296.88,USD,open,HF-PO-07248,2026-05,Hardware,HF-114,Security Lead,PayablesDesk
+HF-AP-00148,Ironleaf GRC,HF-VEN-024,2026-05-09,2026-06-21,8794,USD,approved,HF-PO-07249,2026-05,Finance,HF-115,Revenue Ops,PayablesDesk
+HF-AP-00149,QuartzPay Services,HF-VEN-025,2026-05-12,2026-06-22,10535,USD,approved,HF-PO-07250,2026-05,Security,HF-116,Controller,PayablesDesk
+HF-AP-00150,HarborDesk Workplace,HF-VEN-026,2026-05-15,2026-06-23,3818.88,USD,approved,HF-PO-07251,2026-05,Market Expansion,HF-117,VP Operations,PayablesDesk
+HF-AP-00151,Northstar Design Office,HF-VEN-027,2026-05-18,2026-06-10,11315,USD,approved,,2026-05,Field Operations,HF-118,Security Lead,PayablesDesk
+HF-AP-00152,Watchtower Metrics,HF-VEN-028,2026-05-21,2026-06-11,5926,USD,open,HF-PO-07253,2026-05,Energy Platform,HF-119,Revenue Ops,PayablesDesk
+HF-AP-00153,SafeCask Backups,HF-VEN-029,2026-05-24,2026-06-12,5957.5,USD,approved,HF-PO-07254,2026-05,Hardware,HF-120,Controller,PayablesDesk
+HF-AP-00154,KeelWorks Procurement,HF-VEN-030,2026-05-27,2026-06-13,10057,USD,in review,HF-PO-07255,2026-05,Finance,HF-121,VP Operations,PayablesDesk
+HF-AP-00155,Alder QA Studio,HF-VEN-031,2026-05-03,2026-06-14,9912,USD,approved,HF-PO-07256,2026-05,Security,HF-122,Security Lead,PayablesDesk
+HF-AP-00156,BridgeLoop Integrations,HF-VEN-032,2026-05-06,2026-06-15,12719,USD,approved,HF-PO-07257,2026-05,Market Expansion,HF-123,Revenue Ops,PayablesDesk
+HF-AP-00157,Covefront Success Ops,HF-VEN-033,2026-05-09,2026-06-16,16755.29,USD,open,HF-PO-07258,2026-05,Field Operations,HF-124,Controller,PayablesDesk
+HF-AP-00158,PeopleField Systems,HF-VEN-034,2026-05-12,2026-06-17,9345,USD,approved,,2026-05,Energy Platform,HF-125,VP Operations,PayablesDesk
+HF-AP-00159,PayRun Office,HF-VEN-035,2026-05-15,2026-06-18,7367.5,USD,approved,HF-PO-07260,2026-05,Hardware,HF-126,Security Lead,PayablesDesk
+HF-AP-00160,Northgate Audit Partners,HF-VEN-036,2026-05-18,2026-06-19,17400,USD,approved,HF-PO-07261,2026-05,Finance,HF-127,Revenue Ops,PayablesDesk
+HF-AP-00161,RelayStack Compute,HF-VEN-037,2026-05-21,2026-06-20,9587,USD,approved,HF-PO-07262,2026-05,Security,HF-100,Controller,PayablesDesk
+HF-AP-00162,Oakline Data Rooms,HF-VEN-038,2026-05-24,2026-06-21,4772.5,USD,open,HF-PO-07263,2026-05,Market Expansion,HF-101,VP Operations,PayablesDesk
+HF-AP-00163,PaperTrail Systems,HF-VEN-039,2026-05-27,2026-06-22,3114.24,USD,approved,HF-PO-07264,2026-05,Field Operations,HF-102,Security Lead,PayablesDesk
+HF-AP-00164,BeaconRisk Advisory,HF-VEN-040,2026-05-03,2026-06-23,12173,USD,approved,HF-PO-07265,2026-05,Energy Platform,HF-103,Revenue Ops,PayablesDesk
+HF-AP-00165,Fieldstone Research,HF-VEN-041,2026-05-06,2026-06-10,8178,USD,approved,,2026-05,Hardware,HF-104,Controller,PayablesDesk
+HF-AP-00166,Brightling Locale,HF-VEN-042,2026-05-09,2026-06-11,4954.5,USD,approved,HF-PO-07267,2026-05,Finance,HF-105,VP Operations,PayablesDesk
+HF-AP-00167,SummitFloor Events,HF-VEN-043,2026-05-12,2026-06-12,13369.3,USD,open,HF-PO-07268,2026-05,Security,HF-106,Security Lead,PayablesDesk
+HF-AP-00168,Warehouse Nine Services,HF-VEN-044,2026-05-15,2026-06-13,17763.5,USD,approved,HF-PO-07269,2026-05,Market Expansion,HF-107,Revenue Ops,PayablesDesk
+HF-AP-00169,NorthFork ETL,HF-VEN-045,2026-05-18,2026-06-14,12664,USD,approved,HF-PO-07270,2026-05,Field Operations,HF-108,Controller,PayablesDesk
+HF-AP-00170,PatchHarbor Response,HF-VEN-046,2026-05-21,2026-06-15,8568,USD,approved,HF-PO-07271,2026-05,Energy Platform,HF-109,VP Operations,PayablesDesk
+HF-AP-00171,CloseFrame Accounting,HF-VEN-016,2026-06-03,2026-06-10,11331.6,USD,open,,2026-06,Market Expansion,HF-105,Controller,PayablesDesk
+HF-AP-00172,SkillHarbor Learning,HF-VEN-017,2026-06-06,2026-06-11,5047.12,USD,approved,HF-PO-07273,2026-06,Field Operations,HF-106,VP Operations,PayablesDesk
+HF-AP-00173,Waypost Travel Desk,HF-VEN-018,2026-06-09,2026-06-12,8093.28,USD,approved,HF-PO-07274,2026-06,Energy Platform,HF-107,Security Lead,PayablesDesk
+HF-AP-00174,Tundra Test Labs,HF-VEN-019,2026-06-12,2026-06-13,9993.36,USD,approved,HF-PO-07275,2026-06,Hardware,HF-108,Revenue Ops,PayablesDesk
+HF-AP-00175,VectorPoint Research,HF-VEN-020,2026-06-15,2026-06-14,14279.2,USD,approved,HF-PO-07276,2026-06,Finance,HF-109,Controller,PayablesDesk
+HF-AP-00176,Linebird Communications,HF-VEN-021,2026-06-18,2026-06-15,4057.04,USD,open,HF-PO-07277,2026-06,Security,HF-110,VP Operations,PayablesDesk
+HF-AP-00177,Pinehook Operations,HF-VEN-022,2026-06-21,2026-06-16,15084.16,USD,approved,HF-PO-07278,2026-06,Market Expansion,HF-111,Security Lead,PayablesDesk
+HF-AP-00178,Mossbank Data Exchange,HF-VEN-023,2026-06-24,2026-06-17,9738.56,USD,approved,,2026-06,Field Operations,HF-112,Revenue Ops,PayablesDesk
+HF-AP-00179,Ironleaf GRC,HF-VEN-024,2026-06-27,2026-06-18,9145.76,USD,approved,HF-PO-07280,2026-06,Energy Platform,HF-113,Controller,PayablesDesk
+HF-AP-00180,QuartzPay Services,HF-VEN-025,2026-06-03,2026-06-19,10956.4,USD,approved,HF-PO-07281,2026-06,Hardware,HF-114,VP Operations,PayablesDesk
+HF-AP-00181,HarborDesk Workplace,HF-VEN-026,2026-06-06,2026-06-20,8473.14,USD,open,HF-PO-07282,2026-06,Finance,HF-115,Security Lead,PayablesDesk
+HF-AP-00182,Northstar Design Office,HF-VEN-027,2026-06-09,2026-06-21,11767.6,USD,approved,HF-PO-07283,2026-06,Security,HF-116,Revenue Ops,PayablesDesk
+HF-AP-00183,Watchtower Metrics,HF-VEN-028,2026-06-12,2026-06-22,6163.04,USD,approved,HF-PO-07284,2026-06,Market Expansion,HF-117,Controller,PayablesDesk
+HF-AP-00184,SafeCask Backups,HF-VEN-029,2026-06-15,2026-06-23,3812.8,USD,approved,HF-PO-07285,2026-06,Field Operations,HF-118,VP Operations,PayablesDesk
+HF-AP-00185,KeelWorks Procurement,HF-VEN-030,2026-06-18,2026-06-10,10459.28,USD,approved,,2026-06,Energy Platform,HF-119,Security Lead,PayablesDesk
+HF-AP-00186,Alder QA Studio,HF-VEN-031,2026-06-21,2026-06-11,10308.48,USD,open,HF-PO-07287,2026-06,Hardware,HF-120,Revenue Ops,PayablesDesk
+HF-AP-00187,BridgeLoop Integrations,HF-VEN-032,2026-06-24,2026-06-12,13227.76,USD,approved,HF-PO-07288,2026-06,Finance,HF-121,Controller,PayablesDesk
+HF-AP-00188,Covefront Success Ops,HF-VEN-033,2026-06-27,2026-06-13,12271.48,USD,in review,HF-PO-07289,2026-06,Security,HF-122,VP Operations,PayablesDesk
+HF-AP-00189,PeopleField Systems,HF-VEN-034,2026-06-03,2026-06-14,9718.8,USD,approved,HF-PO-07290,2026-06,Market Expansion,HF-123,Security Lead,PayablesDesk
+HF-AP-00190,PayRun Office,HF-VEN-035,2026-06-06,2026-06-15,7662.2,USD,approved,HF-PO-07291,2026-06,Field Operations,HF-124,Revenue Ops,PayablesDesk
+HF-AP-00191,Northgate Audit Partners,HF-VEN-036,2026-06-09,2026-06-16,24708,USD,open,HF-PO-07292,2026-06,Energy Platform,HF-125,Controller,PayablesDesk
+HF-AP-00192,RelayStack Compute,HF-VEN-037,2026-06-12,2026-06-17,9970.48,USD,approved,,2026-06,Hardware,HF-126,VP Operations,PayablesDesk
+HF-AP-00193,Oakline Data Rooms,HF-VEN-038,2026-06-15,2026-06-18,4963.4,USD,approved,HF-PO-07294,2026-06,Finance,HF-127,Security Lead,PayablesDesk
+HF-AP-00194,PaperTrail Systems,HF-VEN-039,2026-06-18,2026-06-19,5060.64,USD,approved,HF-PO-07295,2026-06,Security,HF-100,Revenue Ops,PayablesDesk
+HF-AP-00195,BeaconRisk Advisory,HF-VEN-040,2026-06-21,2026-06-20,12659.92,USD,approved,HF-PO-07296,2026-06,Market Expansion,HF-101,Controller,PayablesDesk
+HF-AP-00196,Fieldstone Research,HF-VEN-041,2026-06-24,2026-06-21,8505.12,USD,open,HF-PO-07297,2026-06,Field Operations,HF-102,VP Operations,PayablesDesk
+HF-AP-00197,Brightling Locale,HF-VEN-042,2026-06-27,2026-06-22,3170.88,USD,approved,HF-PO-07298,2026-06,Energy Platform,HF-103,Security Lead,PayablesDesk
+HF-AP-00198,SummitFloor Events,HF-VEN-043,2026-06-03,2026-06-23,9791.6,USD,approved,HF-PO-07299,2026-06,Hardware,HF-104,Revenue Ops,PayablesDesk
+HF-AP-00199,Warehouse Nine Services,HF-VEN-044,2026-06-06,2026-06-10,18474.04,USD,approved,,2026-06,Finance,HF-105,Controller,PayablesDesk
+HF-AP-00200,NorthFork ETL,HF-VEN-045,2026-06-09,2026-06-11,13170.56,USD,approved,HF-PO-07301,2026-06,Security,HF-106,VP Operations,PayablesDesk
+HF-AP-00201,PatchHarbor Response,HF-VEN-046,2026-06-12,2026-06-12,12166.56,USD,open,HF-PO-07302,2026-06,Market Expansion,HF-107,Security Lead,PayablesDesk
+HF-AP-00202,LeadMesa Studio,HF-VEN-047,2026-06-15,2026-06-13,9614.8,USD,approved,HF-PO-07303,2026-06,Field Operations,HF-108,Revenue Ops,PayablesDesk
+HF-AP-00203,ChartRiver BI,HF-VEN-048,2026-06-18,2026-06-14,6653.92,USD,approved,HF-PO-07304,2026-06,Energy Platform,HF-109,Controller,PayablesDesk
+HF-AP-00204,CrateBridge Storage,HF-VEN-049,2026-06-21,2026-06-15,6871.8,USD,approved,HF-PO-07305,2026-06,Hardware,HF-110,VP Operations,PayablesDesk
+HF-AP-00205,PortKey Identity,HF-VEN-008,2026-01-12,2026-02-15,22323.8,USD,open,HF-PO-08300,2026-01,Field Operations,HF-160,CFO delegate,PayablesDesk
+HF-AP-00206,SlateFox Insurance,HF-VEN-013,2026-02-15,2026-03-18,25275.7,USD,approved,HF-PO-08301,2026-02,Energy Platform,HF-161,CFO delegate,PayablesDesk
+HF-AP-00207,Waypost Travel Desk,HF-VEN-018,2026-03-18,2026-04-21,23346,USD,approved,HF-PO-08302,2026-03,Hardware,HF-162,CFO delegate,PayablesDesk
+HF-AP-00208,Mossbank Data Exchange,HF-VEN-023,2026-04-21,2026-05-24,31369.4,USD,open,HF-PO-08303,2026-04,Finance,HF-163,CFO delegate,PayablesDesk
+HF-AP-00209,Watchtower Metrics,HF-VEN-028,2026-05-24,2026-06-27,13629.8,USD,approved,HF-PO-08304,2026-05,Security,HF-164,CFO delegate,PayablesDesk
+HF-AP-00210,Covefront Success Ops,HF-VEN-033,2026-06-27,2026-01-03,31268.68,USD,approved,HF-PO-08305,2026-06,Market Expansion,HF-165,CFO delegate,PayablesDesk
+HF-AP-00211,Oakline Data Rooms,HF-VEN-038,2026-01-03,2026-02-06,14317.5,USD,open,HF-PO-08306,2026-01,Field Operations,HF-166,CFO delegate,PayablesDesk
+HF-AP-00212,SummitFloor Events,HF-VEN-043,2026-02-06,2026-03-09,31540.25,USD,approved,HF-PO-08307,2026-02,Energy Platform,HF-167,CFO delegate,PayablesDesk
+HF-AP-00213,ChartRiver BI,HF-VEN-048,2026-03-09,2026-04-12,14715.4,USD,approved,HF-PO-08308,2026-03,Hardware,HF-168,CFO delegate,PayablesDesk
+HF-AP-00214,SignalBirch Analytics,HF-VEN-053,2026-04-12,2026-05-15,22499.83,USD,open,HF-PO-08309,2026-04,Finance,HF-169,CFO delegate,PayablesDesk
+HF-AP-00215,HelioCore Components,HF-VEN-058,2026-05-15,2026-06-18,62067,USD,approved,HF-PO-08310,2026-05,Security,HF-170,CFO delegate,PayablesDesk
+HF-AP-00216,TurbineDesk Analytics,HF-VEN-005,2026-06-18,2026-01-21,86356.3,USD,approved,HF-PO-08311,2026-06,Market Expansion,HF-171,CFO delegate,PayablesDesk
+HF-AP-00217,BlueTable Analytics,HF-VEN-010,2026-01-21,2026-02-24,23450.8,USD,open,HF-PO-08312,2026-01,Field Operations,HF-172,CFO delegate,PayablesDesk
+HF-AP-00218,HelpHarbor Desk,HF-VEN-015,2026-02-24,2026-03-27,20085.68,USD,approved,HF-PO-08313,2026-02,Energy Platform,HF-173,CFO delegate,PayablesDesk
+HF-AP-00219,VectorPoint Research,HF-VEN-020,2026-03-27,2026-04-03,41190,USD,approved,HF-PO-08314,2026-03,Hardware,HF-174,CFO delegate,PayablesDesk
+HF-AP-00220,QuartzPay Services,HF-VEN-025,2026-04-03,2026-05-06,35292.25,USD,open,HF-PO-08315,2026-04,Finance,HF-175,CFO delegate,PayablesDesk
+HF-AP-00221,KeelWorks Procurement,HF-VEN-030,2026-05-06,2026-06-09,23131.1,USD,approved,HF-PO-08316,2026-05,Security,HF-176,CFO delegate,PayablesDesk
+HF-AP-00222,PayRun Office,HF-VEN-035,2026-06-09,2026-01-12,19523.88,USD,approved,HF-PO-08317,2026-06,Market Expansion,HF-177,CFO delegate,PayablesDesk
+HF-AP-00223,BeaconRisk Advisory,HF-VEN-040,2026-01-12,2026-02-15,36519,USD,open,HF-PO-08318,2026-01,Field Operations,HF-178,CFO delegate,PayablesDesk
+HF-AP-00224,NorthFork ETL,HF-VEN-045,2026-02-15,2026-03-18,42424.4,USD,approved,HF-PO-08319,2026-02,Energy Platform,HF-160,CFO delegate,PayablesDesk
+HF-AP-00225,Benchline Devices,HF-VEN-050,2026-03-18,2026-04-21,40912.4,USD,approved,HF-PO-08320,2026-03,Hardware,HF-161,CFO delegate,PayablesDesk
+HF-AP-00226,ArrayPoint Calibration,HF-VEN-055,2026-04-21,2026-05-24,36941,USD,open,HF-PO-08321,2026-04,Finance,HF-162,CFO delegate,PayablesDesk
+HF-AP-00227,WattBridge Telemetry,HF-VEN-002,2026-05-24,2026-06-27,41685,USD,approved,HF-PO-08322,2026-05,Security,HF-163,CFO delegate,PayablesDesk
+HF-AP-00228,BrightBeam Hosting,HF-VEN-007,2026-06-27,2026-01-03,68005,USD,approved,HF-PO-08323,2026-06,Market Expansion,HF-164,CFO delegate,PayablesDesk
+HF-AP-00229,Expense card clearing,HF-TEMP-001,2026-03-18,2026-04-21,4800,USD,open,,2026-03,Hardware,HF-EXC,missing,PayablesDesk
+HF-AP-00230,Local courier reimbursements,HF-TEMP-002,2026-04-21,2026-05-24,6150,USD,in review,,2026-04,Finance,HF-EXC,missing,PayablesDesk
+HF-AP-00231,One-off data purchase,HF-TEMP-003,2026-05-24,2026-06-27,7500,USD,open,,2026-05,Security,HF-EXC,missing,PayablesDesk
+HF-AP-00232,Emergency contractor desk,HF-TEMP-004,2026-06-27,2026-04-03,8850,USD,in review,,2026-06,Market Expansion,HF-EXC,missing,PayablesDesk
+HF-AP-00233,Workshop venue deposit,HF-TEMP-005,2026-03-03,2026-05-06,10200,USD,open,,2026-03,Field Operations,HF-EXC,missing,PayablesDesk
+HF-AP-00234,Expense card clearing,HF-TEMP-006,2026-04-06,2026-06-09,11550,USD,in review,,2026-04,Energy Platform,HF-EXC,missing,PayablesDesk
+HF-AP-00235,Local courier reimbursements,HF-TEMP-007,2026-05-09,2026-04-12,12900,USD,open,,2026-05,Hardware,HF-EXC,missing,PayablesDesk
+HF-AP-00236,One-off data purchase,HF-TEMP-008,2026-06-12,2026-05-15,14250,USD,in review,,2026-06,Finance,HF-EXC,missing,PayablesDesk
+HF-AP-00237,Emergency contractor desk,HF-TEMP-009,2026-03-15,2026-06-18,15600,USD,open,,2026-03,Security,HF-EXC,missing,PayablesDesk
+HF-AP-00238,Workshop venue deposit,HF-TEMP-010,2026-04-18,2026-04-21,16950,USD,in review,,2026-04,Market Expansion,HF-EXC,missing,PayablesDesk
+HF-AP-00239,Expense card clearing,HF-TEMP-011,2026-05-21,2026-05-24,18300,USD,open,,2026-05,Field Operations,HF-EXC,missing,PayablesDesk
+HF-AP-00240,Local courier reimbursements,HF-TEMP-012,2026-06-24,2026-06-27,19650,USD,in review,,2026-06,Energy Platform,HF-EXC,missing,PayablesDesk

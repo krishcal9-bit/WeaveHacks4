@@ -2,7 +2,9 @@
 // No React here — components stay thin and consistent by importing these helpers.
 
 import type {
+  AgentInfluence,
   AgentStatus,
+  CouncilInfluenceReport,
   DebateState,
   ReliabilityScore,
   RosterMember,
@@ -87,6 +89,7 @@ export const NODE_LABEL: Record<string, string> = {
   procurement: "Procurement is forming its position",
   challenge: "Evidence challenge panel",
   debate: "Committee cross-examination",
+  influence: "Council is assigning influence weights",
   synthesis: "The CFO is deliberating",
   reliability: "Reliability auditor is scoring the council",
   reliability_auditor: "Reliability auditor is scoring the council",
@@ -103,6 +106,7 @@ export const NODE_TO_AGENT: Record<string, string> = {
   procurement: "procurement",
   challenge: "challenge",
   debate: "debate",
+  influence: "cfo",
   synthesis: "cfo",
   reliability: "reliability",
   reliability_auditor: "reliability",
@@ -113,6 +117,7 @@ export const PHASE_LABEL: Record<string, string> = {
   intake: "Intake",
   analysis: "Functional analysis",
   debate: "Cross-examination",
+  influence: "Council influence",
   synthesis: "CFO synthesis",
   reliability: "Reliability eval",
   persist: "Recording decision",
@@ -199,6 +204,8 @@ export interface RealtimeView {
   detail: string;
   model?: string;
   voice?: string;
+  micMuted?: boolean;
+  listening?: boolean;
 }
 
 export interface TimelineStep {
@@ -317,6 +324,7 @@ export function buildTimeline(args: {
       : "blocked";
   const hasFraming = transcript.some((turn) => turn.type === "framing");
   const hasDebate = transcript.some((turn) => turn.type === "rebuttal");
+  const hasInfluence = transcript.some((turn) => turn.type === "influence");
   const hasReliability = transcript.some((turn) => turn.type === "reliability");
   const hasAgent = (agent: string) =>
     transcript.some((turn) => turn.agent === agent && turn.type === "position");
@@ -358,6 +366,12 @@ export function buildTimeline(args: {
       kind: "node",
       label: "Cross-exam",
       status: timelineStatus({ complete: hasDebate, healthReady, id: "debate", nodeName, running }),
+    },
+    {
+      id: "influence",
+      kind: "node",
+      label: "Influence",
+      status: timelineStatus({ complete: hasInfluence, healthReady, id: "influence", nodeName, running }),
     },
     {
       id: "synthesis",
@@ -402,6 +416,7 @@ export function buildPhaseSteps(steps: TimelineStep[]): PhaseStep[] {
     { id: "briefing", label: "Briefing", status: byId.intake ?? byId.preflight ?? "pending", target: "council-web" },
     { id: "analysis", label: "Analysis", status: analysisStatus, target: "council-transcript" },
     { id: "debate", label: "Debate", status: byId.debate ?? "pending", target: "council-transcript" },
+    { id: "influence", label: "Influence", status: byId.influence ?? "pending", target: "council-web" },
     { id: "ruling", label: "Ruling", status: byId.synthesis ?? "pending", target: "council-memo" },
     { id: "evals", label: "Evals", status: byId.reliability ?? "pending", target: "evals" },
   ];
@@ -656,4 +671,25 @@ export function fmtTelemetry(value?: number, unit?: string): string {
   if (typeof value !== "number") return "Waiting";
   const formatted = value >= 1000 ? value.toLocaleString() : String(value);
   return unit ? `${formatted}${unit}` : formatted;
+}
+
+// --------------------------------------------------------------------------- //
+// Council influence helpers
+// --------------------------------------------------------------------------- //
+export function influenceByAgent(report?: CouncilInfluenceReport): Record<string, AgentInfluence> {
+  return Object.fromEntries((report?.weights ?? []).map((weight) => [weight.agent_id, weight]));
+}
+
+export function resolveInfluenceValue(
+  agentStatus?: AgentStatus,
+  influence?: AgentInfluence,
+): number | undefined {
+  const raw = influence?.influence_weight ?? agentStatus?.influence_weight;
+  return typeof raw === "number" && Number.isFinite(raw) ? Math.max(0, Math.min(100, Math.round(raw))) : undefined;
+}
+
+export function topInfluenceAgent(report?: CouncilInfluenceReport): AgentInfluence | undefined {
+  const weights = report?.weights ?? [];
+  if (!weights.length) return undefined;
+  return weights.reduce((top, item) => (item.influence_weight > top.influence_weight ? item : top));
 }

@@ -10,6 +10,7 @@ export function SponsorHealthPanel({ sponsorRows, health }: { sponsorRows: Spons
   return (
     <Panel
       icon={ShieldCheck}
+      visualIcon="health"
       eyebrow="Strict live preflight"
       title="Sponsor readiness"
       count={readyCount}

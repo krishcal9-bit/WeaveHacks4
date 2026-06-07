@@ -5,6 +5,7 @@ import { FileText } from "lucide-react";
 import { api } from "@/lib/api";
 import type { DecisionEvent } from "@/lib/types";
 import { DecisionRow, MetricTile, NotAvailable, Panel, type Tone } from "@/components/dashboard";
+import { AtlasIcon } from "@/components/atlas-icon";
 
 const POLL_MS = 30_000;
 
@@ -53,28 +54,34 @@ export default function ActivityPage() {
 
   return (
     <div className="mx-auto w-full max-w-[1080px] px-4 py-5 sm:px-6">
-      <div className="flex items-center gap-1.5 text-[10px] font-medium uppercase tracking-[0.08em] text-subtle-foreground">
-        <FileText className="h-3.5 w-3.5" strokeWidth={1.85} />
-        Decision log
+      <div className="flex items-center gap-3">
+        <AtlasIcon name="memo" size="sm" className="atlas-icon-badge--quiet" />
+        <div className="min-w-0">
+          <div className="flex items-center gap-1.5 text-[10px] font-medium uppercase tracking-[0.08em] text-subtle-foreground">
+            <FileText className="h-3.5 w-3.5" strokeWidth={1.85} />
+            Decision log
+          </div>
+          <h1 className="mt-1 text-[20px] font-semibold tracking-tight text-foreground">Decision activity</h1>
+        </div>
       </div>
-      <h1 className="mt-1 text-[20px] font-semibold tracking-tight text-foreground">Decision activity</h1>
       <p className="mt-0.5 text-[12px] text-muted-foreground">
         Every recommendation the committee has issued, newest first.
       </p>
 
       <div className="mt-4 grid grid-cols-1 gap-3 sm:grid-cols-3 lg:grid-cols-5">
-        <MetricTile label="Total decisions" value={String(decisions.length)} />
-        <MetricTile label="Approved" value={String(verdicts.APPROVE ?? 0)} tone="positive" />
-        <MetricTile label="Conditional" value={String(verdicts.CONDITIONAL ?? 0)} tone="warning" />
-        <MetricTile label="Rejected" value={String(verdicts.REJECT ?? 0)} tone="risk" />
+        <MetricTile label="Total decisions" value={String(decisions.length)} visualIcon="memo" />
+        <MetricTile label="Approved" value={String(verdicts.APPROVE ?? 0)} tone="positive" visualIcon="reconcile" />
+        <MetricTile label="Conditional" value={String(verdicts.CONDITIONAL ?? 0)} tone="warning" visualIcon="scenario" />
+        <MetricTile label="Rejected" value={String(verdicts.REJECT ?? 0)} tone="risk" visualIcon="risk" />
         <MetricTile
           label="Avg confidence"
           value={Number.isNaN(avgConfidence) ? "—" : `${avgConfidence.toFixed(0)}%`}
+          visualIcon="health"
         />
       </div>
 
       <div className="mt-3">
-        <Panel title="All decisions" eyebrow="History" icon={FileText}>
+        <Panel title="All decisions" eyebrow="History" icon={FileText} visualIcon="memo">
           {err && decisions.length === 0 ? (
             <NotAvailable label="Could not reach the finance service to load the decision log." />
           ) : !loaded ? (

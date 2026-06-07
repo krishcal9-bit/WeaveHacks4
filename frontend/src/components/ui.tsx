@@ -57,7 +57,7 @@ export function CommandSurface({
 
 export function SectionTitle({ children, className = "" }: { children: ReactNode; className?: string }) {
   return (
-    <h2 className={cx("text-[11px] font-semibold uppercase tracking-[0.08em] text-subtle-foreground", className)}>
+    <h2 className={cx("font-mono text-[10px] font-semibold uppercase tracking-[0.18em] text-subtle-foreground", className)}>
       {children}
     </h2>
   );

@@ -51,6 +51,7 @@ export type CouncilWebEdge = {
   to: WebNodeId;
   kind: WebEdgeKind;
   active: boolean;
+  weight?: number;
 };
 
 function isWorking(status?: AgentStatus): boolean {
@@ -107,11 +108,16 @@ export function webNodeStatusLine(args: {
 
 export function buildCouncilWebEdges(args: {
   agentStatuses: AgentStatus[];
+  influenceByAgent?: Record<string, { influence_weight?: number }>;
   running: boolean;
   nodeName?: string;
   transcript: TranscriptTurn[];
 }): CouncilWebEdge[] {
-  const { agentStatuses, running, nodeName, transcript } = args;
+  const { agentStatuses, influenceByAgent, running, nodeName, transcript } = args;
+  const influenceWeight = (agentId: string) => {
+    const raw = influenceByAgent?.[agentId]?.influence_weight;
+    return typeof raw === "number" && Number.isFinite(raw) ? Math.max(0, Math.min(100, raw)) : undefined;
+  };
   const byId = Object.fromEntries(agentStatuses.map((status) => [status.id, status])) as Record<string, AgentStatus>;
   const edgeMap = new Map<string, CouncilWebEdge>();
 
@@ -122,7 +128,11 @@ export function buildCouncilWebEdges(args: {
       edgeMap.set(key, edge);
       return;
     }
-    edgeMap.set(key, { ...existing, active: existing.active || edge.active });
+    edgeMap.set(key, {
+      ...existing,
+      active: existing.active || edge.active,
+      weight: Math.max(existing.weight ?? 0, edge.weight ?? 0),
+    });
   };
 
   for (const target of HUB_TARGETS) {
@@ -144,9 +154,33 @@ export function buildCouncilWebEdges(args: {
   }
 
   for (const target of HUB_TARGETS) {
+    const weight = influenceWeight(target);
     if (isWorking(byId[target])) {
-      upsert({ id: `hub-${target}-cfo`, from: target as WebNodeId, to: "cfo", kind: "hub", active: true });
-      upsert({ id: `hub-cfo-${target}`, from: "cfo", to: target, kind: "hub", active: true });
+      upsert({
+        id: `hub-${target}-cfo`,
+        from: target as WebNodeId,
+        to: "cfo",
+        kind: "hub",
+        active: true,
+        weight,
+      });
+      upsert({
+        id: `hub-cfo-${target}`,
+        from: "cfo",
+        to: target,
+        kind: "hub",
+        active: true,
+        weight,
+      });
+    } else if (weight && weight >= 20 && (COUNCIL_ANALYST_IDS as readonly string[]).includes(target)) {
+      upsert({
+        id: `hub-${target}-cfo-weight`,
+        from: target as WebNodeId,
+        to: "cfo",
+        kind: "hub",
+        active: true,
+        weight,
+      });
     }
   }
 
@@ -161,7 +195,14 @@ export function buildCouncilWebEdges(args: {
     if (turn.type === "position") {
       const agent = resolveWebAgent(turn);
       if (!agent || agent === "cfo") continue;
-      upsert({ id: `msg-${agent}-cfo-pos`, from: agent, to: "cfo", kind: "message", active: true });
+      upsert({
+        id: `msg-${agent}-cfo-pos`,
+        from: agent,
+        to: "cfo",
+        kind: "message",
+        active: true,
+        weight: influenceWeight(agent),
+      });
       continue;
     }
     if (turn.type === "rebuttal") {

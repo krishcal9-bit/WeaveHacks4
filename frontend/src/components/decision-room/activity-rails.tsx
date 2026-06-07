@@ -28,9 +28,9 @@ function redisKindTone(kind?: string): Tone {
 export function RedisActivityRail({ activity }: { activity: RedisActivity[] }) {
   const rows = [...activity].slice(-40).reverse();
   return (
-    <Panel icon={Database} eyebrow="System of record" title="Redis activity" count={activity.length} scroll>
+    <Panel icon={Database} visualIcon="memory" eyebrow="System of record" title="Redis activity" count={activity.length} scroll>
       {rows.length === 0 ? (
-        <EmptyState icon={Database}>RedisJSON, RediSearch, vector RAG, streams, and pub/sub writes appear here.</EmptyState>
+        <EmptyState icon={Database} visualIcon="memory">RedisJSON, RediSearch, vector RAG, streams, and pub/sub writes appear here.</EmptyState>
       ) : (
         <div className="space-y-2">
           {rows.map((item, index) => (

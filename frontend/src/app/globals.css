@@ -1,39 +1,40 @@
 @import "tailwindcss";
 
 /*
-  Atlas design tokens — restrained enterprise-fintech palette.
-  Light-first, institutional. Color conveys information only:
-  green = positive impact, red = risk, amber = warning, blue = info.
+  Atlas design tokens — "financial press" editorial system.
+  Light = salmon newsprint (the colour of the financial papers), dark = warm
+  ink. One oxblood-red accent carries the brand; semantic colour still conveys
+  information only: green = positive, red = risk, amber = warning, blue = info.
 */
 :root {
-  /* Surfaces — warm parchment app chrome */
-  --background: #f3efe8;
-  --surface: #fdfbf7;
-  --surface-muted: #ebe5dc;
-  --surface-quiet: #f8f5f0;
-  --border: #ddd5c8;
-  --border-strong: #c9bfb0;
-  --ring: #b8a99a;
-  --shadow-soft: 0 1px 2px rgba(18, 16, 14, 0.05), 0 16px 36px rgba(18, 16, 14, 0.07);
+  /* Surfaces — salmon newsprint */
+  --background: #f4e9d8;
+  --surface: #fdf6ea;
+  --surface-muted: #ecdec8;
+  --surface-quiet: #f7eddc;
+  --border: #ddccb1;
+  --border-strong: #c6b08d;
+  --ring: #b09873;
+  --shadow-soft: 0 1px 2px rgba(40, 28, 18, 0.05), 0 18px 40px rgba(40, 28, 18, 0.08);
 
-  /* Text */
-  --foreground: #12100e;
-  --muted-foreground: #5c554c;
-  --subtle-foreground: #8a8074;
+  /* Text — printer's ink */
+  --foreground: #1a1510;
+  --muted-foreground: #574d40;
+  --subtle-foreground: #897c68;
 
-  /* Semantic — muted, professional */
-  --positive: #2d6a4f;
-  --positive-bg: #e3f0ea;
-  --risk: #b42318;
-  --risk-bg: #fbeae8;
-  --warning: #b54708;
-  --warning-bg: #fdf0e6;
-  --info: #2f5bb7;
-  --info-bg: #eaf0fb;
+  /* Semantic — muted, professional, tuned to sit on salmon */
+  --positive: #2c6b4d;
+  --positive-bg: #e4efe2;
+  --risk: #b8362a;
+  --risk-bg: #f7e0d7;
+  --warning: #a3620a;
+  --warning-bg: #f6e6c9;
+  --info: #2c569f;
+  --info-bg: #e6ecf6;
 
-  /* Brand accent — terracotta */
-  --accent: #c44f2c;
-  --accent-foreground: #fff8f4;
+  /* Brand accent — oxblood editorial red */
+  --accent: #a52f22;
+  --accent-foreground: #fdf3ed;
 
   /* CopilotKit chat theming (P0 verification surface) → slate, never neon */
   --copilot-kit-primary-color: #1b2330;
@@ -46,32 +47,32 @@
 }
 
 .dark {
-  --background: #0e0d0b;
-  --surface: #161412;
-  --surface-muted: #1f1c18;
-  --surface-quiet: #12100e;
-  --border: #2a2722;
-  --border-strong: #3d3830;
-  --ring: #6d665c;
-  --shadow-soft: 0 1px 2px rgba(0, 0, 0, 0.35), 0 16px 36px rgba(0, 0, 0, 0.45);
+  --background: #14100c;
+  --surface: #1c1712;
+  --surface-muted: #26201a;
+  --surface-quiet: #17120d;
+  --border: #322a21;
+  --border-strong: #483d30;
+  --ring: #71634f;
+  --shadow-soft: 0 1px 2px rgba(0, 0, 0, 0.4), 0 18px 40px rgba(0, 0, 0, 0.5);
 
-  --foreground: #f6f0e6;
-  --muted-foreground: #a39e94;
-  --subtle-foreground: #6d665c;
+  --foreground: #f4ead8;
+  --muted-foreground: #aa9d86;
+  --subtle-foreground: #756857;
 
-  --positive: #7ec8a8;
-  --positive-bg: #1a2e26;
-  --risk: #f87171;
-  --risk-bg: #2e1a18;
-  --warning: #f0b27a;
-  --warning-bg: #2e2218;
-  --info: #8eb5ff;
-  --info-bg: #1a2438;
+  --positive: #7cc6a1;
+  --positive-bg: #182a21;
+  --risk: #ec6a59;
+  --risk-bg: #2f1813;
+  --warning: #e3a866;
+  --warning-bg: #2c2013;
+  --info: #8fb6ff;
+  --info-bg: #182338;
 
-  --accent: #e0633a;
-  --accent-foreground: #fff8f4;
+  --accent: #df5746;
+  --accent-foreground: #1b110d;
 
-  --copilot-kit-primary-color: #e0633a;
+  --copilot-kit-primary-color: #db5340;
   --copilot-kit-contrast-color: #fff8f4;
   --copilot-kit-background-color: #161412;
   --copilot-kit-secondary-color: #1f1c18;
@@ -100,8 +101,9 @@
   --color-info-bg: var(--info-bg);
   --color-accent: var(--accent);
   --color-accent-foreground: var(--accent-foreground);
-  --font-sans: var(--font-outfit);
+  --font-sans: var(--font-archivo);
   --font-display: var(--font-fraunces);
+  --font-serif: var(--font-newsreader);
   --font-mono: var(--font-plex-mono);
 }
 
@@ -123,10 +125,103 @@ body {
 
 .font-display {
   font-family: var(--font-display), Georgia, "Times New Roman", serif;
+  font-optical-sizing: auto;
+}
+
+.font-serif {
+  font-family: var(--font-serif), Georgia, "Times New Roman", serif;
 }
 
 .font-mono {
   font-family: var(--font-mono), ui-monospace, monospace;
+}
+
+/* ── Editorial system ─────────────────────────────────────────────────────
+   Kickers, ledes, drop caps, and rules — the vocabulary of a finance journal. */
+
+/* Eyebrow / kicker: mono, letter-spaced, accent — often paired with a rule. */
+.kicker {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-family: var(--font-mono), ui-monospace, monospace;
+  font-size: 0.6875rem;
+  font-weight: 600;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--accent);
+}
+
+.kicker::before {
+  content: "";
+  width: 1.5rem;
+  height: 1px;
+  background: currentColor;
+  opacity: 0.55;
+}
+
+.kicker--bare::before {
+  display: none;
+}
+
+/* Lede: editorial reading serif for opening/standfirst paragraphs. */
+.lede {
+  font-family: var(--font-serif), Georgia, serif;
+  font-size: 1.0625rem;
+  line-height: 1.62;
+  color: var(--muted-foreground);
+}
+
+/* Drop cap for the first letter of a lead block (memo, framing). */
+.dropcap::first-letter {
+  font-family: var(--font-display), Georgia, serif;
+  float: left;
+  font-size: 3.1em;
+  line-height: 0.74;
+  font-weight: 500;
+  padding: 0.04em 0.09em 0 0;
+  color: var(--accent);
+}
+
+/* Newspaper rules. */
+.rule-strong {
+  border-top: 2px solid var(--foreground);
+}
+
+.rule-hair {
+  border-top: 1px solid var(--border);
+}
+
+/* The masthead double-rule under the global header. */
+.editorial-masthead {
+  border-bottom: 3px double var(--border-strong);
+}
+
+/* Editorial headline: display serif, tight, optical-sized. */
+.headline {
+  font-family: var(--font-display), Georgia, serif;
+  font-optical-sizing: auto;
+  letter-spacing: -0.015em;
+  line-height: 1.04;
+}
+
+/* Numbered section marker, e.g. a folio "01". */
+.folio {
+  font-family: var(--font-mono), ui-monospace, monospace;
+  font-variant-numeric: tabular-nums;
+  color: var(--accent);
+}
+
+/* Subtle paper grain laid over app chrome (see .app-grain element). */
+.app-grain {
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 240 240' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+  mix-blend-mode: multiply;
+  opacity: 0.04;
+}
+
+.dark .app-grain {
+  mix-blend-mode: screen;
+  opacity: 0.035;
 }
 
 main {
@@ -154,7 +249,7 @@ main a {
 .command-surface {
   min-width: 0;
   border: 1px solid var(--border);
-  border-radius: 8px;
+  border-radius: 6px;
   background: var(--surface);
   box-shadow: var(--shadow-soft);
 }
@@ -165,6 +260,21 @@ main a {
 
 .command-surface--quiet {
   background: var(--surface-quiet);
+}
+
+/* Feature surface: a hairline accent rule across the top, like a section front. */
+.command-surface--feature {
+  position: relative;
+  border-top-color: transparent;
+}
+
+.command-surface--feature::before {
+  content: "";
+  position: absolute;
+  inset: -1px -1px auto -1px;
+  height: 2px;
+  border-radius: 6px 6px 0 0;
+  background: var(--accent);
 }
 
 .atlas-icon-badge {
@@ -439,12 +549,13 @@ main a {
 }
 
 .council-edge-flow {
-  animation: council-edge-dash 2s linear infinite;
+  stroke-dasharray: 7 9;
+  animation: council-edge-dash 1.8s linear infinite;
 }
 
 @keyframes council-edge-dash {
   to {
-    stroke-dashoffset: -12;
+    stroke-dashoffset: -32;
   }
 }
 
@@ -464,10 +575,110 @@ main a {
   }
 }
 
+.council-orb-influence {
+  animation: council-orb-influence 3s ease-in-out infinite;
+}
+
+@keyframes council-orb-influence {
+  0%,
+  100% {
+    box-shadow: 0 0 0 0 color-mix(in srgb, var(--info) 0%, transparent);
+  }
+  50% {
+    box-shadow: 0 0 0 6px color-mix(in srgb, var(--info) 18%, transparent);
+  }
+}
+
+.council-wave-bar {
+  transform-origin: bottom center;
+  animation: council-wave-bar 1.1s ease-in-out infinite;
+}
+
+.council-wave-bar:nth-child(1) { animation-delay: 0ms; }
+.council-wave-bar:nth-child(2) { animation-delay: 90ms; }
+.council-wave-bar:nth-child(3) { animation-delay: 180ms; }
+.council-wave-bar:nth-child(4) { animation-delay: 270ms; }
+.council-wave-bar:nth-child(5) { animation-delay: 360ms; }
+.council-wave-bar:nth-child(6) { animation-delay: 450ms; }
+.council-wave-bar:nth-child(7) { animation-delay: 540ms; }
+.council-wave-bar:nth-child(8) { animation-delay: 630ms; }
+.council-wave-bar:nth-child(9) { animation-delay: 720ms; }
+
+@keyframes council-wave-bar {
+  0%,
+  100% {
+    transform: scaleY(0.45);
+    opacity: 0.55;
+  }
+  50% {
+    transform: scaleY(1);
+    opacity: 1;
+  }
+}
+
+.council-influence-shimmer {
+  position: relative;
+  overflow: hidden;
+}
+
+.council-influence-shimmer::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  transform: translateX(-120%);
+  background: linear-gradient(90deg, transparent, color-mix(in srgb, var(--foreground) 14%, transparent), transparent);
+  animation: council-influence-shimmer 2.4s ease-in-out infinite;
+}
+
+@keyframes council-influence-shimmer {
+  0% {
+    transform: translateX(-120%);
+  }
+  55%,
+  100% {
+    transform: translateX(220%);
+  }
+}
+
+.council-phase-connector {
+  transform-origin: left center;
+  animation: council-phase-connector 0.65s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+@keyframes council-phase-connector {
+  from {
+    transform: scaleX(0);
+    opacity: 0.35;
+  }
+  to {
+    transform: scaleX(1);
+    opacity: 1;
+  }
+}
+
+.council-live-glow {
+  animation: council-live-glow 2.2s ease-in-out infinite;
+}
+
+@keyframes council-live-glow {
+  0%,
+  100% {
+    box-shadow: 0 0 0 0 color-mix(in srgb, var(--info) 0%, transparent);
+  }
+  50% {
+    box-shadow: 0 0 0 4px color-mix(in srgb, var(--info) 16%, transparent);
+  }
+}
+
 /* Respect reduced-motion: the council room leans on pulse/spin to signal "live". */
 @media (prefers-reduced-motion: reduce) {
   .council-edge-flow,
-  .council-orb-pulse {
+  .council-orb-pulse,
+  .council-orb-influence,
+  .council-wave-bar,
+  .council-influence-shimmer::after,
+  .council-phase-connector,
+  .council-live-glow {
     animation: none !important;
   }
 
@@ -552,25 +763,55 @@ button:focus-visible {
   border: 0;
 }
 
-/* ── Landing page (YC-style marketing) ───────────────────────────────────── */
+/* ── Landing page — salmon newsprint + sage green (matches dashboard tokens) ─ */
 
 .landing-root {
-  background: #0e0d0b;
-  color: #f6f0e6;
+  background: var(--background);
+  color: var(--foreground);
 }
 
 .landing-grain {
   background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
-  mix-blend-mode: overlay;
+  mix-blend-mode: multiply;
+  opacity: 0.045;
+}
+
+.dark .landing-grain {
+  mix-blend-mode: screen;
+  opacity: 0.035;
 }
 
 .landing-glow {
-  background: radial-gradient(circle, rgba(224, 99, 58, 0.18) 0%, transparent 68%);
+  background: radial-gradient(
+    circle,
+    color-mix(in srgb, var(--accent) 14%, transparent) 0%,
+    transparent 68%
+  );
   filter: blur(40px);
 }
 
+.landing-glow--hero {
+  background: radial-gradient(
+    circle,
+    color-mix(in srgb, var(--accent) 10%, transparent) 0%,
+    transparent 68%
+  );
+}
+
+.landing-glow--green {
+  background: radial-gradient(
+    circle,
+    color-mix(in srgb, var(--positive) 16%, transparent) 0%,
+    transparent 70%
+  );
+}
+
 .landing-glow--council {
-  background: radial-gradient(circle, rgba(126, 200, 168, 0.12) 0%, transparent 70%);
+  background: radial-gradient(
+    circle,
+    color-mix(in srgb, var(--positive) 12%, transparent) 0%,
+    transparent 70%
+  );
 }
 
 @keyframes landing-fade-up {
@@ -608,10 +849,12 @@ button:focus-visible {
 @keyframes landing-shimmer {
   0%,
   100% {
-    box-shadow: inset 0 0 0 1px rgba(224, 99, 58, 0.2);
+    box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--positive) 22%, transparent);
   }
   50% {
-    box-shadow: inset 0 0 0 1px rgba(224, 99, 58, 0.45), 0 0 24px rgba(224, 99, 58, 0.12);
+    box-shadow:
+      inset 0 0 0 1px color-mix(in srgb, var(--positive) 42%, transparent),
+      0 0 20px color-mix(in srgb, var(--positive) 10%, transparent);
   }
 }
 
@@ -648,7 +891,7 @@ button:focus-visible {
 }
 
 .landing-cta:focus-visible {
-  outline: 2px solid #e0633a;
+  outline: 2px solid var(--ring);
   outline-offset: 3px;
 }
 

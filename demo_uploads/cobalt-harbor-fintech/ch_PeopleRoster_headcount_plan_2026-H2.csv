@@ -1,13 +1,63 @@
-entity,export_id,planning_cycle,approved_by,team,role,headcount,monthly_cost,start_month,status,funding_basis,recruiter,req_id
-Cobalt Harbor Finance,CH-PEOPLEROSTER-H2-2026,H2 operating plan,Pending finance review,Engineering,Platform Engineer,1,14000,2026-07,open,signed expansion,internal,CH-REQ-0500
-Cobalt Harbor Finance,CH-PEOPLEROSTER-H2-2026,H2 operating plan,Finance Committee,Customer Success,Implementation Manager,2,23500,2026-08,planned,security evidence remediation,retained search,CH-REQ-0501
-Cobalt Harbor Finance,CH-PEOPLEROSTER-H2-2026,H2 operating plan,Finance Committee,Sales,Account Executive,3,33000,2026-09,filled,pipeline conversion,agency,CH-REQ-0502
-Cobalt Harbor Finance,CH-PEOPLEROSTER-H2-2026,H2 operating plan,Finance Committee,Marketing,Growth Manager,4,35000,2026-10,open,customer onboarding,internal,CH-REQ-0503
-Cobalt Harbor Finance,CH-PEOPLEROSTER-H2-2026,H2 operating plan,Pending finance review,Security,Security Analyst,1,44500,2026-11,open,automation savings,retained search,CH-REQ-0504
-Cobalt Harbor Finance,CH-PEOPLEROSTER-H2-2026,H2 operating plan,Finance Committee,Operations,Ops Lead,2,54000,2026-07,planned,signed expansion,agency,CH-REQ-0505
-Cobalt Harbor Finance,CH-PEOPLEROSTER-H2-2026,H2 operating plan,Finance Committee,Data,Data Engineer,3,14000,2026-08,filled,security evidence remediation,internal,CH-REQ-0506
-Cobalt Harbor Finance,CH-PEOPLEROSTER-H2-2026,H2 operating plan,Finance Committee,Quality,QA Specialist,4,23500,2026-09,open,pipeline conversion,retained search,CH-REQ-0507
-Cobalt Harbor Finance,CH-PEOPLEROSTER-H2-2026,H2 operating plan,Pending finance review,Finance Ops,Finance Systems Analyst,1,33000,2026-10,open,customer onboarding,agency,CH-REQ-0508
-Cobalt Harbor Finance,CH-PEOPLEROSTER-H2-2026,H2 operating plan,Finance Committee,Field Operations,Field Technician,2,35000,2026-11,planned,automation savings,internal,CH-REQ-0509
-Cobalt Harbor Finance,CH-PEOPLEROSTER-H2-2026,H2 operating plan,Finance Committee,Hardware,Hardware Engineer,3,44500,2026-07,filled,signed expansion,retained search,CH-REQ-0510
-Cobalt Harbor Finance,CH-PEOPLEROSTER-H2-2026,H2 operating plan,Finance Committee,Risk,Risk Analyst,4,54000,2026-08,open,security evidence remediation,agency,CH-REQ-0511
+team,role,headcount,monthly_cost,start_month,status,funding_basis,requisition_id,manager,location,source_system
+Engineering,Staff Engineer 1,1,15700,2026-01,open,security blocker,CH-REQ-0001,Dana Price,Remote US,PeopleRoster
+Engineering,Implementation Manager 2,2,17450,2026-02,planned,approved plan,CH-REQ-0002,Morgan Lee,Remote US,PeopleRoster
+Engineering,Revenue Analyst 3,3,19200,2026-03,filled,approved plan,CH-REQ-0003,Casey Patel,Remote US,PeopleRoster
+Engineering,Security Engineer 4,1,20950,2026-04,filled,approved plan,CH-REQ-0004,Jordan Wells,Remote US,PeopleRoster
+Engineering,Finance Manager 5,2,22700,2026-05,open,signed revenue,CH-REQ-0005,Dana Price,Remote US,PeopleRoster
+Customer Success,Implementation Manager 1,1,17000,2026-02,open,security blocker,CH-REQ-0006,Dana Price,Austin,PeopleRoster
+Customer Success,Revenue Analyst 2,2,18750,2026-03,planned,approved plan,CH-REQ-0007,Morgan Lee,Austin,PeopleRoster
+Customer Success,Security Engineer 3,3,20500,2026-04,filled,approved plan,CH-REQ-0008,Casey Patel,Austin,PeopleRoster
+Customer Success,Finance Manager 4,1,22250,2026-05,filled,approved plan,CH-REQ-0009,Jordan Wells,Austin,PeopleRoster
+Customer Success,Ops Coordinator 5,2,24000,2026-06,open,signed revenue,CH-REQ-0010,Dana Price,Austin,PeopleRoster
+Sales,Revenue Analyst 1,1,18300,2026-03,open,security blocker,CH-REQ-0011,Dana Price,Toronto,PeopleRoster
+Sales,Security Engineer 2,2,20050,2026-04,planned,approved plan,CH-REQ-0012,Morgan Lee,Toronto,PeopleRoster
+Sales,Finance Manager 3,3,21800,2026-05,filled,approved plan,CH-REQ-0013,Casey Patel,Toronto,PeopleRoster
+Sales,Ops Coordinator 4,1,23550,2026-06,filled,approved plan,CH-REQ-0014,Jordan Wells,Toronto,PeopleRoster
+Sales,Product Manager 5,2,25300,2026-01,open,signed revenue,CH-REQ-0015,Dana Price,Toronto,PeopleRoster
+Security,Security Engineer 1,1,19600,2026-04,open,security blocker,CH-REQ-0016,Dana Price,Dublin,PeopleRoster
+Security,Finance Manager 2,2,21350,2026-05,planned,approved plan,CH-REQ-0017,Morgan Lee,Dublin,PeopleRoster
+Security,Ops Coordinator 3,3,23100,2026-06,filled,approved plan,CH-REQ-0018,Casey Patel,Dublin,PeopleRoster
+Security,Product Manager 4,1,24850,2026-01,filled,approved plan,CH-REQ-0019,Jordan Wells,Dublin,PeopleRoster
+Security,Data Engineer 5,2,26600,2026-02,open,signed revenue,CH-REQ-0020,Dana Price,Dublin,PeopleRoster
+Finance,Finance Manager 1,1,20900,2026-05,open,security blocker,CH-REQ-0021,Dana Price,Denver,PeopleRoster
+Finance,Ops Coordinator 2,2,22650,2026-06,planned,approved plan,CH-REQ-0022,Morgan Lee,Denver,PeopleRoster
+Finance,Product Manager 3,3,24400,2026-01,filled,approved plan,CH-REQ-0023,Casey Patel,Denver,PeopleRoster
+Finance,Data Engineer 4,1,26150,2026-02,filled,approved plan,CH-REQ-0024,Jordan Wells,Denver,PeopleRoster
+Finance,Support Lead 5,2,27900,2026-03,open,signed revenue,CH-REQ-0025,Dana Price,Denver,PeopleRoster
+Operations,Ops Coordinator 1,1,22200,2026-06,open,security blocker,CH-REQ-0026,Dana Price,Remote US,PeopleRoster
+Operations,Product Manager 2,2,23950,2026-01,planned,approved plan,CH-REQ-0027,Morgan Lee,Remote US,PeopleRoster
+Operations,Data Engineer 3,3,25700,2026-02,filled,approved plan,CH-REQ-0028,Casey Patel,Remote US,PeopleRoster
+Operations,Support Lead 4,1,27450,2026-03,filled,approved plan,CH-REQ-0029,Jordan Wells,Remote US,PeopleRoster
+Operations,Solutions Architect 5,2,29200,2026-04,open,signed revenue,CH-REQ-0030,Dana Price,Remote US,PeopleRoster
+Product,Product Manager 1,1,23500,2026-01,open,security blocker,CH-REQ-0031,Dana Price,Austin,PeopleRoster
+Product,Data Engineer 2,2,25250,2026-02,planned,approved plan,CH-REQ-0032,Morgan Lee,Austin,PeopleRoster
+Product,Support Lead 3,3,27000,2026-03,filled,approved plan,CH-REQ-0033,Casey Patel,Austin,PeopleRoster
+Product,Solutions Architect 4,1,28750,2026-04,filled,approved plan,CH-REQ-0034,Jordan Wells,Austin,PeopleRoster
+Product,Staff Engineer 5,2,30500,2026-05,open,signed revenue,CH-REQ-0035,Dana Price,Austin,PeopleRoster
+Data,Data Engineer 1,1,24800,2026-02,open,security blocker,CH-REQ-0036,Dana Price,Toronto,PeopleRoster
+Data,Support Lead 2,2,26550,2026-03,planned,approved plan,CH-REQ-0037,Morgan Lee,Toronto,PeopleRoster
+Data,Solutions Architect 3,3,28300,2026-04,filled,approved plan,CH-REQ-0038,Casey Patel,Toronto,PeopleRoster
+Data,Staff Engineer 4,1,30050,2026-05,filled,approved plan,CH-REQ-0039,Jordan Wells,Toronto,PeopleRoster
+Data,Implementation Manager 5,2,31800,2026-06,open,signed revenue,CH-REQ-0040,Dana Price,Toronto,PeopleRoster
+Implementation,Support Lead 1,1,26100,2026-03,open,security blocker,CH-REQ-0041,Dana Price,Dublin,PeopleRoster
+Implementation,Solutions Architect 2,2,27850,2026-04,planned,approved plan,CH-REQ-0042,Morgan Lee,Dublin,PeopleRoster
+Implementation,Staff Engineer 3,3,29600,2026-05,filled,approved plan,CH-REQ-0043,Casey Patel,Dublin,PeopleRoster
+Implementation,Implementation Manager 4,1,31350,2026-06,filled,approved plan,CH-REQ-0044,Jordan Wells,Dublin,PeopleRoster
+Implementation,Revenue Analyst 5,2,33100,2026-01,open,signed revenue,CH-REQ-0045,Dana Price,Dublin,PeopleRoster
+Support,Solutions Architect 1,1,27400,2026-04,open,security blocker,CH-REQ-0046,Dana Price,Denver,PeopleRoster
+Support,Staff Engineer 2,2,29150,2026-05,planned,approved plan,CH-REQ-0047,Morgan Lee,Denver,PeopleRoster
+Support,Implementation Manager 3,3,30900,2026-06,filled,approved plan,CH-REQ-0048,Casey Patel,Denver,PeopleRoster
+Support,Revenue Analyst 4,1,32650,2026-01,filled,approved plan,CH-REQ-0049,Jordan Wells,Denver,PeopleRoster
+Support,Security Engineer 5,2,34400,2026-02,open,signed revenue,CH-REQ-0050,Dana Price,Denver,PeopleRoster
+RevOps Exception,Staff Engineer exception 1,2,18200,2026-03,open,unmapped expansion request,CH-REQ-0051,Dana Price,Remote US,PeopleRoster
+RevOps Exception,Implementation Manager exception 2,1,19500,2026-04,planned,unmapped expansion request,CH-REQ-0052,Morgan Lee,Remote US,PeopleRoster
+RevOps Exception,Revenue Analyst exception 3,1,20800,2026-05,planned,unmapped expansion request,CH-REQ-0053,Casey Patel,Remote US,PeopleRoster
+Trust Program,Implementation Manager exception 1,2,20600,2026-04,open,customer escalation,CH-REQ-0054,Morgan Lee,Austin,PeopleRoster
+Trust Program,Revenue Analyst exception 2,1,21900,2026-05,planned,customer escalation,CH-REQ-0055,Casey Patel,Austin,PeopleRoster
+Trust Program,Security Engineer exception 3,1,23200,2026-06,planned,customer escalation,CH-REQ-0056,Jordan Wells,Austin,PeopleRoster
+Strategic Programs,Revenue Analyst exception 1,2,23000,2026-05,open,unmapped expansion request,CH-REQ-0057,Casey Patel,Toronto,PeopleRoster
+Strategic Programs,Security Engineer exception 2,1,24300,2026-06,planned,unmapped expansion request,CH-REQ-0058,Jordan Wells,Toronto,PeopleRoster
+Strategic Programs,Finance Manager exception 3,1,25600,2026-01,planned,unmapped expansion request,CH-REQ-0059,Dana Price,Toronto,PeopleRoster
+Field Launch,Security Engineer exception 1,2,25400,2026-06,open,customer escalation,CH-REQ-0060,Jordan Wells,Dublin,PeopleRoster
+Field Launch,Finance Manager exception 2,1,26700,2026-01,planned,customer escalation,CH-REQ-0061,Dana Price,Dublin,PeopleRoster
+Field Launch,Ops Coordinator exception 3,1,28000,2026-02,planned,customer escalation,CH-REQ-0062,Morgan Lee,Dublin,PeopleRoster

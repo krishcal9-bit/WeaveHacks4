@@ -1,6 +1,8 @@
 "use client";
 
 import { ArrowDownToLine, Check, XCircle } from "lucide-react";
+import { motion, useReducedMotion } from "motion/react";
+import { springSnappy } from "@/components/motion/variants";
 import { cx } from "@/components/ui";
 import {
   buildPhaseSteps,
@@ -56,36 +58,47 @@ function PhaseNode({
   last: boolean;
   onJump: (id: string) => void;
 }) {
+  const reduced = useReducedMotion();
   const tone = toneClasses(timelineTone(step.status));
+  const isActive = step.status === "active";
   return (
     <li className="flex min-w-[112px] flex-1 items-center">
-      <button
+      <motion.button
         type="button"
         onClick={() => onJump(step.target)}
         className="group flex min-w-0 items-center gap-2 rounded-md px-1.5 py-1 text-left transition-colors hover:bg-surface-muted"
+        animate={isActive && !reduced ? { scale: [1, 1.02, 1] } : { scale: 1 }}
+        transition={isActive ? { duration: 1.8, repeat: Infinity, ease: "easeInOut" } : springSnappy}
       >
-        <span
+        <motion.span
           className={cx(
             "grid h-6 w-6 shrink-0 place-items-center rounded-full border text-[11px] font-bold tabular-nums",
             step.status === "complete"
               ? "border-positive bg-positive text-white"
               : step.status === "active"
-                ? "border-info bg-info-bg text-info"
+                ? "border-info bg-info-bg text-info council-live-glow"
                 : step.status === "blocked"
                   ? "border-risk bg-risk-bg text-risk"
                   : "border-border-strong bg-surface text-subtle-foreground",
           )}
+          initial={step.status === "complete" && !reduced ? { scale: 0.7, opacity: 0 } : false}
+          animate={{ scale: 1, opacity: 1 }}
+          transition={springSnappy}
         >
           {step.status === "complete" ? (
             <Check className="h-3.5 w-3.5" strokeWidth={3} />
           ) : step.status === "active" ? (
-            <span className="h-2 w-2 animate-pulse rounded-full bg-info" />
+            <motion.span
+              className="h-2 w-2 rounded-full bg-info"
+              animate={reduced ? undefined : { scale: [1, 1.35, 1], opacity: [1, 0.55, 1] }}
+              transition={{ duration: 1.2, repeat: Infinity, ease: "easeInOut" }}
+            />
           ) : step.status === "blocked" ? (
             <XCircle className="h-3.5 w-3.5" strokeWidth={2.5} />
           ) : (
             index + 1
           )}
-        </span>
+        </motion.span>
         <span className="min-w-0">
           <span
             className={cx(
@@ -97,11 +110,14 @@ function PhaseNode({
           </span>
           <span className={cx("block text-[10px] leading-tight", tone.text)}>{timelineLabel(step.status)}</span>
         </span>
-      </button>
+      </motion.button>
       {!last && (
         <span
           aria-hidden="true"
-          className={cx("mx-1 h-px min-w-[12px] flex-1", step.status === "complete" ? "bg-positive/40" : "bg-border")}
+          className={cx(
+            "mx-1 h-px min-w-[12px] flex-1 origin-left",
+            step.status === "complete" ? "bg-positive/40 council-phase-connector" : "bg-border",
+          )}
         />
       )}
     </li>

@@ -40,8 +40,10 @@ from langchain_openai import ChatOpenAI
 
 from src.env import load_env, redact_secrets
 from src.structured_models import (
+    AgentImprovement,
     BoardMemo,
     ChallengePanelReport,
+    CouncilInfluenceReport,
     DecisionPlan,
     DecisionType,
     Position,
@@ -398,16 +400,26 @@ _DEBATE_TEMPLATE = (
     "evidence gaps the challenge panel flagged. Keep it professional, substantive, and concrete — like a "
     "real boardroom, not small talk."
 )
+_INFLUENCE_TEMPLATE = (
+    "You are the council moderator for {company}'s investment committee. After cross-examination, assign "
+    "each analyst (treasury, fpna, risk, procurement) a deliberation influence weight for the CFO's ruling. "
+    "Weights must sum to exactly 100 across the four analysts — they are NOT equal by default. Reward roles "
+    "that cited concrete numbers, survived challenge well, and advanced the decision with quantified ideas. "
+    "Penalize vague or under-evidenced roles. Factor in the supplied historical reliability priors and "
+    "decision-type relevance. Explain who earned the most influence and why."
+)
 _CFO_TEMPLATE = (
     "You are the Chief Financial Officer of {company}, chairing the investment committee for a "
-    "{decision_type} decision. You have heard each function's position, the cross-examination, and the "
-    "evidence challenge panel. Weigh them, resolve disagreements, and issue a final, board-ready "
-    "decision. Be decisive and quantified. Honor the stated assumptions where facts were missing and "
-    "let unresolved evidence gaps lower your confidence and shape your conditions. Estimate the "
-    "decision's incremental monthly cost, one-time cost, and added monthly revenue (numbers only, 0 if "
-    "none) so runway impact can be computed by tool. Use the richer operating data: forecast downside, "
-    "churn cohorts, pipeline-stage risk, vendor obligations, security incidents, audit findings, board "
-    "constraints, and prior outcomes."
+    "{decision_type} decision. You have heard each function's position, the cross-examination, the "
+    "evidence challenge panel, and the council's assigned influence weights. Weigh positions by those "
+    "influence shares — higher-weight analysts should move your ruling more; low-weight roles should "
+    "not dominate even if loud. Resolve disagreements, and issue a final, board-ready decision. Be "
+    "decisive and quantified. Honor the stated assumptions where facts were missing and let unresolved "
+    "evidence gaps lower your confidence and shape your conditions. Estimate the decision's incremental "
+    "monthly cost, one-time cost, and added monthly revenue (numbers only, 0 if none) so runway impact "
+    "can be computed by tool. Use the richer operating data: forecast downside, churn cohorts, "
+    "pipeline-stage risk, vendor obligations, security incidents, audit findings, board constraints, and "
+    "prior outcomes."
 )
 _MEMO_TEMPLATE = (
     "You are the Chief Financial Officer of {company} writing the board memo and operator action "
@@ -438,6 +450,7 @@ _PROMPT_TEMPLATES: dict[str, str] = {
     "procurement": _ANALYST_TEMPLATE,
     "challenge": _CHALLENGE_TEMPLATE,
     "debate": _DEBATE_TEMPLATE,
+    "influence": _INFLUENCE_TEMPLATE,
     "cfo": _CFO_TEMPLATE,
     "board_memo": _MEMO_TEMPLATE,
     "reliability": _RELIABILITY_TEMPLATE,
@@ -451,7 +464,8 @@ _PROMPT_VERSION_IDS: dict[str, str] = {
     "procurement": "procurement.v3-renewal-redlines",
     "challenge": "challenge.v1-grounding-gate",
     "debate": "debate.v2-gap-pressure",
-    "cfo": "cfo.v3-typed-synthesis",
+    "influence": "influence.v1-weighted-council",
+    "cfo": "cfo.v4-influence-weighted",
     "board_memo": "memo.v1-operator-checklist",
     "reliability": "reliability.v2-replay-gate",
 }
@@ -719,6 +733,7 @@ async def analyst_position(
     decision_focus: list[str],
     evidence: dict,
     operator_directives: str = "",
+    improvement_directive: str = "",
     config: RunnableConfig | None = None,
 ) -> StructuredResult:
     focus = "; ".join(decision_focus) if decision_focus else playbook_for(decision_type)["focus"]
@@ -730,6 +745,16 @@ async def analyst_position(
         decision_type=decision_type,
         focus=focus,
     )
+    # Self-improvement overlay: a standing directive earned from this seat's prior
+    # W&B Weave reliability traces, grafted on so the agent gets more reliable
+    # each round (see src/self_improvement.py). Never fabricated — empty until the
+    # reliability auditor has scored at least one prior round.
+    if improvement_directive.strip():
+        system += (
+            "\n\nSELF-IMPROVEMENT DIRECTIVE (learned from your own W&B Weave reliability traces in "
+            "prior council rounds — follow it to raise your reliability this round):\n"
+            f"{improvement_directive.strip()}"
+        )
     human = (
         f"DECISION UNDER REVIEW:\n{decision}\n\n"
         f"COMPANY CONTEXT ({company}):\n{json.dumps(context, default=str)[:12000]}\n\n"
@@ -820,6 +845,53 @@ async def cross_examination(
     )
 
 
+async def council_influence(
+    *,
+    decision: str,
+    positions: list[dict],
+    debate_turns: list[dict],
+    challenge_report: dict | None,
+    historical_reliability: dict[str, int],
+    decision_type: str,
+    company: str,
+    operator_directives: str = "",
+    config: RunnableConfig | None = None,
+) -> StructuredResult:
+    system = _PROMPT_TEMPLATES["influence"].format(company=company)
+    findings = [
+        {
+            "role": finding.get("role"),
+            "grounding_score": finding.get("grounding_score"),
+            "cited_enough_numbers": finding.get("cited_enough_numbers"),
+            "challenge": finding.get("challenge"),
+        }
+        for finding in ((challenge_report or {}).get("findings") or [])
+    ]
+    human = (
+        f"DECISION:\n{decision}\n\n"
+        f"DECISION TYPE:\n{decision_type}\n\n"
+        f"HISTORICAL RELIABILITY PRIORS (rolling council track record):\n"
+        f"{json.dumps(historical_reliability, default=str)}\n\n"
+        f"POSITIONS:\n"
+        f"{json.dumps([{'agent': p.get('agent'), 'role': p.get('role'), 'stance': p.get('stance'), 'headline': p.get('headline'), 'cited_metrics': p.get('cited_metrics', []), 'key_points': p.get('key_points')} for p in positions], default=str)}\n\n"
+        f"CHALLENGE-PANEL FINDINGS:\n{json.dumps(findings, default=str)}\n\n"
+        f"CROSS-EXAMINATION:\n"
+        f"{json.dumps([{'from': t.get('from_role'), 'to': t.get('to_role'), 'point': t.get('point')} for t in debate_turns], default=str)}\n\n"
+        "Assign influence_weight for treasury, fpna, risk, and procurement so the four weights sum to 100."
+        f"{operator_directives}"
+    )
+    return await structured_call(
+        node="influence",
+        role="influence",
+        schema=CouncilInfluenceReport,
+        system=system,
+        human=human,
+        config=config,
+        temperature=0.25,
+        reasoning_effort=LLM_DEBATE_REASONING_EFFORT,
+    )
+
+
 async def cfo_recommendation(
     *,
     decision: str,
@@ -828,6 +900,7 @@ async def cfo_recommendation(
     debate_turns: list[dict],
     challenge_report: dict | None,
     decision_plan: dict | None,
+    council_influence: dict | None,
     company: str,
     decision_type: str,
     operator_directives: str = "",
@@ -836,10 +909,14 @@ async def cfo_recommendation(
     system = _PROMPT_TEMPLATES["cfo"].format(company=company, decision_type=decision_type)
     assumptions = (decision_plan or {}).get("assumptions") or []
     gaps = (challenge_report or {}).get("unresolved_gaps") or []
+    influence_weights = (council_influence or {}).get("weights") or []
     human = (
         f"DECISION:\n{decision}\n\n"
         f"COMPANY CONTEXT:\n{json.dumps(context, default=str)[:12000]}\n\n"
-        f"POSITIONS:\n{json.dumps([{'role': p.get('role'), 'stance': p.get('stance'), 'headline': p.get('headline'), 'argument': p.get('argument'), 'cited_metrics': p.get('cited_metrics', [])} for p in positions], default=str)}\n\n"
+        f"COUNCIL INFLUENCE WEIGHTS (must shape your ruling — not equal voice):\n"
+        f"{json.dumps(council_influence or {}, default=str)}\n\n"
+        f"POSITIONS:\n"
+        f"{json.dumps([{'role': p.get('role'), 'agent': p.get('agent'), 'stance': p.get('stance'), 'headline': p.get('headline'), 'argument': p.get('argument'), 'cited_metrics': p.get('cited_metrics', []), 'influence_weight': next((w.get('influence_weight') for w in influence_weights if w.get('agent_id') == p.get('agent')), None)} for p in positions], default=str)}\n\n"
         f"CROSS-EXAMINATION:\n{json.dumps([{'from': t.get('from_role'), 'to': t.get('to_role'), 'point': t.get('point')} for t in debate_turns], default=str)}\n\n"
         f"STATED ASSUMPTIONS (facts that were missing):\n{json.dumps(assumptions, default=str)}\n\n"
         f"UNRESOLVED EVIDENCE GAPS (resolve or explicitly accept; they should lower confidence):\n{json.dumps(gaps, default=str)}"
@@ -918,4 +995,53 @@ async def reliability_report(
         human=human,
         config=config,
         temperature=0.2,
+    )
+
+
+async def improve_agent(
+    *,
+    company: str,
+    agent_id: str,
+    persona_label: str,
+    reliability_score: dict,
+    prior_directive: str,
+    decision: str,
+    round_no: int,
+    config: RunnableConfig | None = None,
+) -> StructuredResult:
+    """Rewrite the least-reliable sub-agent's standing directive from its Weave trace.
+
+    Live OpenAI call grounded ONLY in the agent's W&B Weave reliability score
+    (its lowest dimensions, known weaknesses, and the auditor's prompt
+    adjustment). The result is grafted onto the agent's system prompt next round.
+    """
+    system = (
+        f"You are the self-improvement engine for {company}'s AI finance council. After the CFO rules, "
+        "the Reliability Auditor scores every agent against a W&B Weave rubric (evidence_grounding, "
+        "forecast_calibration, policy_compliance, debate_value, outcome_accuracy, confidence_calibration, "
+        "trace_quality). Your job is to make the single weakest sub-agent measurably more reliable on the "
+        "NEXT decision by rewriting a short standing directive grafted onto its system prompt. Target its "
+        "lowest-scoring dimensions and its known weaknesses. Be concrete and operational; preserve the "
+        "still-useful parts of its current directive; never invent facts or external data."
+    )
+    human = (
+        f"WEAKEST SUB-AGENT: {agent_id} ({persona_label})\n"
+        f"ROUND: {round_no}\n\n"
+        f"MOST RECENT DECISION:\n{decision}\n\n"
+        f"ITS W&B WEAVE RELIABILITY TRACE (this round's score — improve from here):\n"
+        f"{json.dumps(reliability_score, default=str)}\n\n"
+        f"ITS CURRENT STANDING SELF-IMPROVEMENT DIRECTIVE (empty if this is its first improvement):\n"
+        f"{prior_directive or '(none yet)'}\n\n"
+        "Produce an improved standing directive that supersedes the prior one but keeps any still-relevant "
+        "guidance, and name the single reliability dimension it most targets."
+    )
+    return await structured_call(
+        node="self_improvement",
+        role=agent_id,
+        schema=AgentImprovement,
+        system=system,
+        human=human,
+        config=config,
+        temperature=0.3,
+        reasoning_effort=LLM_DEBATE_REASONING_EFFORT,
     )

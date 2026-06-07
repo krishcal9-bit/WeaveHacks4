@@ -1,7 +1,9 @@
 "use client";
 
 import { useEffect, useMemo, useRef } from "react";
+import { AnimatePresence, motion, useReducedMotion } from "motion/react";
 import { CornerDownRight, Loader2, MessagesSquare, Sparkles } from "lucide-react";
+import { springSnappy, transcriptTurn } from "@/components/motion/variants";
 import { cx } from "@/components/ui";
 import { AGENT_TONE, resolveMember, ROSTER_BY_ID } from "@/lib/agents";
 import {
@@ -20,6 +22,7 @@ const TYPE_LABEL: Record<string, string> = {
   position: "Position",
   rebuttal: "Cross-exam",
   decision: "Ruling",
+  influence: "Influence",
   reliability: "Eval",
 };
 
@@ -63,6 +66,7 @@ export function TranscriptStream({
     <Panel
       id="council-transcript"
       icon={MessagesSquare}
+      visualIcon="council"
       title="Debate"
       count={transcript.length}
       action={
@@ -90,7 +94,7 @@ export function TranscriptStream({
           started ? (
             <SkeletonTurns />
           ) : (
-            <EmptyState icon={MessagesSquare}>
+            <EmptyState icon={MessagesSquare} visualIcon={healthReady ? "council" : "health"}>
               {healthReady
                 ? "Submit a decision to open the live council transcript."
                 : "Strict preflight must pass before the council can convene."}
@@ -98,16 +102,19 @@ export function TranscriptStream({
           )
         ) : (
           <ol className="space-y-2.5">
-            {thinkingTurns.map((turn, index) => (
-              <ThinkingRow key={turn.id ?? `thinking-${turn.agent}-${index}`} turn={turn} />
-            ))}
-            {spokenTurns.map((turn, index) => (
-              <TurnRow
-                key={turn.id ?? `${turn.type}-${turn.agent ?? turn.from_role}-${index}`}
-                turn={turn}
-                recommendation={recommendation}
-              />
-            ))}
+            <AnimatePresence initial={false} mode="popLayout">
+              {thinkingTurns.map((turn, index) => (
+                <ThinkingRow key={turn.id ?? `thinking-${turn.agent}-${index}`} turn={turn} index={index} />
+              ))}
+              {spokenTurns.map((turn, index) => (
+                <TurnRow
+                  key={turn.id ?? `${turn.type}-${turn.agent ?? turn.from_role}-${index}`}
+                  turn={turn}
+                  index={index}
+                  recommendation={recommendation}
+                />
+              ))}
+            </AnimatePresence>
           </ol>
         )}
       </div>
@@ -159,13 +166,20 @@ function LiveCouncilBar({
   );
 }
 
-function ThinkingRow({ turn }: { turn: TranscriptTurn }) {
+function ThinkingRow({ turn, index }: { turn: TranscriptTurn; index: number }) {
+  const reduced = useReducedMotion();
   const speaker = turn.agent ? ROSTER_BY_ID[turn.agent] : resolveMember(turn.role);
   const seatId = speaker?.id ?? turn.agent ?? "cfo";
   const accent = toneClasses(AGENT_TONE[seatId] ?? "info");
 
   return (
-    <li
+    <motion.li
+      layout
+      variants={transcriptTurn}
+      initial={reduced ? false : "hidden"}
+      animate="show"
+      exit={{ opacity: 0, scale: 0.98, transition: { duration: 0.18 } }}
+      transition={{ ...springSnappy, delay: reduced ? 0 : index * 0.02 }}
       className={cx(
         "min-w-0 rounded-md border border-dashed bg-background p-2.5",
         accent.border,
@@ -187,23 +201,46 @@ function ThinkingRow({ turn }: { turn: TranscriptTurn }) {
       {turn.argument && (
         <p className="mt-2 break-words text-[12px] leading-relaxed text-muted-foreground">{turn.argument}</p>
       )}
-    </li>
+    </motion.li>
   );
 }
 
-function TurnRow({ turn, recommendation }: { turn: TranscriptTurn; recommendation?: DebateState["recommendation"] }) {
+function TurnRow({
+  turn,
+  index,
+  recommendation,
+}: {
+  turn: TranscriptTurn;
+  index: number;
+  recommendation?: DebateState["recommendation"];
+}) {
+  const reduced = useReducedMotion();
   const isRebuttal = turn.type === "rebuttal";
   const from = isRebuttal ? resolveMember(turn.from_role) : undefined;
   const to = isRebuttal ? resolveMember(turn.to_role) : undefined;
   const speaker = isRebuttal ? from : turn.agent ? ROSTER_BY_ID[turn.agent] : resolveMember(turn.role);
   const seatId = speaker?.id ?? "cfo";
-  const accent = toneClasses(AGENT_TONE[seatId] ?? "neutral");
+  const accent = toneClasses(turn.type === "influence" ? "info" : AGENT_TONE[seatId] ?? "neutral");
   const body = turn.argument || turn.point || "";
   const stance = turn.stance ? toneClasses(stanceTone(String(turn.stance))) : null;
   const evidence = Array.isArray(turn.evidence) ? turn.evidence : [];
 
   return (
-    <li className={cx("min-w-0 rounded-md border border-border bg-background p-2.5", "border-l-2", accent.ring)}>
+    <motion.li
+      layout
+      variants={transcriptTurn}
+      initial={reduced ? false : "hidden"}
+      animate="show"
+      exit={{ opacity: 0, y: -6, scale: 0.985, transition: { duration: 0.2 } }}
+      transition={{ ...springSnappy, delay: reduced ? 0 : Math.min(index * 0.03, 0.18) }}
+      className={cx(
+        "min-w-0 rounded-md border border-border bg-background p-2.5",
+        "border-l-2",
+        accent.ring,
+        turn.type === "influence" && "border-info/35 bg-info-bg/15",
+        turn.type === "decision" && "border-positive/35 bg-positive-bg/10",
+      )}
+    >
       <div className="flex min-w-0 items-center justify-between gap-2">
         <div className="flex min-w-0 items-center gap-2">
           <span className={cx("grid h-6 w-6 shrink-0 place-items-center rounded-md border border-border bg-surface", accent.text)}>
@@ -255,7 +292,7 @@ function TurnRow({ turn, recommendation }: { turn: TranscriptTurn; recommendatio
       )}
 
       {evidence.length > 0 && <EvidenceChips evidence={evidence} />}
-    </li>
+    </motion.li>
   );
 }
 
