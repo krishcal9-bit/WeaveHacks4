@@ -62,7 +62,7 @@ function loaded(status?: string): boolean {
 type FileCardState = "loaded" | "partial" | "review" | "error" | "stale" | "missing";
 
 const STATE_LABELS: Record<FileCardState, string> = {
-  loaded: "Loaded",
+  loaded: "Accepted",
   partial: "Partial",
   review: "Needs review",
   error: "Error",
@@ -156,15 +156,14 @@ function fileState(connector: ConnectorStatus): FileCardState {
   if (connector.status === "partial") return "partial";
   if (
     loaded(connector.status) &&
-    (connector.reconciliation_status === "needs_review" ||
-      (connector.rejected_count ?? 0) > 0 ||
-      (connector.duplicate_count ?? 0) > 0)
+    ((connector.rejected_count ?? 0) > 0 ||
+      (connector.duplicate_count ?? 0) > 0 ||
+      (connector.blockers?.length ?? 0) > 0 ||
+      (connector.required_facts_missing?.length ?? 0) > 0 ||
+      invoiceMessinessIssueCount(connector) > 0)
   ) {
     return "review";
   }
-  if (loaded(connector.status) && (connector.confidence_score ?? 100) < 85) return "review";
-  if (loaded(connector.status) && (connector.required_facts_missing?.length ?? 0) > 0) return "review";
-  if (loaded(connector.status) && invoiceMessinessIssueCount(connector) > 0) return "review";
   if (loaded(connector.status) && freshness(connector).stale) return "stale";
   if (loaded(connector.status)) return "loaded";
   return "missing";

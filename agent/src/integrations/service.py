@@ -322,19 +322,47 @@ def import_connector(
     return ImportResult(provenance=base, records=payload)
 
 
+def derive_company_after_import(raw: Optional[bytes] = None, source_name: Optional[str] = None) -> dict[str, Any]:
+    """Capture company identity from an uploaded file's metadata (if any) and
+    (re)derive the canonical company record + vendor index from all uploaded
+    datasets. Atlas is upload-first: this is what makes the operator's uploaded
+    company — not a seed — the system of record the council and voice agent read."""
+    try:
+        from src.data import company_from_uploads as CU
+
+        if raw is not None and source_name:
+            CU.capture_company_profile(raw, source_name=source_name)
+        return CU.apply_company_from_uploads()
+    except Exception as exc:  # never let derivation failure break an import
+        return {"applied": False, "error": redact_secrets(exc)}
+
+
 def import_uploaded_file(
     connector_id: str,
     *,
     source_name: str,
     raw: bytes,
     fmt_override: Optional[SourceFormat] = None,
+    derive: bool = True,
 ) -> ImportResult:
-    """Import one browser-uploaded CSV/JSON file through the normal connector path."""
+    """Import one browser-uploaded CSV/JSON file through the normal connector path.
+
+    On a successful import the canonical company record is re-derived from all
+    uploaded datasets (unless ``derive=False`` for batch/workbook callers that
+    derive once at the end)."""
     if connector_id not in C.CONNECTORS:
         raise ValueError(f"unknown connector: {connector_id}; valid: {', '.join(C.CONNECTORS)}")
 
     spec = C.CONNECTORS[connector_id]
     safe_name = Path(source_name or spec.fixture_filename).name
+    # Capture any company identity carried in the uploaded file's metadata.
+    if derive:
+        try:
+            from src.data import company_from_uploads as CU
+
+            CU.capture_company_profile(raw, source_name=safe_name)
+        except Exception:
+            pass
     base = ImportProvenance(
         connector_id=spec.connector_id,
         source_type=spec.source_type,
@@ -370,6 +398,8 @@ def import_uploaded_file(
         base.headcount_quality_summary = prior.get("headcount_quality_summary") or {}
         base.imported_at = _now()
         store.save_provenance(base)
+        if derive:
+            derive_company_after_import()
         return ImportResult(provenance=base, records=store.load_dataset(spec.connector_id))
 
     try:
@@ -402,6 +432,8 @@ def import_uploaded_file(
         base.status = ImportStatus.IMPORTED
 
     store.save_source(base, payload)
+    if derive:
+        derive_company_after_import()
     return ImportResult(provenance=base, records=payload)
 
 
@@ -415,15 +447,19 @@ def import_workbook(
     fmt = C.detect_format(Path(safe_name))
     if fmt not in C.EXCEL_FORMATS:
         raise ValueError("Workbook import requires a .xlsx or .xls file.")
-    return [
+    results = [
         import_uploaded_file(
             connector_id,
             source_name=safe_name,
             raw=raw,
             fmt_override=fmt,
+            derive=False,
         )
         for connector_id in C.CONNECTORS
     ]
+    # Derive the company once after all worksheets are imported.
+    derive_company_after_import(raw, safe_name)
+    return results
 
 
 def run_import(

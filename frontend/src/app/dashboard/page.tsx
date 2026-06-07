@@ -161,9 +161,9 @@ function rowLabel(status?: string, state?: UploadState): string {
   if (state?.status === "parsing") return "Parsing";
   if (state?.status === "error") return "Failed";
   if (state?.status === "review") return "Needs review";
-  if (state?.status === "loaded") return "Loaded";
-  if (status === "partial") return "Loaded with notes";
-  if (loadedStatus(status)) return "Loaded";
+  if (state?.status === "loaded") return "Accepted";
+  if (status === "partial") return "Accepted with notes";
+  if (loadedStatus(status)) return "Accepted";
   if (status === "empty") return "Empty";
   if (status === "error") return "Failed";
   return "Need file";
@@ -202,8 +202,7 @@ function connectorNeedsReview(connector?: ConnectorStatus): boolean {
       (connector.status === "partial" ||
         (connector.rejected_count ?? 0) > 0 ||
         (connector.duplicate_count ?? 0) > 0 ||
-        (connector.blockers?.length ?? 0) > 0 ||
-        connector.reconciliation_status === "needs_review"),
+        (connector.blockers?.length ?? 0) > 0),
   );
 }
 
@@ -211,9 +210,8 @@ function uploadReviewDetail(connector?: ConnectorStatus): string {
   const quality = connectorQualitySummary(connector);
   if (quality) return quality;
   if (connector?.blockers?.[0]) return connector.blockers[0];
-  if (connector?.status === "partial") return "Loaded with validation notes";
-  if (connector?.reconciliation_status === "needs_review") return "Loaded; reconciliation needs review";
-  return "Loaded; review recommended";
+  if (connector?.status === "partial") return "Accepted with validation notes";
+  return "Accepted; review recommended";
 }
 
 function confidenceTone(score?: number | null): Tone {

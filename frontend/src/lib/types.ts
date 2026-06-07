@@ -937,6 +937,11 @@ export interface RealtimeSession {
   seconds_remaining?: number | null;
   policy?: RealtimeStatus["policy"];
   health?: Record<string, unknown>;
+  // Live, company-grounded session config the browser applies verbatim:
+  // instructions built from the Redis system of record + the voice tool surface.
+  instructions?: string;
+  tools?: unknown[];
+  company_brief?: Record<string, unknown>;
   [k: string]: unknown;
 }
 

@@ -255,6 +255,28 @@ def realtime_health_endpoint(response: Response) -> dict:
     return payload
 
 
+@router.get("/realtime/context")
+def realtime_context() -> dict:
+    """Live company grounding brief for the voice agent: company identity, key
+    financials, operator-uploaded operating data, and indexed documents — read
+    straight from Redis. Backs the voice ``get_company_overview`` tool so the
+    agent answers "what is my company about?" from real data, never a guess."""
+    return RT.company_voice_brief()
+
+
+@router.post("/realtime/lookup")
+def realtime_lookup(body: dict = Body(...)) -> dict:
+    """Grounded retrieval for the voice agent: live semantic search over the
+    operator's uploaded documents/files plus finance policies and board
+    precedent. Backs the voice ``search_company_knowledge`` tool."""
+    query = str((body or {}).get("query") or "")
+    try:
+        k = int((body or {}).get("k") or 6)
+    except (TypeError, ValueError):
+        k = 6
+    return RT.voice_lookup(query, k=k)
+
+
 # --------------------------------------------------------------------------- #
 # W&B Weave evaluation / replay / promotion operating system
 # --------------------------------------------------------------------------- #
