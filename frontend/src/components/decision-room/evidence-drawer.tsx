@@ -133,11 +133,15 @@ function EvidenceDrawerBase({
   started,
   active = false,
   pinnedEvidence = [],
+  className = "",
+  bodyClassName = "",
 }: {
   context?: CouncilContext;
   started: boolean;
   active?: boolean;
   pinnedEvidence?: PinnedEvidence[];
+  className?: string;
+  bodyClassName?: string;
 }) {
   const prefersReducedMotion = useReducedMotion();
   const reduced = Boolean(prefersReducedMotion);
@@ -176,6 +180,8 @@ function EvidenceDrawerBase({
       title="Evidence drawer"
       collapsible
       defaultOpen
+      className={className}
+      bodyClassName={bodyClassName}
     >
       {!hasEvidence ? (
         <EmptyState icon={FileSearch} visualIcon="evidence">

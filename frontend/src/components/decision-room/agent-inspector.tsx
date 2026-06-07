@@ -42,6 +42,8 @@ export function AgentInspector({
   running,
   healthReady,
   started,
+  className = "",
+  bodyClassName = "",
 }: {
   member: RosterMember;
   agentStatus?: AgentStatus;
@@ -54,6 +56,8 @@ export function AgentInspector({
   running: boolean;
   healthReady: boolean;
   started: boolean;
+  className?: string;
+  bodyClassName?: string;
 }) {
   const turn = findLatestTurnForMember(member.id, transcript);
   const active = isAgentActive({ agentStatus, healthReady, memberId: member.id, nodeName, running });
@@ -95,6 +99,8 @@ export function AgentInspector({
       icon={agentIcon(member.id)}
       visualIcon="council"
       title={member.label}
+      className={className}
+      bodyClassName={bodyClassName}
       action={
         <StatusBadge tone={active ? "info" : scoreValue ? reliabilityTone(scoreValue) : "neutral"} pulse={active}>
           {active ? NODE_LABEL[nodeName ?? ""]?.split(" ")[0] ?? "Active" : (agentStatus?.status ?? "Waiting")}

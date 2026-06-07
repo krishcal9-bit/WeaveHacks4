@@ -23,15 +23,15 @@ import type {
 } from "@/lib/types";
 import { CouncilWeb } from "@/components/decision-room/council-web";
 import { CouncilQuestionBanner } from "@/components/decision-room/council-question-banner";
-import { BoardMemo, ScenarioImpactCard } from "@/components/decision-room/board-memo";
+import { BoardMemo } from "@/components/decision-room/board-memo";
 import { CommandConsole } from "@/components/decision-room/command-console";
 import { CouncilHeader, PreflightPanel } from "@/components/decision-room/council-chrome";
 import { InfluencePanel } from "@/components/decision-room/influence-panel";
 import { SelfImprovementPanel } from "@/components/decision-room/self-improvement-panel";
 import { TranscriptStream } from "@/components/decision-room/transcript-stream";
 import { EvidenceDrawer } from "@/components/decision-room/evidence-drawer";
+import { AgentInspector } from "@/components/decision-room/agent-inspector";
 import { RedisActivityRail } from "@/components/decision-room/activity-rails";
-import { SteerCouncil } from "@/components/decision-room/steer-council";
 import { Stagger, StaggerItem } from "@/components/motion/stagger";
 
 import { agentBase } from "@/lib/agent-base";
@@ -161,9 +161,9 @@ export default function DecisionsPage() {
 
   // Defensive reads: every field is optional and may arrive incrementally.
   const transcript = useMemo(() => vState?.transcript ?? [], [vState?.transcript]);
-  const agentStatuses = vState?.agent_statuses ?? [];
+  const agentStatuses = useMemo(() => vState?.agent_statuses ?? [], [vState?.agent_statuses]);
   const recommendation = vState?.recommendation;
-  const reliabilityScores = vState?.reliability_scores ?? [];
+  const reliabilityScores = useMemo(() => vState?.reliability_scores ?? [], [vState?.reliability_scores]);
   const councilInfluence = vState?.council_influence;
   const agentImprovements = vState?.agent_improvements;
   const commands = vState?.commands;
@@ -182,7 +182,7 @@ export default function DecisionsPage() {
   const displayTranscript = useMemo(() => (mounted ? transcript : []), [mounted, transcript]);
   const displayRunning = mounted && vRunning;
   const displayNodeName = mounted ? vNode : undefined;
-  const displayAgentStatuses = mounted ? agentStatuses : [];
+  const displayAgentStatuses = useMemo(() => (mounted ? agentStatuses : []), [mounted, agentStatuses]);
   const displayRecommendation = mounted ? recommendation : undefined;
   const displayDecision = mounted ? decision : undefined;
   const displayStarted = mounted && started;
@@ -229,6 +229,15 @@ export default function DecisionsPage() {
   const activeRosterId = activeAgentId && ROSTER_BY_ID[activeAgentId] ? activeAgentId : undefined;
   const candidateId = selectedAgentId ?? (running ? activeRosterId : undefined) ?? latestSpeakerId(transcript) ?? "cfo";
   const selectedMember = ROSTER_BY_ID[candidateId] ?? ROSTER_BY_ID.cfo;
+  // Status + reliability for the inspected seat (rendered in the right column).
+  const inspectorStatus = useMemo(
+    () => displayAgentStatuses.find((status) => status.id === selectedMember.id),
+    [displayAgentStatuses, selectedMember.id],
+  );
+  const inspectorReliability = useMemo(
+    () => (mounted ? reliabilityScores : []).find((score) => score.agent_id === selectedMember.id),
+    [mounted, reliabilityScores, selectedMember.id],
+  );
 
   // ----------------------------------------------------------------------- //
   // Health polling (every 15s): locks submissions until strict-live green.
@@ -620,10 +629,10 @@ export default function DecisionsPage() {
         steps={timeline}
       />
 
-      <div className="flex flex-1 flex-col gap-2 p-2 lg:p-3">
+      <div className="flex min-w-0 flex-1 flex-col gap-2 overflow-x-hidden p-2 lg:p-3">
         {!displayHealthReady && <PreflightPanel health={health} onRefresh={loadHealth} />}
 
-        <div className="grid min-h-0 flex-1 gap-2 xl:grid-cols-[minmax(0,1fr)_minmax(280px,340px)]">
+        <div className="grid min-h-0 min-w-0 flex-1 gap-2 xl:grid-cols-[minmax(0,1fr)_minmax(280px,340px)]">
           <Stagger className="flex min-w-0 flex-col gap-2">
             {mounted && councilQuestion && (
               <StaggerItem>
@@ -691,13 +700,23 @@ export default function DecisionsPage() {
             />
             </StaggerItem>
 
+            {/* Evidence drawer lives at the bottom of the left column. */}
             <StaggerItem>
-            <ScenarioImpactCard impact={displayRecommendation?.impact} />
+            <EvidenceDrawer
+              context={displayContext}
+              started={displayStarted}
+              active={displayActivityPulse}
+              pinnedEvidence={displayPinnedEvidence}
+            />
             </StaggerItem>
           </Stagger>
 
-          <aside className="room-scroll flex min-w-0 flex-col gap-2 xl:sticky xl:top-2 xl:max-h-[calc(100dvh-1rem)] xl:self-start xl:overflow-y-auto">
-            <SteerCouncil onUse={setInput} running={displayRunning} healthReady={displayHealthReady} />
+          {/* Right column: operator console, the agent inspector, then Redis
+              activity which fills the remaining height. min-h-full lets the aside
+              be at least the grid row height (so the fill box reaches the bottom)
+              but also grow past it — so a long Redis activity list extends the
+              page instead of getting an internal scrollbar. */}
+          <aside className="flex min-w-0 flex-col gap-2 xl:min-h-full">
             <CommandConsole
               input={input}
               onInput={setInput}
@@ -711,13 +730,25 @@ export default function DecisionsPage() {
               commands={commands}
               audioRef={realtimeAudioRef}
             />
-            <EvidenceDrawer
-              context={displayContext}
+            <AgentInspector
+              member={selectedMember}
+              agentStatus={inspectorStatus}
+              reliabilityScore={inspectorReliability}
+              transcript={displayTranscript}
+              recommendation={displayRecommendation}
+              redisActivity={displayRedisActivity}
+              learningReport={mounted ? vState?.learning_report : undefined}
+              nodeName={displayNodeName}
+              running={displayRunning}
+              healthReady={displayHealthReady}
               started={displayStarted}
-              active={displayActivityPulse}
-              pinnedEvidence={displayPinnedEvidence}
             />
-            <RedisActivityRail activity={displayRedisActivity} active={displayActivityPulse} />
+            <RedisActivityRail
+              activity={displayRedisActivity}
+              active={displayActivityPulse}
+              className="flex-1"
+              bodyClassName="flex-1"
+            />
           </aside>
         </div>
       </div>
