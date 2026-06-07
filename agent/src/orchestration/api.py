@@ -170,6 +170,20 @@ def list_hierarchical(limit: int = 25):
         raise _fail(exc)
 
 
+@orchestration_router.post("/orchestration/whatif")
+async def whatif(body: dict = Body(...)):
+    """Branch a persisted run and counterfactually re-run with altered reliability weights (live)."""
+    run_id = (body or {}).get("run_id", "")
+    if not run_id:
+        raise HTTPException(status_code=400, detail="run_id required")
+    try:
+        from src.orchestration import whatif as WHATIF
+
+        return await WHATIF.what_if(run_id, weight_overrides=(body or {}).get("weight_overrides"))
+    except Exception as exc:
+        raise _fail(exc)
+
+
 @orchestration_router.post("/orchestration/hierarchical")
 async def run_hierarchical(body: dict = Body(...)):
     """Decompose a complex decision into concurrent sub-committees and aggregate (live)."""
