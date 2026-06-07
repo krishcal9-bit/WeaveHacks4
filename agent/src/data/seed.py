@@ -554,9 +554,13 @@ def seed(verbose: bool = True, *, include_company: bool = False) -> dict:
     #    governance norms (not company identity) the council grounds in; the
     #    live-readiness gate requires this vector index to be populated.
     R.ensure_policy_index()
-    embeddings = R.embed_texts([f"{p['title']}. {p['text']}" for p in POLICIES])
-    for p, emb in zip(POLICIES, embeddings):
-        R.upsert_policy(p["id"], text=p["text"], kind=p["kind"], title=p["title"], embedding=emb, source_id=p["id"])
+    # Idempotent: the policy RAG is not in the demo-reset clear set, so skip the
+    # (network) re-embedding when it is already fully populated — this is the main
+    # cost the reset reseed was paying every time.
+    if len(R.keys(f"{R.POLICY_PREFIX}*")) < len(POLICIES):
+        embeddings = R.embed_texts([f"{p['title']}. {p['text']}" for p in POLICIES])
+        for p, emb in zip(POLICIES, embeddings):
+            R.upsert_policy(p["id"], text=p["text"], kind=p["kind"], title=p["title"], embedding=emb, source_id=p["id"])
 
     # 4) Seed the recent-decisions stream from generic finance board precedents
     #    (also required non-empty by the live-readiness gate).
