@@ -1,6 +1,6 @@
 "use client";
 
-import type { ReactNode } from "react";
+import { memo, type ReactNode } from "react";
 import {
   BriefcaseBusiness,
   CheckSquare,
@@ -150,7 +150,9 @@ function downloadMemo(memo: string, companyName: string) {
   URL.revokeObjectURL(url);
 }
 
-export function BoardMemo({
+export const BoardMemo = memo(BoardMemoBase);
+
+function BoardMemoBase({
   boardMemo,
   recommendation,
   decision,

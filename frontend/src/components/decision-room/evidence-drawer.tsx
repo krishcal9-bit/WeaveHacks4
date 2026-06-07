@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, type ReactNode } from "react";
+import { memo, useState, type ReactNode } from "react";
 import { AnimatePresence, motion, useReducedMotion } from "motion/react";
 import {
   Banknote,
@@ -126,7 +126,9 @@ function SignalBadge({ kind, active }: { kind: RedisSignalKind; active: boolean 
   );
 }
 
-export function EvidenceDrawer({
+export const EvidenceDrawer = memo(EvidenceDrawerBase);
+
+function EvidenceDrawerBase({
   context,
   started,
   active = false,

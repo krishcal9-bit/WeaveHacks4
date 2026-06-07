@@ -1,5 +1,6 @@
 "use client";
 
+import { memo } from "react";
 import { Scale } from "lucide-react";
 import { motion, useReducedMotion } from "motion/react";
 import { Stagger, StaggerItem } from "@/components/motion/stagger";
@@ -10,7 +11,9 @@ import { ROSTER_BY_ID } from "@/lib/agents";
 import type { AgentInfluence, CouncilInfluenceReport, ReliabilityScore } from "@/lib/types";
 import { EmptyState, Panel, SkeletonText, StatusBadge } from "./primitives";
 
-export function InfluencePanel({
+export const InfluencePanel = memo(InfluencePanelBase);
+
+function InfluencePanelBase({
   councilInfluence,
   reliabilityScores,
   running,

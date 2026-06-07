@@ -76,6 +76,41 @@ function realtimeViewFromStream(status?: DebateState["realtime_status"]): Realti
   };
 }
 
+// Throttle a fast-changing value so consumers re-render at most once per `ms`.
+// Always lands the final value (trailing edge) so the UI ends fully up to date.
+// This is what keeps the Decision Room responsive: the AG-UI stream pushes many
+// state deltas per second, but the heavy visual tree only needs to repaint a few
+// times per second.
+function useThrottledValue<T>(value: T, ms: number): T {
+  const [throttled, setThrottled] = useState<T>(value);
+  const lastRef = useRef<number>(0);
+  const timerRef = useRef<number | null>(null);
+
+  useEffect(() => {
+    const now = Date.now();
+    const elapsed = now - lastRef.current;
+    if (elapsed >= ms) {
+      lastRef.current = now;
+      setThrottled(value);
+      return;
+    }
+    if (timerRef.current !== null) window.clearTimeout(timerRef.current);
+    timerRef.current = window.setTimeout(() => {
+      lastRef.current = Date.now();
+      setThrottled(value);
+      timerRef.current = null;
+    }, ms - elapsed);
+    return () => {
+      if (timerRef.current !== null) {
+        window.clearTimeout(timerRef.current);
+        timerRef.current = null;
+      }
+    };
+  }, [value, ms]);
+
+  return throttled;
+}
+
 export default function DecisionsPage() {
   const [input, setInput] = useState("");
   const [councilQuestion, setCouncilQuestion] = useState("");
@@ -116,34 +151,42 @@ export default function DecisionsPage() {
   const { appendMessage } = useCopilotChat();
   const [stateMirror, setStateMirror] = useState<Partial<DebateState>>({});
 
+  // Throttle the streamed coagent state for DISPLAY so the heavy Decision Room
+  // tree repaints a few times per second instead of on every AG-UI delta (the
+  // unthrottled stream froze the page). Logic below (submit guards, command sync,
+  // copilot actions, dispatchCommand) still uses the LIVE state/running/nodeName.
+  const vState = useThrottledValue(state, 140);
+  const vRunning = useThrottledValue(running, 140);
+  const vNode = useThrottledValue(nodeName, 140);
+
   // Defensive reads: every field is optional and may arrive incrementally.
-  const transcript = useMemo(() => state?.transcript ?? [], [state?.transcript]);
-  const agentStatuses = state?.agent_statuses ?? [];
-  const recommendation = state?.recommendation;
-  const reliabilityScores = state?.reliability_scores ?? [];
-  const councilInfluence = state?.council_influence;
-  const agentImprovements = state?.agent_improvements;
-  const commands = state?.commands;
+  const transcript = useMemo(() => vState?.transcript ?? [], [vState?.transcript]);
+  const agentStatuses = vState?.agent_statuses ?? [];
+  const recommendation = vState?.recommendation;
+  const reliabilityScores = vState?.reliability_scores ?? [];
+  const councilInfluence = vState?.council_influence;
+  const agentImprovements = vState?.agent_improvements;
+  const commands = vState?.commands;
   const decision = state?.decision;
-  const contextState = state?.context && Object.keys(state.context).length > 0 ? state.context : stateMirror.context;
-  const redisActivityState = state?.redis_activity?.length ? state.redis_activity : stateMirror.redis_activity;
-  const pinnedEvidenceState = state?.pinned_evidence?.length ? state.pinned_evidence : stateMirror.pinned_evidence;
+  const contextState = vState?.context && Object.keys(vState.context).length > 0 ? vState.context : stateMirror.context;
+  const redisActivityState = vState?.redis_activity?.length ? vState.redis_activity : stateMirror.redis_activity;
+  const pinnedEvidenceState = vState?.pinned_evidence?.length ? vState.pinned_evidence : stateMirror.pinned_evidence;
   const realtimeStatusState =
-    state?.realtime_status && Object.keys(state.realtime_status).length > 0 ? state.realtime_status : stateMirror.realtime_status;
+    vState?.realtime_status && Object.keys(vState.realtime_status).length > 0 ? vState.realtime_status : stateMirror.realtime_status;
   const companyName = contextState?.financials?.name ?? "the company";
 
   const mounted = useMounted();
-  const started = transcript.length > 0 || running;
+  const started = transcript.length > 0 || vRunning;
   const healthReady = health.status === "ready" && health.data?.ready === true;
   const displayHealthReady = useDeferredHealthReady(healthReady);
   const displayTranscript = useMemo(() => (mounted ? transcript : []), [mounted, transcript]);
-  const displayRunning = mounted && running;
-  const displayNodeName = mounted ? nodeName : undefined;
+  const displayRunning = mounted && vRunning;
+  const displayNodeName = mounted ? vNode : undefined;
   const displayAgentStatuses = mounted ? agentStatuses : [];
   const displayRecommendation = mounted ? recommendation : undefined;
   const displayDecision = mounted ? decision : undefined;
   const displayStarted = mounted && started;
-  const displayPhase = mounted ? state?.phase : undefined;
+  const displayPhase = mounted ? vState?.phase : undefined;
   const displayContext = mounted ? contextState : undefined;
   const displayRedisActivity = useMemo(() => {
     if (!mounted) return [];
@@ -350,6 +393,9 @@ export default function DecisionsPage() {
       const blockedMessage = await requireCompanyDataOrRedirect();
       if (blockedMessage) throw new Error(blockedMessage);
       setInput("");
+      // Show the question banner above the council web for the typed/Run path
+      // (the voice and copilot-action paths already set this).
+      setCouncilQuestion(content);
       await appendMessage(new TextMessage({ role: MessageRole.User, content }));
     },
     [appendMessage, healthReady, running, requireCompanyDataOrRedirect],
@@ -423,7 +469,7 @@ export default function DecisionsPage() {
       });
       return result?.message ?? "Clarify command dispatched.";
     },
-  });
+  }, [dispatchCommand, decision]);
 
   // Send a full question/decision prompt to the council. Instead of dumping the
   // text into the prompt input, surface it as the animated banner above the
@@ -446,7 +492,7 @@ export default function DecisionsPage() {
       await appendMessage(new TextMessage({ role: MessageRole.User, content }));
       return "Question sent to the council.";
     },
-  });
+  }, [running, healthReady, requireCompanyDataOrRedirect, appendMessage]);
 
   useCopilotAction({
     name: "challengeCouncilClaim",
@@ -465,7 +511,7 @@ export default function DecisionsPage() {
       });
       return result?.message ?? "Challenge command dispatched.";
     },
-  });
+  }, [dispatchCommand, decision]);
 
   useCopilotAction({
     name: "defendCouncilPosition",
@@ -484,7 +530,7 @@ export default function DecisionsPage() {
       });
       return result?.message ?? "Defend command dispatched.";
     },
-  });
+  }, [dispatchCommand, decision]);
 
   useCopilotAction({
     name: "rerunCouncilRole",
@@ -503,7 +549,7 @@ export default function DecisionsPage() {
       });
       return result?.message ?? "Rerun command dispatched.";
     },
-  });
+  }, [dispatchCommand, decision]);
 
   useCopilotAction({
     name: "requestScenarioFork",
@@ -528,7 +574,7 @@ export default function DecisionsPage() {
       });
       return result?.message ?? "Scenario command dispatched.";
     },
-  });
+  }, [dispatchCommand]);
 
   useCopilotAction({
     name: "pinCouncilEvidence",
@@ -552,7 +598,7 @@ export default function DecisionsPage() {
       });
       return result?.message ?? "Pin command dispatched.";
     },
-  });
+  }, [dispatchCommand]);
 
   useCopilotAction({
     name: "exportBoardMemo",
@@ -562,7 +608,7 @@ export default function DecisionsPage() {
       const result = await dispatchCommand({ type: "export_memo", payload: {}, source: "copilot" });
       return result?.message ?? "Export command dispatched.";
     },
-  });
+  }, [dispatchCommand]);
 
   return (
     <main className="flex min-h-full flex-col bg-background">
@@ -633,12 +679,12 @@ export default function DecisionsPage() {
 
             <StaggerItem>
             <BoardMemo
-              boardMemo={mounted ? state?.board_memo : undefined}
+              boardMemo={mounted ? vState?.board_memo : undefined}
               recommendation={displayRecommendation}
               decision={displayDecision}
               companyName={companyName}
               reliabilityScores={reliabilityScores}
-              operatorActions={mounted ? state?.operator_actions : undefined}
+              operatorActions={mounted ? vState?.operator_actions : undefined}
               running={displayRunning}
               healthReady={displayHealthReady}
               started={displayStarted}
