@@ -1,6 +1,6 @@
 """
 LangChain tools backing the finance agents — every tool is grounded in the
-Redis system of record so agents argue with real Acme Corp numbers.
+Redis system of record so agents argue with the operator's real uploaded numbers.
 """
 
 import json
@@ -14,7 +14,7 @@ COMPANY_KEY = f"{R.NS}:company:northwind"
 
 @tool
 def get_company_financials() -> str:
-    """Acme Corp's financial and operating position: cash, burn, runway,
+    """The company's financial and operating position: cash, burn, runway,
     revenue, margins, growth, unit economics, forecasts, cohorts, pipeline,
     hiring plan, incidents, audit findings, board constraints, and prior
     decision outcomes."""
@@ -73,7 +73,7 @@ def compute_runway(
 
 @tool
 def list_vendors() -> str:
-    """List Acme Corp's vendor & SaaS contracts: name, category, annual cost,
+    """List the company's vendor & SaaS contracts: name, category, annual cost,
     renewal date, billing terms, contract clauses, switching cost, and notes.
     Useful for procurement and cost decisions."""
     vendors = R.search_vendors("*", 50)
@@ -90,7 +90,7 @@ def list_vendors() -> str:
 
 @tool
 def search_finance_policies(query: str) -> str:
-    """Semantic search over Acme Corp's finance policies and past board
+    """Semantic search over the company's finance policies and past board
     decisions. Use this to ground recommendations in company policy and precedent.
     Returns stable policy_id/source_id values so Risk and CFO can cite concrete
     board-policy references, not generic policy language."""

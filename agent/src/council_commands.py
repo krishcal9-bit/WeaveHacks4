@@ -79,7 +79,7 @@ def _load_financials() -> dict[str, Any]:
 
 
 def _company_name(financials: dict[str, Any] | None = None) -> str:
-    return (financials or {}).get("name") or "Acme Corp"
+    return (financials or {}).get("name") or "the company"
 
 
 def _rejection(reason: str, message: str) -> dict[str, Any]:

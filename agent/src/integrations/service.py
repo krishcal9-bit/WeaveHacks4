@@ -322,47 +322,22 @@ def import_connector(
     return ImportResult(provenance=base, records=payload)
 
 
-def derive_company_after_import(raw: Optional[bytes] = None, source_name: Optional[str] = None) -> dict[str, Any]:
-    """Capture company identity from an uploaded file's metadata (if any) and
-    (re)derive the canonical company record + vendor index from all uploaded
-    datasets. Atlas is upload-first: this is what makes the operator's uploaded
-    company — not a seed — the system of record the council and voice agent read."""
-    try:
-        from src.data import company_from_uploads as CU
-
-        if raw is not None and source_name:
-            CU.capture_company_profile(raw, source_name=source_name)
-        return CU.apply_company_from_uploads()
-    except Exception as exc:  # never let derivation failure break an import
-        return {"applied": False, "error": redact_secrets(exc)}
-
-
 def import_uploaded_file(
     connector_id: str,
     *,
     source_name: str,
     raw: bytes,
     fmt_override: Optional[SourceFormat] = None,
-    derive: bool = True,
 ) -> ImportResult:
     """Import one browser-uploaded CSV/JSON file through the normal connector path.
 
-    On a successful import the canonical company record is re-derived from all
-    uploaded datasets (unless ``derive=False`` for batch/workbook callers that
-    derive once at the end)."""
+    The company system of record is (re)derived from the uploaded datasets by the
+    caller (API / CLI) via ``apply_company_derivation`` after import."""
     if connector_id not in C.CONNECTORS:
         raise ValueError(f"unknown connector: {connector_id}; valid: {', '.join(C.CONNECTORS)}")
 
     spec = C.CONNECTORS[connector_id]
     safe_name = Path(source_name or spec.fixture_filename).name
-    # Capture any company identity carried in the uploaded file's metadata.
-    if derive:
-        try:
-            from src.data import company_from_uploads as CU
-
-            CU.capture_company_profile(raw, source_name=safe_name)
-        except Exception:
-            pass
     base = ImportProvenance(
         connector_id=spec.connector_id,
         source_type=spec.source_type,
@@ -398,8 +373,6 @@ def import_uploaded_file(
         base.headcount_quality_summary = prior.get("headcount_quality_summary") or {}
         base.imported_at = _now()
         store.save_provenance(base)
-        if derive:
-            derive_company_after_import()
         return ImportResult(provenance=base, records=store.load_dataset(spec.connector_id))
 
     try:
@@ -432,8 +405,6 @@ def import_uploaded_file(
         base.status = ImportStatus.IMPORTED
 
     store.save_source(base, payload)
-    if derive:
-        derive_company_after_import()
     return ImportResult(provenance=base, records=payload)
 
 
@@ -447,19 +418,15 @@ def import_workbook(
     fmt = C.detect_format(Path(safe_name))
     if fmt not in C.EXCEL_FORMATS:
         raise ValueError("Workbook import requires a .xlsx or .xls file.")
-    results = [
+    return [
         import_uploaded_file(
             connector_id,
             source_name=safe_name,
             raw=raw,
             fmt_override=fmt,
-            derive=False,
         )
         for connector_id in C.CONNECTORS
     ]
-    # Derive the company once after all worksheets are imported.
-    derive_company_after_import(raw, safe_name)
-    return results
 
 
 def run_import(
@@ -513,7 +480,31 @@ def apply_company_derivation() -> Optional[dict[str, Any]]:
     if not record:
         return None
     R.set_json(COMPANY_KEY, record)
+    _apply_uploaded_vendors()
     return record
+
+
+def _apply_uploaded_vendors() -> int:
+    """Make the operator's uploaded vendor register the procurement system of record.
+
+    Upload-first: when a vendor_export has been imported, those vendors replace any
+    seeded scaffolding vendors at ``atlas:vendor:*`` so the council's ``list_vendors``
+    tool and the dashboard show the operator's real contracts. No-op when nothing
+    has been uploaded (the seeded scaffolding stays in place for the empty state).
+    """
+    vendors = _load_typed(SourceType.VENDOR_EXPORT, VendorRecord)
+    if not vendors:
+        return 0
+    R.delete_keys_matching(f"{R.VENDOR_PREFIX}*")
+    for vendor in vendors:
+        payload = vendor.model_dump(mode="json")
+        payload.setdefault("id", vendor.vendor_id)
+        R.set_json(f"{R.VENDOR_PREFIX}{vendor.vendor_id}", payload)
+    try:
+        R.ensure_vendor_index()
+    except Exception:
+        pass
+    return len(vendors)
 
 
 # --------------------------------------------------------------------------- #

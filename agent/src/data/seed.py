@@ -542,18 +542,24 @@ def seed(verbose: bool = True, *, include_company: bool = False) -> dict:
 
         print(f"[seed] self-improvement overlay warning: {redact_secrets(exc)}")
 
-    # 2) Vendors (JSON) + search index
+    # 2) Vendors (JSON) + search index. These are company-agnostic finance
+    #    scaffolding (generic SaaS contracts) that the live-readiness gate requires
+    #    a populated vendor index for; on upload they are REPLACED by the operator's
+    #    own vendor register (service.apply_company_derivation → _apply_uploaded_vendors).
     for v in VENDORS:
         R.set_json(f"{R.VENDOR_PREFIX}{v['id']}", v)
     R.ensure_vendor_index()
 
-    # 3) Policies & decisions (HASH + vector index) for semantic RAG
+    # 3) Finance-policy + precedent RAG (HASH + vector index). Generic finance
+    #    governance norms (not company identity) the council grounds in; the
+    #    live-readiness gate requires this vector index to be populated.
     R.ensure_policy_index()
     embeddings = R.embed_texts([f"{p['title']}. {p['text']}" for p in POLICIES])
     for p, emb in zip(POLICIES, embeddings):
         R.upsert_policy(p["id"], text=p["text"], kind=p["kind"], title=p["title"], embedding=emb, source_id=p["id"])
 
-    # 4) Seed the recent-decisions stream from historical board decisions
+    # 4) Seed the recent-decisions stream from generic finance board precedents
+    #    (also required non-empty by the live-readiness gate).
     if not R.read_events("decisions", count=1):
         for d in [p for p in POLICIES if p["kind"] == "decision"]:
             R.append_event("decisions", {"title": d["title"], "summary": d["text"], "source": "history"})
@@ -570,19 +576,21 @@ def seed(verbose: bool = True, *, include_company: bool = False) -> dict:
     # 6) Seed the governance layer (board policy rules + approval matrix + indices).
     governance = seed_governance(verbose=verbose)
 
-    # 7) Seed the financial-OS layer (departments, invoices, POs, contracts, ARR
-    #    movements, vendor clauses, knowledge corpus, scenarios) — non-fatal; the
-    #    live preflight independently asserts the seeded counts.
+    # 7) Seed the bundled financial-OS layer (departments, invoices, POs, contracts,
+    #    ARR movements, vendor clauses, knowledge corpus, scenarios) — opt-in demo
+    #    data; upload-first leaves these collections to be filled from real uploads.
     financial_os: dict = {}
-    try:
-        financial_os = FS.seed_financial_os(COMPANY, VENDORS, POLICIES, verbose=verbose)
-    except Exception as exc:
-        from src.env import redact_secrets
+    demo_scenarios: dict = {}
+    if include_company:
+        try:
+            financial_os = FS.seed_financial_os(COMPANY, VENDORS, POLICIES, verbose=verbose)
+        except Exception as exc:
+            from src.env import redact_secrets
 
-        print(f"[seed] financial-OS seeding warning: {redact_secrets(exc)}")
+            print(f"[seed] financial-OS seeding warning: {redact_secrets(exc)}")
 
-    # 8) Seed scenario-specific messy decision examples for the demo selector.
-    demo_scenarios = seed_demo_scenarios(verbose=verbose)
+        # 8) Seed scenario-specific messy decision examples for the demo selector.
+        demo_scenarios = seed_demo_scenarios(verbose=verbose)
 
     # 9) Seed the orchestration namespace (atlas:orch:*) ONLY when the engine is
     #    enabled, so the core demo seed stays unchanged with ATLAS_ORCHESTRATOR off.

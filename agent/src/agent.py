@@ -348,7 +348,7 @@ def _now() -> str:
 
 def _company_name(context: dict | None = None) -> str:
     financials = (context or {}).get("financials") or {}
-    return financials.get("name") or "Acme Corp"
+    return financials.get("name") or "the company"
 
 
 def _company_stage(context: dict | None = None) -> str:
