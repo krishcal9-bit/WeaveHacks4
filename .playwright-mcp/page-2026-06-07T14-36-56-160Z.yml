@@ -1,0 +1,330 @@
+- generic [active] [ref=e1]:
+  - generic [ref=e2]:
+    - banner [ref=e3]:
+      - generic [ref=e4]:
+        - generic [ref=e5]: Atlas Finance
+        - generic [ref=e6]: Sunday, June 7, 2026 · Live edition
+      - generic [ref=e7]:
+        - link "Atlas Finance The Council" [ref=e9] [cursor=pointer]:
+          - /url: /
+          - img [ref=e10]
+          - generic [ref=e12]: Atlas Finance
+          - generic [ref=e13]: The Council
+        - navigation [ref=e14]:
+          - link "Data" [ref=e15] [cursor=pointer]:
+            - /url: /dashboard
+            - img [ref=e16]
+            - generic [ref=e20]: Data
+          - link "Run" [ref=e21] [cursor=pointer]:
+            - /url: /decisions
+            - img [ref=e23]
+            - generic [ref=e27]: Run
+          - link "Settings" [ref=e28] [cursor=pointer]:
+            - /url: /settings
+            - img [ref=e29]
+            - generic [ref=e32]: Settings
+          - link "Activity" [ref=e33] [cursor=pointer]:
+            - /url: /activity
+            - img [ref=e34]
+            - generic [ref=e36]: Activity
+          - link "Department" [ref=e37] [cursor=pointer]:
+            - /url: /department
+            - img [ref=e38]
+            - generic [ref=e42]: Department
+        - button "Switch to dark mode" [ref=e43]:
+          - img [ref=e45]
+        - link "Home" [ref=e48] [cursor=pointer]:
+          - /url: /
+          - img [ref=e49]
+          - text: Home
+    - main [ref=e54]:
+      - main [ref=e57]:
+        - generic [ref=e58]:
+          - generic [ref=e59]:
+            - img [ref=e60]
+            - text: System healthy
+          - generic [ref=e66]:
+            - generic [ref=e68]: W&B
+            - generic [ref=e69]: Initialized for project weavehacks4
+          - generic [ref=e70]:
+            - generic [ref=e72]: OpenAI
+            - generic [ref=e73]: openai:gpt-5.5 · xhigh reasoning · gpt-realtime-2 voice
+          - generic [ref=e74]:
+            - generic [ref=e76]: Redis
+            - generic [ref=e77]: Redis Stack is live with JSON, Search, vector RAG, and Streams.
+          - generic [ref=e80]: Reliability pending
+          - generic [ref=e81]: 7:36:55 AM PDT
+        - generic [ref=e83]:
+          - generic [ref=e84]:
+            - generic [ref=e85]:
+              - heading "AI Council Room" [level=2] [ref=e87]
+              - generic [ref=e90]: Live
+            - paragraph [ref=e91]: What should the council decide?
+            - generic [ref=e92]: Awaiting decision
+          - generic [ref=e94]:
+            - generic [ref=e95]:
+              - generic [ref=e96]: Decision phase
+              - button "Jump to latest" [disabled] [ref=e97]:
+                - img [ref=e98]
+                - text: Jump to latest
+            - list [ref=e100]:
+              - listitem [ref=e101]:
+                - button "1 Briefing Pending" [ref=e102]:
+                  - generic [ref=e104]: "1"
+                  - generic [ref=e105]:
+                    - generic [ref=e106]: Briefing
+                    - generic [ref=e108]: Pending
+              - listitem [ref=e110]:
+                - button "2 Analysis Pending" [ref=e111]:
+                  - generic [ref=e113]: "2"
+                  - generic [ref=e114]:
+                    - generic [ref=e115]: Analysis
+                    - generic [ref=e117]: Pending
+              - listitem [ref=e119]:
+                - button "3 Debate Pending" [ref=e120]:
+                  - generic [ref=e122]: "3"
+                  - generic [ref=e123]:
+                    - generic [ref=e124]: Debate
+                    - generic [ref=e126]: Pending
+              - listitem [ref=e128]:
+                - button "4 Influence Pending" [ref=e129]:
+                  - generic [ref=e131]: "4"
+                  - generic [ref=e132]:
+                    - generic [ref=e133]: Influence
+                    - generic [ref=e135]: Pending
+              - listitem [ref=e137]:
+                - button "5 Ruling Pending" [ref=e138]:
+                  - generic [ref=e140]: "5"
+                  - generic [ref=e141]:
+                    - generic [ref=e142]: Ruling
+                    - generic [ref=e144]: Pending
+              - listitem [ref=e146]:
+                - button "6 Evals Pending" [ref=e147]:
+                  - generic [ref=e149]: "6"
+                  - generic [ref=e150]:
+                    - generic [ref=e151]: Evals
+                    - generic [ref=e153]: Pending
+        - generic [ref=e155]:
+          - generic [ref=e156]:
+            - generic [ref=e158]:
+              - generic [ref=e159]:
+                - heading "Council" [level=2] [ref=e162]
+                - generic [ref=e163]: Live graph
+              - generic [ref=e166]:
+                - img
+                - button "CFO — Idle" [pressed] [ref=e167]:
+                  - generic [ref=e171]: CFO
+                  - generic [ref=e172]: Idle
+                - button "Treasury — Idle" [ref=e173]:
+                  - generic [ref=e176]: Treasury
+                  - generic [ref=e177]: Idle
+                - button "FP&A — Idle" [ref=e178]:
+                  - generic [ref=e181]: FP&A
+                  - generic [ref=e182]: Idle
+                - button "Risk — Idle" [ref=e183]:
+                  - generic [ref=e186]: Risk
+                  - generic [ref=e187]: Idle
+                - button "Procurement — Idle" [ref=e188]:
+                  - generic [ref=e191]: Procurement
+                  - generic [ref=e192]: Idle
+                - button "Reliability — Idle" [ref=e193]:
+                  - generic [ref=e196]: Reliability
+                  - generic [ref=e197]: Idle
+            - generic [ref=e199]:
+              - generic [ref=e200]:
+                - heading "Debate" [level=2] [ref=e203]
+                - generic [ref=e204]: "0"
+              - paragraph [ref=e209]: Submit a decision to open the live council transcript.
+            - generic [ref=e211]:
+              - generic [ref=e214]:
+                - generic [ref=e215]: Self-improving council
+                - heading "Deliberation influence" [level=2] [ref=e216]
+              - paragraph [ref=e220]: Influence weights appear once the council convenes and cross-examines.
+            - generic [ref=e222]:
+              - generic [ref=e225]:
+                - generic [ref=e226]: W&B agent selection
+                - heading "Weave-driven council evolution" [level=2] [ref=e227]
+              - paragraph [ref=e231]: After each round, the least-reliable sub-agent is retired and replaced from its W&B Weave reliability trace. Scores fluctuate every decision.
+            - generic [ref=e233]:
+              - heading "CFO ruling" [level=2] [ref=e237]
+              - paragraph [ref=e241]: Submit a decision — the CFO's ruling, risks, and conditions land here.
+            - generic [ref=e243]:
+              - heading "Runway impact" [level=2] [ref=e247]
+              - paragraph [ref=e251]: Runway delta is computed from the company cash record after the CFO rules.
+          - complementary [ref=e252]:
+            - generic [ref=e253]:
+              - generic [ref=e254]:
+                - img [ref=e256]
+                - generic [ref=e259]:
+                  - generic [ref=e260]: Demo selector
+                  - heading "Messy scenarios" [level=2] [ref=e261]
+                - generic [ref=e262]: "7"
+              - generic [ref=e263]:
+                - generic [ref=e264]: Council case
+                - combobox "Council case" [ref=e265]:
+                  - option "Bridge financing" [selected]
+                  - option "Datadog renewal"
+                  - option "Hiring plan"
+                  - option "Pipeline shortfall"
+                  - option "Pricing change"
+                  - option "Security blocker"
+                  - option "Vendor consolidation"
+                - generic [ref=e266]:
+                  - paragraph [ref=e267]: Financing decision where treasury timing, AR collections, covenants, and board exceptions are out of sync.
+                  - generic [ref=e268]:
+                    - generic [ref=e269]:
+                      - img [ref=e270]
+                      - generic [ref=e274]: 4 sources
+                    - generic [ref=e275]:
+                      - img [ref=e276]
+                      - generic [ref=e279]: 8 messy fields
+                  - generic [ref=e280]:
+                    - generic [ref=e281]:
+                      - generic [ref=e282]:
+                        - generic [ref=e283]: ledger
+                        - generic [ref=e284]: 2 rows
+                      - generic [ref=e285]: CloudLedger · bank fees netted separately; incoming wires not matched to invoices
+                    - generic [ref=e286]:
+                      - generic [ref=e287]:
+                        - generic [ref=e288]: invoices
+                        - generic [ref=e289]: 2 rows
+                      - generic [ref=e290]: PayablesDesk · large receivables due after financing close; partial customer payment
+                    - generic [ref=e291]:
+                      - generic [ref=e292]:
+                        - generic [ref=e293]: financing scenarios
+                        - generic [ref=e294]: 1 rows
+                      - generic [ref=e295]: BoardModel · close date entered as text; fees excluded from one tab
+                    - generic [ref=e296]:
+                      - generic [ref=e297]:
+                        - generic [ref=e298]: board policy
+                        - generic [ref=e299]: 1 rows
+                      - generic [ref=e300]: BoardPortal · runway exception requires signed term sheet or board exception
+                  - generic [ref=e301]:
+                    - button "Fill prompt" [ref=e302]:
+                      - img [ref=e303]
+                      - text: Fill prompt
+                    - button "Run" [ref=e306]:
+                      - img [ref=e307]
+                      - text: Run
+            - generic [ref=e309]:
+              - generic [ref=e310]:
+                - heading "Operator" [level=2] [ref=e313]
+                - generic [ref=e316]: Voice idle
+              - generic [ref=e317]:
+                - form "Send a decision to the Atlas council" [ref=e318]:
+                  - textbox "Decision prompt" [ref=e319]:
+                    - /placeholder: Frame a decision - e.g. "Should we sign the $240K Datadog renewal?"
+                  - generic [ref=e320]:
+                    - button "Send to council" [disabled] [ref=e321]:
+                      - generic [ref=e322]:
+                        - img [ref=e323]
+                        - text: Send to council
+                    - button "Start voice" [ref=e325]:
+                      - img [ref=e326]
+                      - text: Voice
+                - generic [ref=e330]:
+                  - img [ref=e332]
+                  - generic [ref=e338]:
+                    - generic [ref=e340]: Voice idle
+                    - paragraph [ref=e351]: Realtime 2 voice idle
+            - generic [ref=e352]:
+              - generic [ref=e353]:
+                - generic [ref=e354]:
+                  - heading "Operator Command" [level=2] [ref=e355]
+                  - heading "Steer the council (AG-UI)" [level=2] [ref=e356]
+                - generic [ref=e358]: Live
+              - status [ref=e360]:
+                - generic [ref=e361]:
+                  - img [ref=e363]
+                  - generic [ref=e369]:
+                    - generic [ref=e370]:
+                      - generic [ref=e371]: Command channel
+                      - generic [ref=e372]: Idle
+                    - paragraph [ref=e373]: Command controls are ready.
+              - generic [ref=e374]:
+                - generic [ref=e375]:
+                  - generic [ref=e376]: Target role
+                  - combobox "Target role" [ref=e377]:
+                    - option "Office of the CFO"
+                    - option "Treasury" [selected]
+                    - option "FP&A"
+                    - option "Risk & Audit"
+                    - option "Procurement"
+                    - option "Reliability Auditor"
+                - generic [ref=e378]:
+                  - generic [ref=e379]: Targeting Treasury - liquidity mechanics
+                  - paragraph [ref=e380]: Cash runway, cash timing, payment terms, burn sensitivity, financing delay, and late-cash downside.
+                - textbox "Ask about cash arriving late, payment timing, renewal cash, or runway buffer..." [ref=e381]
+                - generic [ref=e382]:
+                  - 'button "Clarify via Treasury: liquidity mechanics" [disabled] [ref=e383]':
+                    - img [ref=e384]
+                    - generic [ref=e387]: Clarify
+                  - 'button "Route to Treasury: liquidity mechanics" [disabled] [ref=e388]':
+                    - img [ref=e389]
+                    - generic [ref=e392]: Route
+                  - 'button "Challenge Treasury: liquidity mechanics" [disabled] [ref=e393]':
+                    - img [ref=e394]
+                    - generic [ref=e397]: Challenge
+                  - button "Ask Treasury to defend through liquidity mechanics" [ref=e398]:
+                    - img [ref=e399]
+                    - generic [ref=e402]: Defend
+                  - button "Rerun Treasury with liquidity mechanics" [ref=e403]:
+                    - img [ref=e404]
+                    - generic [ref=e407]: Rerun
+              - generic [ref=e408]:
+                - generic [ref=e409]:
+                  - generic [ref=e410]: Scenario fork & compare
+                  - generic [ref=e411]: Delta vs. live runway
+                - generic [ref=e412]:
+                  - textbox [ref=e413]: Option A
+                  - textbox "+spend" [ref=e414]
+                  - textbox "1x cost" [ref=e415]
+                  - textbox "+rev" [ref=e416]
+                - generic [ref=e417]:
+                  - textbox [ref=e418]: Option B
+                  - textbox "+spend" [ref=e419]
+                  - textbox "1x cost" [ref=e420]
+                  - textbox "+rev" [ref=e421]
+                - generic [ref=e422]:
+                  - button "Project A" [ref=e423]:
+                    - img [ref=e424]
+                    - generic [ref=e429]: Project A
+                  - button "Compare A vs B" [ref=e430]:
+                    - img [ref=e431]
+                    - generic [ref=e438]: Compare A vs B
+              - generic [ref=e439]:
+                - generic [ref=e440]:
+                  - generic [ref=e441]: Pin evidence
+                  - combobox [ref=e442]:
+                    - option "policy" [selected]
+                    - option "vendor"
+                    - option "financial"
+                    - option "custom"
+                - generic [ref=e443]:
+                  - textbox "Search policy..." [ref=e444]
+                  - button "Pin" [ref=e445]:
+                    - img [ref=e446]
+                    - generic [ref=e448]: Pin
+              - generic [ref=e449]:
+                - button "Pause council" [ref=e450]:
+                  - img [ref=e451]
+                  - generic [ref=e454]: Pause council
+                - button "Export memo" [disabled] [ref=e455]:
+                  - img [ref=e456]
+                  - generic [ref=e459]: Export memo
+            - generic [ref=e461]:
+              - generic [ref=e463]:
+                - generic [ref=e464]: Redis-grounded
+                - heading "Evidence drawer" [level=2] [ref=e465]
+              - button "Expand" [ref=e466]:
+                - img [ref=e467]
+            - generic [ref=e469]:
+              - generic [ref=e470]:
+                - generic [ref=e472]:
+                  - generic [ref=e473]: System of record
+                  - heading "Redis activity" [level=2] [ref=e474]
+                - generic [ref=e475]: "0"
+              - paragraph [ref=e479]: RedisJSON, RediSearch, vector RAG, streams, and reconciliation writes appear here.
+  - button "Open Next.js Dev Tools" [ref=e485] [cursor=pointer]:
+    - img [ref=e486]
+  - alert [ref=e489]

@@ -1,0 +1,102 @@
+- generic [active] [ref=e1]:
+  - generic [ref=e2]:
+    - banner [ref=e3]:
+      - generic [ref=e4]:
+        - generic [ref=e5]: Atlas Finance
+        - generic [ref=e6]: Sunday, June 7, 2026 · Live edition
+      - generic [ref=e7]:
+        - link "Atlas Finance The Council" [ref=e9] [cursor=pointer]:
+          - /url: /
+          - img [ref=e10]
+          - generic [ref=e12]: Atlas Finance
+          - generic [ref=e13]: The Council
+        - navigation [ref=e14]:
+          - link "Data" [ref=e15] [cursor=pointer]:
+            - /url: /dashboard
+            - img [ref=e16]
+            - generic [ref=e20]: Data
+          - link "Run" [ref=e21] [cursor=pointer]:
+            - /url: /decisions
+            - img [ref=e22]
+            - generic [ref=e26]: Run
+          - link "Settings" [ref=e27] [cursor=pointer]:
+            - /url: /settings
+            - img [ref=e29]
+            - generic [ref=e32]: Settings
+          - link "Activity" [ref=e33] [cursor=pointer]:
+            - /url: /activity
+            - img [ref=e34]
+            - generic [ref=e36]: Activity
+          - link "Department" [ref=e37] [cursor=pointer]:
+            - /url: /department
+            - img [ref=e38]
+            - generic [ref=e42]: Department
+        - button "Switch to dark mode" [ref=e43]:
+          - img [ref=e45]
+        - link "Home" [ref=e48] [cursor=pointer]:
+          - /url: /
+          - img [ref=e49]
+          - text: Home
+    - main [ref=e54]:
+      - main [ref=e57]:
+        - generic [ref=e58]:
+          - generic [ref=e62]:
+            - heading "Demo reset" [level=1] [ref=e63]
+            - paragraph [ref=e64]: Clear the uploaded files and start the demo from a blank state.
+          - generic [ref=e65]:
+            - generic [ref=e68]:
+              - generic [ref=e69]:
+                - generic [ref=e70]: Files loaded
+                - generic [ref=e71]: 0%
+              - generic [ref=e72]: 0/7
+            - generic [ref=e76]:
+              - generic [ref=e77]:
+                - generic [ref=e78]: Data confidence
+                - generic [ref=e79]: 0%
+              - generic [ref=e80]: 0%
+            - generic [ref=e84]:
+              - generic [ref=e85]:
+                - generic [ref=e86]: Review items
+                - generic [ref=e87]: "0"
+              - generic [ref=e88]: "0"
+          - generic [ref=e92]:
+            - generic [ref=e93]:
+              - heading "Loaded files" [level=2] [ref=e94]
+              - paragraph [ref=e95]: Each connector tracks source age, validation notes, confidence, and required facts.
+            - generic [ref=e96]:
+              - generic [ref=e97]:
+                - generic [ref=e98]: "0"
+                - generic [ref=e99]: low confidence
+              - generic [ref=e101]:
+                - generic [ref=e102]: "0"
+                - generic [ref=e103]: partial
+              - generic [ref=e105]:
+                - generic [ref=e106]: "0"
+                - generic [ref=e107]: review
+              - generic [ref=e109]:
+                - generic [ref=e110]: "0"
+                - generic [ref=e111]: stale
+              - generic [ref=e113]:
+                - generic [ref=e114]: "0"
+                - generic [ref=e115]: errors
+              - generic [ref=e117]:
+                - generic [ref=e118]: "0"
+                - generic [ref=e119]: missing facts
+              - generic [ref=e121]:
+                - generic [ref=e122]: "0"
+                - generic [ref=e123]: missing
+          - generic [ref=e128]:
+            - generic [ref=e129]:
+              - generic [ref=e130]:
+                - img [ref=e132]
+                - heading "Reset uploaded files" [level=2] [ref=e134]
+              - paragraph [ref=e135]: Clears uploaded files, the latest file check, and the council draft state.
+            - generic [ref=e136]:
+              - link "Upload files" [ref=e137] [cursor=pointer]:
+                - /url: /dashboard
+              - button "Reset" [ref=e138]:
+                - img [ref=e139]
+                - text: Reset
+  - button "Open Next.js Dev Tools" [ref=e147] [cursor=pointer]:
+    - img [ref=e148]
+  - alert [ref=e151]

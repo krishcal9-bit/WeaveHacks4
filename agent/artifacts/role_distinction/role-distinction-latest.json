@@ -1,0 +1,1177 @@
+{
+  "artifact_path": "/Users/m3-max/Documents/GitHub/WeaveHacks4/agent/artifacts/role_distinction/role-distinction-latest.json",
+  "case_count": 3,
+  "cases": [
+    {
+      "collapse_flags": [],
+      "decision": "Renew Datadog at $180K ARR-equivalent annual spend with a 45-day renewal notice.",
+      "decision_type": "vendor_renewal",
+      "id": "vendor-renewal-datadog",
+      "overall_score": 94,
+      "pairwise_similarity": [
+        {
+          "collapse_risk": false,
+          "evidence_jaccard": 0.0,
+          "role_a": "cfo",
+          "role_b": "treasury",
+          "vocabulary_jaccard": 0.015
+        },
+        {
+          "collapse_risk": false,
+          "evidence_jaccard": 0.0,
+          "role_a": "cfo",
+          "role_b": "fpna",
+          "vocabulary_jaccard": 0.014
+        },
+        {
+          "collapse_risk": false,
+          "evidence_jaccard": 0.0,
+          "role_a": "cfo",
+          "role_b": "risk",
+          "vocabulary_jaccard": 0.032
+        },
+        {
+          "collapse_risk": false,
+          "evidence_jaccard": 0.0,
+          "role_a": "cfo",
+          "role_b": "procurement",
+          "vocabulary_jaccard": 0.014
+        },
+        {
+          "collapse_risk": false,
+          "evidence_jaccard": 0.0,
+          "role_a": "cfo",
+          "role_b": "reliability",
+          "vocabulary_jaccard": 0.0
+        },
+        {
+          "collapse_risk": false,
+          "evidence_jaccard": 0.0,
+          "role_a": "treasury",
+          "role_b": "fpna",
+          "vocabulary_jaccard": 0.025
+        },
+        {
+          "collapse_risk": false,
+          "evidence_jaccard": 0.0,
+          "role_a": "treasury",
+          "role_b": "risk",
+          "vocabulary_jaccard": 0.0
+        },
+        {
+          "collapse_risk": false,
+          "evidence_jaccard": 0.077,
+          "role_a": "treasury",
+          "role_b": "procurement",
+          "vocabulary_jaccard": 0.068
+        },
+        {
+          "collapse_risk": false,
+          "evidence_jaccard": 0.0,
+          "role_a": "treasury",
+          "role_b": "reliability",
+          "vocabulary_jaccard": 0.013
+        },
+        {
+          "collapse_risk": false,
+          "evidence_jaccard": 0.0,
+          "role_a": "fpna",
+          "role_b": "risk",
+          "vocabulary_jaccard": 0.0
+        },
+        {
+          "collapse_risk": false,
+          "evidence_jaccard": 0.0,
+          "role_a": "fpna",
+          "role_b": "procurement",
+          "vocabulary_jaccard": 0.024
+        },
+        {
+          "collapse_risk": false,
+          "evidence_jaccard": 0.0,
+          "role_a": "fpna",
+          "role_b": "reliability",
+          "vocabulary_jaccard": 0.0
+        },
+        {
+          "collapse_risk": false,
+          "evidence_jaccard": 0.0,
+          "role_a": "risk",
+          "role_b": "procurement",
+          "vocabulary_jaccard": 0.027
+        },
+        {
+          "collapse_risk": false,
+          "evidence_jaccard": 0.0,
+          "role_a": "risk",
+          "role_b": "reliability",
+          "vocabulary_jaccard": 0.09
+        },
+        {
+          "collapse_risk": false,
+          "evidence_jaccard": 0.0,
+          "role_a": "procurement",
+          "role_b": "reliability",
+          "vocabulary_jaccard": 0.013
+        }
+      ],
+      "passed": true,
+      "role_scores": [
+        {
+          "contamination_hits": [
+            "approval",
+            "control",
+            "renewal",
+            "runway"
+          ],
+          "evidence_category_hits": [
+            "analyst_influence",
+            "dissent",
+            "conditions",
+            "runway_impact_basis",
+            "governance"
+          ],
+          "evidence_score": 100,
+          "expected_vocabulary_hits": [
+            "ruling",
+            "condition",
+            "dissent",
+            "confidence",
+            "influence",
+            "runway impact"
+          ],
+          "failure_mode_hits": [
+            "unresolved assumption",
+            "dissent",
+            "low confidence",
+            "runway impact"
+          ],
+          "failure_mode_score": 100,
+          "missing": [],
+          "role": "cfo",
+          "score": 92,
+          "stance_logic_hits": [
+            "board-ready",
+            "resolve",
+            "weigh",
+            "condition",
+            "confidence"
+          ],
+          "stance_logic_score": 100,
+          "vocabulary_score": 72
+        },
+        {
+          "contamination_hits": [
+            "arr",
+            "condition",
+            "forecast",
+            "renewal",
+            "sensitivity"
+          ],
+          "evidence_category_hits": [
+            "cash_forecast",
+            "ledger",
+            "invoices",
+            "payment_terms",
+            "vendor_renewal_dates",
+            "financing_scenarios"
+          ],
+          "evidence_score": 100,
+          "expected_vocabulary_hits": [
+            "cash",
+            "runway",
+            "liquidity",
+            "payment terms",
+            "working capital",
+            "late cash",
+            "financing delay"
+          ],
+          "failure_mode_hits": [
+            "late cash",
+            "annual prepay",
+            "bridge delay",
+            "working capital"
+          ],
+          "failure_mode_score": 100,
+          "missing": [
+            "role vocabulary"
+          ],
+          "role": "treasury",
+          "score": 90,
+          "stance_logic_hits": [
+            "if cash arrives late",
+            "cash buffer",
+            "monthly outflow",
+            "runway floor"
+          ],
+          "stance_logic_score": 100,
+          "vocabulary_score": 65
+        },
+        {
+          "contamination_hits": [
+            "condition",
+            "contract"
+          ],
+          "evidence_category_hits": [
+            "forecast_assumptions",
+            "pipeline_by_stage",
+            "arr_movements",
+            "customer_contracts",
+            "scenario_math",
+            "plan_vs_actual_deltas"
+          ],
+          "evidence_score": 100,
+          "expected_vocabulary_hits": [
+            "forecast",
+            "arr",
+            "pipeline probability",
+            "roi",
+            "cac/payback",
+            "gross margin",
+            "sensitivity"
+          ],
+          "failure_mode_hits": [
+            "conversion miss",
+            "margin compression",
+            "payback slip",
+            "forecast range"
+          ],
+          "failure_mode_score": 100,
+          "missing": [],
+          "role": "fpna",
+          "score": 96,
+          "stance_logic_hits": [
+            "forecastable",
+            "conversion",
+            "base case",
+            "downside",
+            "payback",
+            "variance"
+          ],
+          "stance_logic_score": 100,
+          "vocabulary_score": 86
+        },
+        {
+          "contamination_hits": [
+            "condition",
+            "weakness"
+          ],
+          "evidence_category_hits": [
+            "board_policies",
+            "governance_rules",
+            "approval_route",
+            "audit_findings",
+            "reconciliation_discrepancies",
+            "source_provenance",
+            "security_evidence"
+          ],
+          "evidence_score": 100,
+          "expected_vocabulary_hits": [
+            "policy",
+            "approval",
+            "audit trail",
+            "control",
+            "provenance",
+            "compliance",
+            "hidden obligation"
+          ],
+          "failure_mode_hits": [
+            "missing approval",
+            "audit gap",
+            "policy exception",
+            "provenance weakness"
+          ],
+          "failure_mode_score": 100,
+          "missing": [],
+          "role": "risk",
+          "score": 96,
+          "stance_logic_hits": [
+            "exception",
+            "attestation",
+            "source quality"
+          ],
+          "stance_logic_score": 100,
+          "vocabulary_score": 86
+        },
+        {
+          "contamination_hits": [
+            "condition",
+            "control"
+          ],
+          "evidence_category_hits": [
+            "vendor_exports",
+            "invoices",
+            "contract_metadata",
+            "procurement_notes",
+            "price_benchmarks",
+            "termination_clauses",
+            "slas",
+            "prior_renewal_outcomes"
+          ],
+          "evidence_score": 100,
+          "expected_vocabulary_hits": [
+            "supplier",
+            "contract",
+            "renewal",
+            "auto-renewal",
+            "benchmark",
+            "switching cost",
+            "sla",
+            "discount"
+          ],
+          "failure_mode_hits": [
+            "auto-renewal",
+            "notice window",
+            "switching cost",
+            "sla miss",
+            "benchmark gap"
+          ],
+          "failure_mode_score": 100,
+          "missing": [],
+          "role": "procurement",
+          "score": 96,
+          "stance_logic_hits": [
+            "leverage",
+            "counter",
+            "termination",
+            "consolidation",
+            "commercial ask"
+          ],
+          "stance_logic_score": 100,
+          "vocabulary_score": 86
+        },
+        {
+          "contamination_hits": [
+            "compliance",
+            "policy"
+          ],
+          "evidence_category_hits": [
+            "agent_scorecards",
+            "trace_metadata",
+            "replay_cases",
+            "prompt_improvement_directives",
+            "grounding_gaps",
+            "known_weaknesses"
+          ],
+          "evidence_score": 100,
+          "expected_vocabulary_hits": [
+            "scorecard",
+            "evidence grounding",
+            "calibration",
+            "trace quality",
+            "replay",
+            "prompt directive",
+            "weakness"
+          ],
+          "failure_mode_hits": [
+            "normal stance",
+            "trace gap",
+            "generic debate",
+            "missing replay",
+            "prompt drift"
+          ],
+          "failure_mode_score": 100,
+          "missing": [],
+          "role": "reliability",
+          "score": 96,
+          "stance_logic_hits": [
+            "evaluator",
+            "score",
+            "audit",
+            "replay"
+          ],
+          "stance_logic_score": 100,
+          "vocabulary_score": 86
+        }
+      ]
+    },
+    {
+      "collapse_flags": [],
+      "decision": "Fund an enterprise growth push tied to $1.7M weighted pipeline ARR.",
+      "decision_type": "growth_investment",
+      "id": "growth-investment-enterprise",
+      "overall_score": 95,
+      "pairwise_similarity": [
+        {
+          "collapse_risk": false,
+          "evidence_jaccard": 0.0,
+          "role_a": "cfo",
+          "role_b": "treasury",
+          "vocabulary_jaccard": 0.015
+        },
+        {
+          "collapse_risk": false,
+          "evidence_jaccard": 0.0,
+          "role_a": "cfo",
+          "role_b": "fpna",
+          "vocabulary_jaccard": 0.013
+        },
+        {
+          "collapse_risk": false,
+          "evidence_jaccard": 0.0,
+          "role_a": "cfo",
+          "role_b": "risk",
+          "vocabulary_jaccard": 0.031
+        },
+        {
+          "collapse_risk": false,
+          "evidence_jaccard": 0.0,
+          "role_a": "cfo",
+          "role_b": "procurement",
+          "vocabulary_jaccard": 0.0
+        },
+        {
+          "collapse_risk": false,
+          "evidence_jaccard": 0.0,
+          "role_a": "cfo",
+          "role_b": "reliability",
+          "vocabulary_jaccard": 0.0
+        },
+        {
+          "collapse_risk": false,
+          "evidence_jaccard": 0.0,
+          "role_a": "treasury",
+          "role_b": "fpna",
+          "vocabulary_jaccard": 0.025
+        },
+        {
+          "collapse_risk": false,
+          "evidence_jaccard": 0.0,
+          "role_a": "treasury",
+          "role_b": "risk",
+          "vocabulary_jaccard": 0.0
+        },
+        {
+          "collapse_risk": false,
+          "evidence_jaccard": 0.077,
+          "role_a": "treasury",
+          "role_b": "procurement",
+          "vocabulary_jaccard": 0.068
+        },
+        {
+          "collapse_risk": false,
+          "evidence_jaccard": 0.0,
+          "role_a": "treasury",
+          "role_b": "reliability",
+          "vocabulary_jaccard": 0.013
+        },
+        {
+          "collapse_risk": false,
+          "evidence_jaccard": 0.0,
+          "role_a": "fpna",
+          "role_b": "risk",
+          "vocabulary_jaccard": 0.0
+        },
+        {
+          "collapse_risk": false,
+          "evidence_jaccard": 0.0,
+          "role_a": "fpna",
+          "role_b": "procurement",
+          "vocabulary_jaccard": 0.024
+        },
+        {
+          "collapse_risk": false,
+          "evidence_jaccard": 0.0,
+          "role_a": "fpna",
+          "role_b": "reliability",
+          "vocabulary_jaccard": 0.0
+        },
+        {
+          "collapse_risk": false,
+          "evidence_jaccard": 0.0,
+          "role_a": "risk",
+          "role_b": "procurement",
+          "vocabulary_jaccard": 0.027
+        },
+        {
+          "collapse_risk": false,
+          "evidence_jaccard": 0.0,
+          "role_a": "risk",
+          "role_b": "reliability",
+          "vocabulary_jaccard": 0.09
+        },
+        {
+          "collapse_risk": false,
+          "evidence_jaccard": 0.0,
+          "role_a": "procurement",
+          "role_b": "reliability",
+          "vocabulary_jaccard": 0.013
+        }
+      ],
+      "passed": true,
+      "role_scores": [
+        {
+          "contamination_hits": [
+            "approval",
+            "control",
+            "runway"
+          ],
+          "evidence_category_hits": [
+            "analyst_influence",
+            "dissent",
+            "conditions",
+            "runway_impact_basis",
+            "governance"
+          ],
+          "evidence_score": 100,
+          "expected_vocabulary_hits": [
+            "ruling",
+            "condition",
+            "dissent",
+            "confidence",
+            "influence",
+            "runway impact"
+          ],
+          "failure_mode_hits": [
+            "unresolved assumption",
+            "dissent",
+            "low confidence",
+            "runway impact"
+          ],
+          "failure_mode_score": 100,
+          "missing": [],
+          "role": "cfo",
+          "score": 94,
+          "stance_logic_hits": [
+            "board-ready",
+            "resolve",
+            "weigh",
+            "condition",
+            "confidence"
+          ],
+          "stance_logic_score": 100,
+          "vocabulary_score": 79
+        },
+        {
+          "contamination_hits": [
+            "arr",
+            "condition",
+            "forecast",
+            "renewal",
+            "sensitivity"
+          ],
+          "evidence_category_hits": [
+            "cash_forecast",
+            "ledger",
+            "invoices",
+            "payment_terms",
+            "vendor_renewal_dates",
+            "financing_scenarios"
+          ],
+          "evidence_score": 100,
+          "expected_vocabulary_hits": [
+            "cash",
+            "runway",
+            "liquidity",
+            "payment terms",
+            "working capital",
+            "late cash",
+            "financing delay"
+          ],
+          "failure_mode_hits": [
+            "late cash",
+            "annual prepay",
+            "bridge delay",
+            "working capital"
+          ],
+          "failure_mode_score": 100,
+          "missing": [
+            "role vocabulary"
+          ],
+          "role": "treasury",
+          "score": 90,
+          "stance_logic_hits": [
+            "if cash arrives late",
+            "cash buffer",
+            "monthly outflow",
+            "runway floor"
+          ],
+          "stance_logic_score": 100,
+          "vocabulary_score": 65
+        },
+        {
+          "contamination_hits": [
+            "condition",
+            "contract"
+          ],
+          "evidence_category_hits": [
+            "forecast_assumptions",
+            "pipeline_by_stage",
+            "arr_movements",
+            "customer_contracts",
+            "scenario_math",
+            "plan_vs_actual_deltas"
+          ],
+          "evidence_score": 100,
+          "expected_vocabulary_hits": [
+            "forecast",
+            "arr",
+            "pipeline probability",
+            "roi",
+            "cac/payback",
+            "gross margin",
+            "sensitivity"
+          ],
+          "failure_mode_hits": [
+            "conversion miss",
+            "margin compression",
+            "payback slip",
+            "forecast range"
+          ],
+          "failure_mode_score": 100,
+          "missing": [],
+          "role": "fpna",
+          "score": 96,
+          "stance_logic_hits": [
+            "forecastable",
+            "conversion",
+            "base case",
+            "downside",
+            "payback",
+            "variance"
+          ],
+          "stance_logic_score": 100,
+          "vocabulary_score": 86
+        },
+        {
+          "contamination_hits": [
+            "condition",
+            "weakness"
+          ],
+          "evidence_category_hits": [
+            "board_policies",
+            "governance_rules",
+            "approval_route",
+            "audit_findings",
+            "reconciliation_discrepancies",
+            "source_provenance",
+            "security_evidence"
+          ],
+          "evidence_score": 100,
+          "expected_vocabulary_hits": [
+            "policy",
+            "approval",
+            "audit trail",
+            "control",
+            "provenance",
+            "compliance",
+            "hidden obligation"
+          ],
+          "failure_mode_hits": [
+            "missing approval",
+            "audit gap",
+            "policy exception",
+            "provenance weakness"
+          ],
+          "failure_mode_score": 100,
+          "missing": [],
+          "role": "risk",
+          "score": 96,
+          "stance_logic_hits": [
+            "exception",
+            "attestation",
+            "source quality"
+          ],
+          "stance_logic_score": 100,
+          "vocabulary_score": 86
+        },
+        {
+          "contamination_hits": [
+            "condition",
+            "control"
+          ],
+          "evidence_category_hits": [
+            "vendor_exports",
+            "invoices",
+            "contract_metadata",
+            "procurement_notes",
+            "price_benchmarks",
+            "termination_clauses",
+            "slas",
+            "prior_renewal_outcomes"
+          ],
+          "evidence_score": 100,
+          "expected_vocabulary_hits": [
+            "supplier",
+            "contract",
+            "renewal",
+            "auto-renewal",
+            "benchmark",
+            "switching cost",
+            "sla",
+            "discount"
+          ],
+          "failure_mode_hits": [
+            "auto-renewal",
+            "notice window",
+            "switching cost",
+            "sla miss",
+            "benchmark gap"
+          ],
+          "failure_mode_score": 100,
+          "missing": [],
+          "role": "procurement",
+          "score": 96,
+          "stance_logic_hits": [
+            "leverage",
+            "counter",
+            "termination",
+            "consolidation",
+            "commercial ask"
+          ],
+          "stance_logic_score": 100,
+          "vocabulary_score": 86
+        },
+        {
+          "contamination_hits": [
+            "compliance",
+            "policy"
+          ],
+          "evidence_category_hits": [
+            "agent_scorecards",
+            "trace_metadata",
+            "replay_cases",
+            "prompt_improvement_directives",
+            "grounding_gaps",
+            "known_weaknesses"
+          ],
+          "evidence_score": 100,
+          "expected_vocabulary_hits": [
+            "scorecard",
+            "evidence grounding",
+            "calibration",
+            "trace quality",
+            "replay",
+            "prompt directive",
+            "weakness"
+          ],
+          "failure_mode_hits": [
+            "normal stance",
+            "trace gap",
+            "generic debate",
+            "missing replay",
+            "prompt drift"
+          ],
+          "failure_mode_score": 100,
+          "missing": [],
+          "role": "reliability",
+          "score": 96,
+          "stance_logic_hits": [
+            "evaluator",
+            "score",
+            "audit",
+            "replay"
+          ],
+          "stance_logic_score": 100,
+          "vocabulary_score": 86
+        }
+      ]
+    },
+    {
+      "collapse_flags": [],
+      "decision": "Approve a customer expansion while a security evidence blocker remains open.",
+      "decision_type": "security_blocker",
+      "id": "security-blocker-expansion",
+      "overall_score": 95,
+      "pairwise_similarity": [
+        {
+          "collapse_risk": false,
+          "evidence_jaccard": 0.0,
+          "role_a": "cfo",
+          "role_b": "treasury",
+          "vocabulary_jaccard": 0.015
+        },
+        {
+          "collapse_risk": false,
+          "evidence_jaccard": 0.0,
+          "role_a": "cfo",
+          "role_b": "fpna",
+          "vocabulary_jaccard": 0.014
+        },
+        {
+          "collapse_risk": false,
+          "evidence_jaccard": 0.0,
+          "role_a": "cfo",
+          "role_b": "risk",
+          "vocabulary_jaccard": 0.048
+        },
+        {
+          "collapse_risk": false,
+          "evidence_jaccard": 0.0,
+          "role_a": "cfo",
+          "role_b": "procurement",
+          "vocabulary_jaccard": 0.0
+        },
+        {
+          "collapse_risk": false,
+          "evidence_jaccard": 0.0,
+          "role_a": "cfo",
+          "role_b": "reliability",
+          "vocabulary_jaccard": 0.0
+        },
+        {
+          "collapse_risk": false,
+          "evidence_jaccard": 0.0,
+          "role_a": "treasury",
+          "role_b": "fpna",
+          "vocabulary_jaccard": 0.025
+        },
+        {
+          "collapse_risk": false,
+          "evidence_jaccard": 0.0,
+          "role_a": "treasury",
+          "role_b": "risk",
+          "vocabulary_jaccard": 0.0
+        },
+        {
+          "collapse_risk": false,
+          "evidence_jaccard": 0.077,
+          "role_a": "treasury",
+          "role_b": "procurement",
+          "vocabulary_jaccard": 0.068
+        },
+        {
+          "collapse_risk": false,
+          "evidence_jaccard": 0.0,
+          "role_a": "treasury",
+          "role_b": "reliability",
+          "vocabulary_jaccard": 0.013
+        },
+        {
+          "collapse_risk": false,
+          "evidence_jaccard": 0.0,
+          "role_a": "fpna",
+          "role_b": "risk",
+          "vocabulary_jaccard": 0.0
+        },
+        {
+          "collapse_risk": false,
+          "evidence_jaccard": 0.0,
+          "role_a": "fpna",
+          "role_b": "procurement",
+          "vocabulary_jaccard": 0.024
+        },
+        {
+          "collapse_risk": false,
+          "evidence_jaccard": 0.0,
+          "role_a": "fpna",
+          "role_b": "reliability",
+          "vocabulary_jaccard": 0.0
+        },
+        {
+          "collapse_risk": false,
+          "evidence_jaccard": 0.0,
+          "role_a": "risk",
+          "role_b": "procurement",
+          "vocabulary_jaccard": 0.027
+        },
+        {
+          "collapse_risk": false,
+          "evidence_jaccard": 0.0,
+          "role_a": "risk",
+          "role_b": "reliability",
+          "vocabulary_jaccard": 0.09
+        },
+        {
+          "collapse_risk": false,
+          "evidence_jaccard": 0.0,
+          "role_a": "procurement",
+          "role_b": "reliability",
+          "vocabulary_jaccard": 0.013
+        }
+      ],
+      "passed": true,
+      "role_scores": [
+        {
+          "contamination_hits": [
+            "approval",
+            "control",
+            "runway"
+          ],
+          "evidence_category_hits": [
+            "analyst_influence",
+            "dissent",
+            "conditions",
+            "runway_impact_basis",
+            "governance"
+          ],
+          "evidence_score": 100,
+          "expected_vocabulary_hits": [
+            "ruling",
+            "condition",
+            "dissent",
+            "confidence",
+            "influence",
+            "runway impact"
+          ],
+          "failure_mode_hits": [
+            "unresolved assumption",
+            "dissent",
+            "low confidence",
+            "runway impact"
+          ],
+          "failure_mode_score": 100,
+          "missing": [],
+          "role": "cfo",
+          "score": 94,
+          "stance_logic_hits": [
+            "board-ready",
+            "resolve",
+            "weigh",
+            "condition",
+            "confidence"
+          ],
+          "stance_logic_score": 100,
+          "vocabulary_score": 79
+        },
+        {
+          "contamination_hits": [
+            "arr",
+            "condition",
+            "forecast",
+            "renewal",
+            "sensitivity"
+          ],
+          "evidence_category_hits": [
+            "cash_forecast",
+            "ledger",
+            "invoices",
+            "payment_terms",
+            "vendor_renewal_dates",
+            "financing_scenarios"
+          ],
+          "evidence_score": 100,
+          "expected_vocabulary_hits": [
+            "cash",
+            "runway",
+            "liquidity",
+            "payment terms",
+            "working capital",
+            "late cash",
+            "financing delay"
+          ],
+          "failure_mode_hits": [
+            "late cash",
+            "annual prepay",
+            "bridge delay",
+            "working capital"
+          ],
+          "failure_mode_score": 100,
+          "missing": [
+            "role vocabulary"
+          ],
+          "role": "treasury",
+          "score": 90,
+          "stance_logic_hits": [
+            "if cash arrives late",
+            "cash buffer",
+            "monthly outflow",
+            "runway floor"
+          ],
+          "stance_logic_score": 100,
+          "vocabulary_score": 65
+        },
+        {
+          "contamination_hits": [
+            "condition",
+            "contract"
+          ],
+          "evidence_category_hits": [
+            "forecast_assumptions",
+            "pipeline_by_stage",
+            "arr_movements",
+            "customer_contracts",
+            "scenario_math",
+            "plan_vs_actual_deltas"
+          ],
+          "evidence_score": 100,
+          "expected_vocabulary_hits": [
+            "forecast",
+            "arr",
+            "pipeline probability",
+            "roi",
+            "cac/payback",
+            "gross margin",
+            "sensitivity"
+          ],
+          "failure_mode_hits": [
+            "conversion miss",
+            "margin compression",
+            "payback slip",
+            "forecast range"
+          ],
+          "failure_mode_score": 100,
+          "missing": [],
+          "role": "fpna",
+          "score": 96,
+          "stance_logic_hits": [
+            "forecastable",
+            "conversion",
+            "base case",
+            "downside",
+            "payback",
+            "variance"
+          ],
+          "stance_logic_score": 100,
+          "vocabulary_score": 86
+        },
+        {
+          "contamination_hits": [
+            "condition",
+            "weakness"
+          ],
+          "evidence_category_hits": [
+            "board_policies",
+            "governance_rules",
+            "approval_route",
+            "audit_findings",
+            "reconciliation_discrepancies",
+            "source_provenance",
+            "security_evidence"
+          ],
+          "evidence_score": 100,
+          "expected_vocabulary_hits": [
+            "policy",
+            "approval",
+            "audit trail",
+            "control",
+            "provenance",
+            "compliance",
+            "hidden obligation"
+          ],
+          "failure_mode_hits": [
+            "missing approval",
+            "audit gap",
+            "policy exception",
+            "provenance weakness"
+          ],
+          "failure_mode_score": 100,
+          "missing": [],
+          "role": "risk",
+          "score": 96,
+          "stance_logic_hits": [
+            "exception",
+            "attestation",
+            "source quality"
+          ],
+          "stance_logic_score": 100,
+          "vocabulary_score": 86
+        },
+        {
+          "contamination_hits": [
+            "condition",
+            "control"
+          ],
+          "evidence_category_hits": [
+            "vendor_exports",
+            "invoices",
+            "contract_metadata",
+            "procurement_notes",
+            "price_benchmarks",
+            "termination_clauses",
+            "slas",
+            "prior_renewal_outcomes"
+          ],
+          "evidence_score": 100,
+          "expected_vocabulary_hits": [
+            "supplier",
+            "contract",
+            "renewal",
+            "auto-renewal",
+            "benchmark",
+            "switching cost",
+            "sla",
+            "discount"
+          ],
+          "failure_mode_hits": [
+            "auto-renewal",
+            "notice window",
+            "switching cost",
+            "sla miss",
+            "benchmark gap"
+          ],
+          "failure_mode_score": 100,
+          "missing": [],
+          "role": "procurement",
+          "score": 96,
+          "stance_logic_hits": [
+            "leverage",
+            "counter",
+            "termination",
+            "consolidation",
+            "commercial ask"
+          ],
+          "stance_logic_score": 100,
+          "vocabulary_score": 86
+        },
+        {
+          "contamination_hits": [
+            "compliance",
+            "policy"
+          ],
+          "evidence_category_hits": [
+            "agent_scorecards",
+            "trace_metadata",
+            "replay_cases",
+            "prompt_improvement_directives",
+            "grounding_gaps",
+            "known_weaknesses"
+          ],
+          "evidence_score": 100,
+          "expected_vocabulary_hits": [
+            "scorecard",
+            "evidence grounding",
+            "calibration",
+            "trace quality",
+            "replay",
+            "prompt directive",
+            "weakness"
+          ],
+          "failure_mode_hits": [
+            "normal stance",
+            "trace gap",
+            "generic debate",
+            "missing replay",
+            "prompt drift"
+          ],
+          "failure_mode_score": 100,
+          "missing": [],
+          "role": "reliability",
+          "score": 96,
+          "stance_logic_hits": [
+            "evaluator",
+            "score",
+            "audit",
+            "replay"
+          ],
+          "stance_logic_score": 100,
+          "vocabulary_score": 86
+        }
+      ]
+    }
+  ],
+  "created_at": "2026-06-07 01:26:53",
+  "id": "role-distinction-1780820813423-6f2c92",
+  "overall_score": 95,
+  "passed": true,
+  "redis": {},
+  "role_average_scores": {
+    "cfo": 93,
+    "fpna": 96,
+    "procurement": 96,
+    "reliability": 96,
+    "risk": 96,
+    "treasury": 90
+  },
+  "source": "representative",
+  "thresholds": {
+    "overall": 78,
+    "role": 72
+  },
+  "weave": {
+    "entity": "rishabh-rb-self",
+    "initialized": false,
+    "project": "weavehacks4",
+    "url": "https://wandb.ai/rishabh-rb-self/weavehacks4/weave"
+  }
+}
