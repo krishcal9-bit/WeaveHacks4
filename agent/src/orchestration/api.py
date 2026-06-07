@@ -1,0 +1,122 @@
+"""
+orchestration/api.py — read-mostly REST surface for the orchestration engine.
+
+Mounted additively onto ``src.api``'s ``/api`` router (the ``financial_api``
+pattern), behind the ``ATLAS_ORCHESTRATOR`` flag, so ``/api/orchestration/*``
+appears only when the engine is enabled. These endpoints bypass CopilotKit; the
+dashboard reads them directly (CORS ``*``), exactly like the other dashboard data.
+
+Every handler is defensive: a Redis/model failure returns 503 with a redacted
+message rather than leaking secrets or crashing the shared app.
+"""
+
+from fastapi import APIRouter, Body, HTTPException, Query
+
+from src.env import redact_secrets
+from src.orchestration import store as STORE
+
+# No prefix — src.api mounts this under its own "/api" router.
+orchestration_router = APIRouter(tags=["orchestration"])
+
+
+def _fail(exc: Exception) -> "HTTPException":
+    return HTTPException(status_code=503, detail=redact_secrets(exc))
+
+
+@orchestration_router.get("/orchestration/map")
+def orchestration_map():
+    """The atlas:orch:* key map + live counts + index doc counts."""
+    try:
+        return STORE.orch_overview()
+    except Exception as exc:
+        raise _fail(exc)
+
+
+@orchestration_router.get("/orchestration/topologies")
+def list_topologies(decision_type: str | None = None):
+    try:
+        return [t.model_dump(mode="json") for t in STORE.list_topologies(decision_type)]
+    except Exception as exc:
+        raise _fail(exc)
+
+
+@orchestration_router.get("/orchestration/topologies/{topology_id}")
+def get_topology(topology_id: str):
+    try:
+        topo = STORE.get_topology(topology_id)
+    except Exception as exc:
+        raise _fail(exc)
+    if not topo:
+        raise HTTPException(status_code=404, detail="topology not found")
+    return topo.model_dump(mode="json")
+
+
+@orchestration_router.get("/orchestration/runs")
+def list_runs(limit: int = 25):
+    try:
+        return STORE.list_traces(limit)
+    except Exception as exc:
+        raise _fail(exc)
+
+
+@orchestration_router.get("/orchestration/runs/{run_id}")
+def get_run(run_id: str):
+    try:
+        run = STORE.get_trace(run_id)
+    except Exception as exc:
+        raise _fail(exc)
+    if not run:
+        raise HTTPException(status_code=404, detail="run not found")
+    return run
+
+
+@orchestration_router.get("/orchestration/memory")
+def recall_memory(q: str = Query(..., description="query text"), k: int = 4, decision_type: str | None = None):
+    """Vector recall of prior decisions from episodic memory (hybrid filter+KNN)."""
+    try:
+        return STORE.recall(q, k=k, decision_type=decision_type)
+    except Exception as exc:
+        raise _fail(exc)
+
+
+@orchestration_router.get("/orchestration/evals")
+def list_evals(limit: int = 25):
+    try:
+        return STORE.list_evals(limit)
+    except Exception as exc:
+        raise _fail(exc)
+
+
+@orchestration_router.get("/orchestration/threads/{thread_id}/checkpoints")
+def list_checkpoints(thread_id: str):
+    """Checkpoint lineage for a debate thread (durable / branch / time-travel)."""
+    try:
+        return STORE.list_checkpoints(thread_id)
+    except Exception as exc:
+        raise _fail(exc)
+
+
+@orchestration_router.post("/orchestration/plan")
+async def plan(body: dict = Body(...)):
+    """Run the Conductor on a decision and return the plan + compiled topology (live)."""
+    decision = (body or {}).get("decision", "")
+    if not decision:
+        raise HTTPException(status_code=400, detail="decision required")
+    context = (body or {}).get("context") or {}
+    company = (body or {}).get("company", "Northwind Robotics")
+    stage = (body or {}).get("stage", "Series B")
+    decision_type = (body or {}).get("decision_type", "general")
+    try:
+        from src.orchestration import conductor as CONDUCTOR
+
+        result = await CONDUCTOR.plan_topology(
+            decision, context, company=company, stage=stage, decision_type=decision_type
+        )
+        return {
+            "ok": result.ok,
+            "plan": result.plan.model_dump(mode="json"),
+            "topology": result.topology.model_dump(mode="json"),
+            "telemetry": result.telemetry,
+        }
+    except Exception as exc:
+        raise _fail(exc)

@@ -124,6 +124,25 @@ class VoteBallot(StrictModel):
     rationale: str = Field(description="one-sentence, evidence-grounded reason for the vote")
 
 
+class SeatPosition(StrictModel):
+    """One seat's structured position in a debate round (OpenAI structured output)."""
+
+    stance: str = Field(description="one of: support, oppose, conditional, abstain")
+    confidence: int = Field(ge=0, le=100, description="0-100 confidence in the stance")
+    headline: str = Field(description="one-line position, <= 14 words")
+    argument: str = Field(description="2-4 sentences citing specific figures from the live context")
+    cited_metrics: list[str] = Field(description="concrete figures cited from the live context")
+
+
+class NegotiationOutcome(StrictModel):
+    """Result of a structured proposal/counter-proposal between two conflicting seats."""
+
+    proposal: str = Field(description="the concrete proposal from the first seat")
+    counter: str = Field(description="the counter-proposal from the second seat")
+    resolved: bool = Field(description="true if the two seats reached a workable compromise")
+    terms: str = Field(description="the agreed terms, or the remaining gap if unresolved")
+
+
 # --------------------------------------------------------------------------- #
 # Debate dynamics (persistence / streaming records)
 # --------------------------------------------------------------------------- #
@@ -277,6 +296,7 @@ class OrchestrationTrace(OrchModel):
     convergence: ConvergenceSignal | None = None
     red_team: RedTeamReport | None = None
     tally: VoteTally | None = None
+    negotiations: list = []
     recommendation: dict = {}
     precedents: list[str] = []  # episodic memory ids cited as precedent
     stop_reason: StopReason = StopReason.max_rounds

@@ -42,10 +42,10 @@ the strict live-only contract and without clobbering the sibling editing
 - [x] M2 — Redis store: checkpointer + episodic memory + streams/bus (`store.py`)
 - [x] M3 — Conductor topology planner (`conductor.py`)
 - [x] M4 — dynamic specialist registry (`registry.py`)
-- [~] M5 — debate engine: rounds/convergence/red-team/voting (`debate.py`)   (in progress)
-- [ ] M6 — Weave eval + promotion gate (`eval.py`)
-- [ ] M7 — REST surface mounted on `api.py` (`api.py`)
-- [ ] M8 — flag-gated graph integration + AG-UI streaming (`graph.py` + agent.py EOF)
+- [x] M5 — debate engine: rounds/convergence/red-team/voting (`debate.py`, `llm_io.py`)
+- [x] M6 — Weave eval + promotion gate (`eval.py`)
+- [~] M7 — REST surface (`api.py` module done; include_router wiring into src/api.py pending)
+- [~] M8 — flag-gated graph (`graph.py` built; agent.py EOF + types.ts wiring pending; E2E verifying)
 - [ ] M9 — seed data + `.cursor/rules` + CLAUDE.md docs
 - [ ] Infra+verify — Redis Stack up, preflight, real debate (flag off+on), commit
 
@@ -69,4 +69,19 @@ the strict live-only contract and without clobbering the sibling editing
 - **M4 done**: `registry.py` — base committee reused from src.agent.ROSTER (lazy + offline mirror) +
   on-demand specialists (tax/legal/hedging/mna) with mandates & system prompts. seat_persona/resolve_seats
   (dedup, drop-unknown)/suggest_specialists. Verified offline + live ROSTER reuse.
-- **M5 start**: debate engine.
+- **M5 done**: `llm_io.py` (shared structured-call + telemetry + cost estimate) + `debate.py` — multi-round
+  adaptive debate (seats see prior round, migrate stance), deterministic convergence + stance-migration,
+  red-team gate with bounded loop-back, conflict negotiation, reliability-weighted voting + minority reports,
+  CFO synthesis (reuses src.agent.Recommendation). @weave.op `orch_debate`. Verified offline (convergence/
+  weighted-tally/migration) + LIVE (Datadog case: converged round 1, weighted CONDITIONAL, CFO ruled
+  CONDITIONAL@90, real Weave span, $0.15).
+- **M6 done**: `eval.py` — topology is the evaluatable unit; scorers (grounding/decisiveness/convergence/
+  red-team/cost/latency), `evaluate_topology`/`evaluate_topologies`, pure `gate_decision`, `promote_if_better`
+  (persists eval + promotion). @weave.op spans. Verified offline (good 0.935 vs bad 0.295; gate blocks on
+  grounding regression) + LIVE A/B (challenger 0.8955 vs incumbent 0.8771 → BLOCKED, gain 0.0184 < 0.02).
+- **M7 module done**: `api.py` — read-mostly /orchestration/* router (map/topologies/runs/memory/evals/
+  checkpoints + POST /plan). Compiles. Wiring into src/api.py (flag-gated include_router) pending.
+- **M8 module done**: `graph.py` — flag-gated orchestration graph (intake→conduct→debate→persist) over a
+  lazily-defined DebateState subclass (adds `orchestration` key); streams onto existing DebateState keys +
+  checkpoints/trace/memory/bus to Redis. Builds (CompiledStateGraph, 4 nodes). E2E flag-on run verifying;
+  agent.py EOF swap + types.ts optional field pending.
