@@ -3,9 +3,9 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "dev": "concurrently \"npm run dev:ui\" \"npm run dev:agent\" --names ui,agent --prefix-colors blue,green --kill-others",
-    "dev:ui": "next dev",
-    "dev:agent": "cd ../agent && uv run main.py",
+    "dev": "npm run dev:ui",
+    "dev:ui": "concurrently -k \"next dev\" \"npm run dev:agent\" --names ui,agent --prefix-colors blue,green",
+    "dev:agent": "cd ../agent && uv run python main.py",
     "build": "next build",
     "start": "next start",
     "lint": "eslint"
@@ -17,6 +17,7 @@
     "@copilotkit/runtime-client-gql": "^1.52.1",
     "concurrently": "^9.2.1",
     "lucide-react": "^1.17.0",
+    "motion": "^12.40.0",
     "next": "16.2.7",
     "react": "19.2.4",
     "react-dom": "19.2.4",

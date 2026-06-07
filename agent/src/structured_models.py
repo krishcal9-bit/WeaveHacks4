@@ -96,9 +96,9 @@ class DecisionPlan(StrictStructuredModel):
 # --------------------------------------------------------------------------- #
 class Position(StrictStructuredModel):
     stance: str = Field(description="one of: support, oppose, conditional")
-    headline: str = Field(description="one-line position, <= 12 words")
-    argument: str = Field(description="2-4 sentences citing specific figures")
-    key_points: list[str] = Field(description="2-3 crisp bullets")
+    headline: str = Field(description="one-line position, <= 10 words")
+    argument: str = Field(description="1-2 short sentences citing specific figures")
+    key_points: list[str] = Field(description="exactly 2 crisp bullets")
     cited_metrics: list[str] = Field(description="the concrete numbers cited, each as a short string e.g. '$410K net burn', '10.2 mo runway', '78% gross margin'")
     evidence_used: list[str] = Field(description="which policies, prior decisions, or context slices grounded this position")
 

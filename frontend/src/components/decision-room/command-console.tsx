@@ -2,9 +2,9 @@
 
 import { ArrowUp, Loader2, Mic, MicOff, Sparkles, Terminal } from "lucide-react";
 import { cx } from "@/components/ui";
-import { toneClasses, type RealtimeView } from "@/lib/council";
+import type { RealtimeView } from "@/lib/council";
 import type { CouncilCommand } from "@/lib/types";
-import { Panel, SectionLabel, StatusBadge } from "./primitives";
+import { Panel, StatusBadge } from "./primitives";
 
 export function CommandConsole({
   input,
@@ -17,6 +17,7 @@ export function CommandConsole({
   onStartRealtime,
   onStopRealtime,
   commands,
+  className,
 }: {
   input: string;
   onInput: (value: string) => void;
@@ -28,6 +29,7 @@ export function CommandConsole({
   onStartRealtime: () => void;
   onStopRealtime: () => void;
   commands?: CouncilCommand[];
+  className?: string;
 }) {
   const sendDisabled = running || !healthReady || !input.trim();
   const realtimeTone =
@@ -42,9 +44,9 @@ export function CommandConsole({
 
   return (
     <Panel
+      className={className}
       icon={Terminal}
-      eyebrow="Operator"
-      title="Decision command"
+      title="Operator"
       action={
         <StatusBadge tone={realtimeTone} pulse={realtime.status === "connecting"}>
           {realtime.status === "connected"
@@ -77,9 +79,9 @@ export function CommandConsole({
           placeholder={
             healthReady
               ? started
-                ? "Ask the council a follow-up, or frame a new decision…"
-                : "Frame a decision for the council — e.g. “Should we sign the $240K Datadog renewal?”"
-              : "Locked until strict live preflight passes…"
+                ? "Ask a follow-up or frame a new decision…"
+                : "Frame a decision — e.g. “Should we sign the $240K Datadog renewal?”"
+              : "Locked until the system is ready…"
           }
           className="min-h-[72px] w-full resize-none rounded-md border border-border bg-background px-3 py-2.5 text-[13px] leading-relaxed outline-none placeholder:text-subtle-foreground focus:border-border-strong disabled:opacity-50"
         />
@@ -97,7 +99,7 @@ export function CommandConsole({
             type="button"
             onClick={realtime.status === "connected" ? onStopRealtime : onStartRealtime}
             disabled={!healthReady || realtime.status === "connecting"}
-            title="OpenAI Realtime 2 voice"
+            title="Voice"
             className={cx(
               "inline-flex h-9 shrink-0 items-center justify-center gap-1.5 rounded-md border px-3 text-[12px] font-semibold transition-colors disabled:opacity-40",
               realtime.status === "connected"
@@ -112,26 +114,14 @@ export function CommandConsole({
             ) : (
               <Mic className="h-4 w-4" strokeWidth={2.25} />
             )}
-            Realtime 2
+            Voice
           </button>
-        </div>
-
-        <div className="mt-1.5 flex items-start justify-between gap-2">
-          <p className={cx("line-clamp-2 min-w-0 text-[11px] leading-relaxed", toneClasses(realtimeTone).text)}>{realtime.detail}</p>
-          {realtime.model && (
-            <span className="shrink-0 text-[10px] text-subtle-foreground">{realtime.voice ? `${realtime.model} · ${realtime.voice}` : realtime.model}</span>
-          )}
         </div>
       </form>
 
       {quickCommands.length > 0 && (
         <div className="mt-3 border-t border-border pt-2.5">
-          <SectionLabel>
-            <span className="inline-flex items-center gap-1.5">
-              <Sparkles className="h-3.5 w-3.5" strokeWidth={2} />
-              Suggested commands
-            </span>
-          </SectionLabel>
+          <div className="text-[12px] font-semibold text-foreground">Suggestions</div>
           <div className="mt-1.5 flex flex-wrap gap-1.5">
             {quickCommands.slice(0, 6).map((command, index) => (
               <button
@@ -142,6 +132,7 @@ export function CommandConsole({
                 onClick={() => onInput(command.prompt ?? command.label)}
                 className="inline-flex max-w-full items-center gap-1 rounded-full border border-border bg-surface px-2.5 py-0.5 text-[11px] font-medium text-muted-foreground transition-colors hover:bg-surface-muted hover:text-foreground disabled:opacity-40"
               >
+                <Sparkles className="h-3 w-3 shrink-0" strokeWidth={2} />
                 <span className="truncate">{command.label}</span>
               </button>
             ))}

@@ -6,7 +6,9 @@
 
 import type { JsonValue, LearningReport } from "./types";
 
-const BASE = process.env.NEXT_PUBLIC_AGENT_URL || "http://localhost:8123";
+import { agentBase } from "./agent-base";
+
+const BASE = agentBase();
 
 async function getJSON<T>(path: string): Promise<T> {
   const res = await fetch(`${BASE}${path}`, { cache: "no-store" });

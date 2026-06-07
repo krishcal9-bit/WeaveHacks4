@@ -17,24 +17,19 @@ import {
 } from "@/lib/council";
 import type {
   CommandResult,
-  CommandState,
   DebateState,
   OperatorCommand,
   RealtimeSession,
 } from "@/lib/types";
-import { AgentInspector } from "@/components/decision-room/agent-inspector";
-import { CouncilCommandPanel } from "@/components/council-command-panel";
-import { AgentMatrix } from "@/components/decision-room/agent-matrix";
+import { CouncilWeb } from "@/components/decision-room/council-web";
 import { BoardMemo, ScenarioImpactCard } from "@/components/decision-room/board-memo";
 import { CommandConsole } from "@/components/decision-room/command-console";
 import { CouncilHeader, CouncilStatusBar, PreflightPanel } from "@/components/decision-room/council-chrome";
-import { EvidenceDrawer } from "@/components/decision-room/evidence-drawer";
-import { ReliabilityPanel } from "@/components/decision-room/reliability-panel";
-import { SponsorEventRail, RedisActivityRail } from "@/components/decision-room/activity-rails";
-import { SponsorHealthPanel } from "@/components/decision-room/sponsor-health";
 import { TranscriptStream } from "@/components/decision-room/transcript-stream";
 
-const AGENT_BASE = process.env.NEXT_PUBLIC_AGENT_URL || "http://localhost:8123";
+import { agentBase } from "@/lib/agent-base";
+
+const AGENT_BASE = agentBase();
 
 export default function DecisionsPage() {
   const [input, setInput] = useState("");
@@ -54,9 +49,6 @@ export default function DecisionsPage() {
   // Defensive reads — every field is optional and may arrive incrementally.
   const transcript = useMemo(() => state?.transcript ?? [], [state?.transcript]);
   const agentStatuses = state?.agent_statuses ?? [];
-  const observabilityEvents = state?.observability_events ?? [];
-  const traceSummary = state?.trace_summary;
-  const redisActivity = state?.redis_activity ?? [];
   const recommendation = state?.recommendation;
   const reliabilityScores = state?.reliability_scores ?? [];
   const learningReport = state?.learning_report;
@@ -97,8 +89,6 @@ export default function DecisionsPage() {
   const activeRosterId = activeAgentId && ROSTER_BY_ID[activeAgentId] ? activeAgentId : undefined;
   const candidateId = selectedAgentId ?? (running ? activeRosterId : undefined) ?? latestSpeakerId(transcript) ?? "cfo";
   const selectedMember = ROSTER_BY_ID[candidateId] ?? ROSTER_BY_ID.cfo;
-  const selectedScore = reliabilityScores.find((score) => score.agent_id === selectedMember.id);
-  const selectedStatus = agentStatuses.find((status) => status.id === selectedMember.id);
 
   // ----------------------------------------------------------------------- //
   // Health polling (every 15s) — locks submissions until strict-live green.
@@ -296,29 +286,6 @@ export default function DecisionsPage() {
   // updates immediately, and the same eight keys stream back through DebateState
   // while a debate is running.
   // ----------------------------------------------------------------------- //
-  const commandState: CommandState = useMemo(
-    () => ({
-      command_queue: state?.command_queue ?? [],
-      active_command: state?.active_command ?? {},
-      pinned_evidence: state?.pinned_evidence ?? [],
-      requested_scenario: state?.requested_scenario ?? {},
-      agent_focus: state?.agent_focus ?? {},
-      phase_controls: state?.phase_controls ?? { paused: false },
-      export_status: state?.export_status ?? { ready: false },
-      command_audit_log: state?.command_audit_log ?? [],
-    }),
-    [
-      state?.command_queue,
-      state?.active_command,
-      state?.pinned_evidence,
-      state?.requested_scenario,
-      state?.agent_focus,
-      state?.phase_controls,
-      state?.export_status,
-      state?.command_audit_log,
-    ],
-  );
-
   const dispatchCommand = useCallback(
     async (command: OperatorCommand): Promise<CommandResult | undefined> => {
       try {
@@ -470,38 +437,22 @@ export default function DecisionsPage() {
       <CouncilHeader
         currentPhase={currentPhase}
         decision={decision}
-        health={health}
         healthReady={healthReady}
-        nodeName={nodeName}
         running={running}
         steps={timeline}
       />
 
-      <div className="space-y-2 p-2 lg:p-3">
+      <div className="flex flex-1 flex-col gap-2 p-2 lg:p-3">
         {!healthReady && <PreflightPanel health={health} onRefresh={loadHealth} />}
 
-        <CommandConsole
-          input={input}
-          onInput={setInput}
-          onSubmit={submit}
-          running={running}
-          healthReady={healthReady}
-          started={started}
-          realtime={realtime}
-          onStartRealtime={startRealtime}
-          onStopRealtime={stopRealtime}
-          commands={commands}
-        />
-
-        <div className="grid items-start gap-2 xl:grid-cols-[minmax(0,1fr)_minmax(340px,400px)]">
-          <div className="min-w-0 space-y-2">
-            <AgentMatrix
+        <div className="grid min-h-0 flex-1 gap-2 xl:grid-cols-[minmax(0,1fr)_minmax(280px,340px)]">
+          <div className="flex min-w-0 flex-col gap-2">
+            <CouncilWeb
               agentStatuses={agentStatuses}
               healthReady={healthReady}
               nodeName={nodeName}
               onSelectAgent={setSelectedAgentId}
               recommendation={recommendation}
-              reliabilityScores={reliabilityScores}
               running={running}
               selectedAgentId={selectedMember.id}
               started={started}
@@ -515,35 +466,9 @@ export default function DecisionsPage() {
               nodeName={nodeName}
               healthReady={healthReady}
               started={started}
+              agentStatuses={agentStatuses}
             />
 
-            <AgentInspector
-              member={selectedMember}
-              agentStatus={selectedStatus}
-              reliabilityScore={selectedScore}
-              transcript={transcript}
-              recommendation={recommendation}
-              redisActivity={redisActivity}
-              learningReport={learningReport}
-              nodeName={nodeName}
-              running={running}
-              healthReady={healthReady}
-              started={started}
-            />
-
-            <EvidenceDrawer context={state?.context} started={started} />
-          </div>
-
-          <aside className="min-w-0 space-y-2">
-            <CouncilCommandPanel
-              healthReady={healthReady}
-              running={running}
-              decision={decision}
-              recommendation={recommendation}
-              transcript={transcript}
-              commandState={commandState}
-              dispatch={dispatchCommand}
-            />
             <BoardMemo
               recommendation={recommendation}
               decision={decision}
@@ -554,16 +479,22 @@ export default function DecisionsPage() {
               started={started}
             />
             <ScenarioImpactCard impact={recommendation?.impact} />
-            <ReliabilityPanel
-              reliabilityScores={reliabilityScores}
-              learningReport={learningReport}
-              traceSummary={traceSummary}
+          </div>
+
+          <aside className="min-w-0 xl:sticky xl:top-2 xl:self-start">
+            <CommandConsole
+              className="xl:min-h-[calc(100dvh-10rem)]"
+              input={input}
+              onInput={setInput}
+              onSubmit={submit}
               running={running}
+              healthReady={healthReady}
               started={started}
+              realtime={realtime}
+              onStartRealtime={startRealtime}
+              onStopRealtime={stopRealtime}
+              commands={commands}
             />
-            <SponsorHealthPanel sponsorRows={sponsorRows} health={health} />
-            <SponsorEventRail events={observabilityEvents} />
-            <RedisActivityRail activity={redisActivity} />
           </aside>
         </div>
       </div>

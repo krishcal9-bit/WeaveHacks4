@@ -6,9 +6,9 @@ and reconciliation pipeline.
 
 Suggested demo sequence:
 
-1. Open the Atlas Data Room.
+1. Open the Atlas Data page.
 2. Upload all seven files in this folder.
-3. Confirm connector coverage and reconciliation issues populate.
+3. Confirm the files load and review notes populate.
 4. Run the council on the Datadog renewal, headcount, security, or vendor-commitment decision.
 
 | File | Connector |
@@ -20,4 +20,3 @@ Suggested demo sequence:
 | `northwind_headcount_plan_2026-h2.csv` | `headcount_plan` |
 | `northwind_security_evidence_soc2-q2.json` | `security_evidence` |
 | `northwind_board_policy_controls_2026.json` | `board_policy` |
-

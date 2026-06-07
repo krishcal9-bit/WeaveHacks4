@@ -1,15 +1,9 @@
 "use client";
 
-import { Database, Radio } from "lucide-react";
+import { Database } from "lucide-react";
 import type { Tone } from "@/lib/council";
-import type { ObservabilityEvent, RedisActivity } from "@/lib/types";
+import type { RedisActivity } from "@/lib/types";
 import { EmptyState, Panel, RailRow } from "./primitives";
-
-const EVENT_TONES = new Set<Tone>(["positive", "warning", "risk", "info", "neutral"]);
-
-function eventTone(tone?: string): Tone {
-  return tone && EVENT_TONES.has(tone as Tone) ? (tone as Tone) : "info";
-}
 
 function redisKindTone(kind?: string): Tone {
   switch ((kind ?? "").toLowerCase()) {
@@ -29,29 +23,6 @@ function redisKindTone(kind?: string): Tone {
     default:
       return "neutral";
   }
-}
-
-export function SponsorEventRail({ events }: { events: ObservabilityEvent[] }) {
-  const rows = [...events].slice(-40).reverse();
-  return (
-    <Panel icon={Radio} eyebrow="Sponsor signals" title="Event rail" count={events.length} scroll>
-      {rows.length === 0 ? (
-        <EmptyState icon={Radio}>OpenAI, W&B Weave, Redis, and CopilotKit signals stream here during a run.</EmptyState>
-      ) : (
-        <div className="space-y-2">
-          {rows.map((event, index) => (
-            <RailRow
-              key={event.id ?? event._id ?? `${event.label}-${index}`}
-              tone={eventTone(event.tone)}
-              title={`${event.sponsor ?? "Atlas"} · ${event.label ?? event.event ?? event.title ?? "Event"}`}
-              detail={event.detail ?? event.summary ?? event.status ?? undefined}
-              meta={event.at ?? event.timestamp}
-            />
-          ))}
-        </div>
-      )}
-    </Panel>
-  );
 }
 
 export function RedisActivityRail({ activity }: { activity: RedisActivity[] }) {

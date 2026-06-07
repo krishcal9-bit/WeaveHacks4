@@ -31,7 +31,9 @@ import type {
   PolicyRule,
 } from "./types";
 
-const BASE = process.env.NEXT_PUBLIC_AGENT_URL || "http://localhost:8123";
+import { agentBase } from "./agent-base";
+
+const BASE = agentBase();
 
 async function responseError(path: string, res: Response): Promise<Error> {
   let detail = "";

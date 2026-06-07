@@ -1,31 +1,28 @@
 "use client";
 
-import { useEffect, useMemo, useRef, useState } from "react";
-import { CornerDownRight, Loader2, MessagesSquare } from "lucide-react";
+import { useEffect, useMemo, useRef } from "react";
+import { CornerDownRight, Loader2, MessagesSquare, Sparkles } from "lucide-react";
+import { motion, AnimatePresence } from "motion/react";
 import { cx } from "@/components/ui";
 import { AGENT_TONE, resolveMember, ROSTER_BY_ID } from "@/lib/agents";
-import { NODE_LABEL, NODE_TO_AGENT, stanceTone, toneClasses } from "@/lib/council";
-import type { DebateState, EvidenceItem, TranscriptTurn } from "@/lib/types";
+import {
+  activeCouncilWorkers,
+  NODE_LABEL,
+  stanceTone,
+  toneClasses,
+} from "@/lib/council";
+import type { AgentStatus, DebateState, EvidenceItem, TranscriptTurn } from "@/lib/types";
 import { agentIcon } from "./agent-visuals";
 import { EmptyState, Panel, SkeletonText, StatusBadge, type IconType } from "./primitives";
 
 const TYPE_LABEL: Record<string, string> = {
   framing: "Framing",
+  thinking: "Thinking",
   position: "Position",
   rebuttal: "Cross-exam",
   decision: "Ruling",
   reliability: "Eval",
 };
-
-type FilterId = "all" | "debate" | "cfo" | "treasury" | "fpna" | "risk" | "procurement" | "reliability";
-
-function turnMatchesAgent(turn: TranscriptTurn, agentId: string): boolean {
-  if (turn.type === "rebuttal") {
-    return resolveMember(turn.from_role)?.id === agentId || resolveMember(turn.to_role)?.id === agentId;
-  }
-  if (agentId === "cfo") return turn.agent === "cfo" || turn.type === "framing" || turn.type === "decision";
-  return turn.agent === agentId;
-}
 
 export function TranscriptStream({
   transcript,
@@ -34,6 +31,7 @@ export function TranscriptStream({
   nodeName,
   healthReady,
   started,
+  agentStatuses,
 }: {
   transcript: TranscriptTurn[];
   recommendation?: DebateState["recommendation"];
@@ -41,96 +39,54 @@ export function TranscriptStream({
   nodeName?: string;
   healthReady: boolean;
   started: boolean;
+  agentStatuses: AgentStatus[];
 }) {
-  const [filter, setFilter] = useState<FilterId>("all");
   const scrollRef = useRef<HTMLDivElement>(null);
   const pinned = useRef(true);
 
-  const counts = useMemo(() => {
-    const base: Record<string, number> = { all: transcript.length, debate: 0 };
-    for (const id of ["cfo", "treasury", "fpna", "risk", "procurement", "reliability"]) base[id] = 0;
-    for (const turn of transcript) {
-      if (turn.type === "rebuttal") base.debate += 1;
-      for (const id of ["cfo", "treasury", "fpna", "risk", "procurement", "reliability"]) {
-        if (turnMatchesAgent(turn, id)) base[id] += 1;
-      }
-    }
-    return base;
-  }, [transcript]);
+  const workers = useMemo(
+    () => activeCouncilWorkers(agentStatuses, running, nodeName),
+    [agentStatuses, running, nodeName],
+  );
 
-  const filtered = useMemo(() => {
-    if (filter === "all") return transcript;
-    if (filter === "debate") return transcript.filter((turn) => turn.type === "rebuttal");
-    return transcript.filter((turn) => turnMatchesAgent(turn, filter));
-  }, [transcript, filter]);
+  const thinkingTurns = useMemo(() => transcript.filter((turn) => turn.type === "thinking"), [transcript]);
+  const spokenTurns = useMemo(() => transcript.filter((turn) => turn.type !== "thinking"), [transcript]);
 
   useEffect(() => {
     if (pinned.current && scrollRef.current) {
       scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
     }
-  }, [transcript.length, filter]);
+  }, [transcript.length, workers.length]);
 
-  const activeAgentId = running ? NODE_TO_AGENT[nodeName ?? ""] : undefined;
-  const activeMember = activeAgentId ? ROSTER_BY_ID[activeAgentId] : undefined;
-
-  const filterChips: { id: FilterId; label: string }[] = [
-    { id: "all", label: "All" },
-    { id: "cfo", label: "CFO" },
-    { id: "treasury", label: "Treasury" },
-    { id: "fpna", label: "FP&A" },
-    { id: "risk", label: "Risk" },
-    { id: "procurement", label: "Procurement" },
-    { id: "debate", label: "Cross-exam" },
-    { id: "reliability", label: "Eval" },
-  ];
+  const phaseLabel = running ? (NODE_LABEL[nodeName ?? ""] ?? "Council in session") : undefined;
 
   return (
     <Panel
       id="council-transcript"
       icon={MessagesSquare}
-      eyebrow="Live debate"
-      title="Transcript stream"
+      title="Debate"
       count={transcript.length}
       action={
         running ? (
           <StatusBadge tone="info" pulse>
-            Streaming
+            Live
           </StatusBadge>
         ) : undefined
       }
       bodyClassName="p-0"
     >
-      <div className="flex flex-wrap items-center gap-1.5 border-b border-border px-3 py-2">
-        {filterChips.map((chip) => {
-          const count = counts[chip.id] ?? 0;
-          const isActive = filter === chip.id;
-          const disabled = chip.id !== "all" && count === 0;
-          return (
-            <button
-              key={chip.id}
-              type="button"
-              disabled={disabled}
-              onClick={() => setFilter(chip.id)}
-              className={cx(
-                "inline-flex items-center gap-1 rounded-full border px-2 py-0.5 text-[11px] font-semibold transition-colors disabled:opacity-35",
-                isActive
-                  ? "border-accent bg-accent text-accent-foreground"
-                  : "border-border bg-surface text-muted-foreground hover:bg-surface-muted hover:text-foreground",
-              )}
-            >
-              {chip.label}
-              {chip.id !== "all" && count > 0 && (
-                <span className={cx("tabular-nums", isActive ? "opacity-80" : "text-subtle-foreground")}>{count}</span>
-              )}
-            </button>
-          );
-        })}
-      </div>
+      {running && (workers.length > 0 || phaseLabel) && (
+        <LiveCouncilBar workers={workers} phaseLabel={phaseLabel} thinkingCount={thinkingTurns.length} />
+      )}
 
-      <div ref={scrollRef} onScroll={(event) => {
-        const el = event.currentTarget;
-        pinned.current = el.scrollHeight - el.scrollTop - el.clientHeight < 48;
-      }} className="room-scroll max-h-[560px] min-h-[260px] overflow-y-auto px-3 py-3">
+      <div
+        ref={scrollRef}
+        onScroll={(event) => {
+          const el = event.currentTarget;
+          pinned.current = el.scrollHeight - el.scrollTop - el.clientHeight < 48;
+        }}
+        className="room-scroll max-h-[560px] min-h-[260px] overflow-y-auto px-3 py-3"
+      >
         {transcript.length === 0 ? (
           started ? (
             <SkeletonTurns />
@@ -141,24 +97,107 @@ export function TranscriptStream({
                 : "Strict preflight must pass before the council can convene."}
             </EmptyState>
           )
-        ) : filtered.length === 0 ? (
-          <EmptyState icon={MessagesSquare}>No turns from this seat yet.</EmptyState>
         ) : (
           <ol className="space-y-2.5">
-            {filtered.map((turn, index) => (
-              <TurnRow key={turn.id ?? `${turn.type}-${turn.agent ?? turn.from_role}-${index}`} turn={turn} recommendation={recommendation} />
+            <AnimatePresence initial={false}>
+              {thinkingTurns.map((turn, index) => (
+                <ThinkingRow key={turn.id ?? `thinking-${turn.agent}-${index}`} turn={turn} />
+              ))}
+            </AnimatePresence>
+            {spokenTurns.map((turn, index) => (
+              <TurnRow
+                key={turn.id ?? `${turn.type}-${turn.agent ?? turn.from_role}-${index}`}
+                turn={turn}
+                recommendation={recommendation}
+              />
             ))}
           </ol>
         )}
-
-        {running && activeMember && (
-          <div className="mt-2.5 flex items-center gap-2 rounded-md border border-info/20 bg-info-bg/40 px-3 py-2 text-[12px] text-info">
-            <Loader2 className="h-3.5 w-3.5 animate-spin" strokeWidth={2.25} />
-            <span className="truncate font-semibold">{NODE_LABEL[nodeName ?? ""] ?? `${activeMember.label} is working`}</span>
-          </div>
-        )}
       </div>
     </Panel>
+  );
+}
+
+function LiveCouncilBar({
+  workers,
+  phaseLabel,
+  thinkingCount,
+}: {
+  workers: AgentStatus[];
+  phaseLabel?: string;
+  thinkingCount: number;
+}) {
+  return (
+    <div className="border-b border-border bg-info-bg/25 px-3 py-2.5">
+      {phaseLabel && (
+        <div className="mb-2 flex items-center gap-2 text-[11px] font-semibold text-info">
+          <Loader2 className="h-3.5 w-3.5 animate-spin" strokeWidth={2.25} />
+          <span className="truncate">{phaseLabel}</span>
+          {thinkingCount > 0 && (
+            <span className="rounded-full border border-info/25 bg-background/80 px-1.5 py-0.5 text-[10px] tabular-nums">
+              {thinkingCount} thinking
+            </span>
+          )}
+        </div>
+      )}
+      <div className="grid gap-1.5 sm:grid-cols-2">
+        {workers.map((worker) => (
+          <motion.div
+            key={worker.id}
+            layout
+            initial={{ opacity: 0, y: 6 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="flex min-w-0 items-start gap-2 rounded-md border border-info/20 bg-background/90 px-2.5 py-2"
+          >
+            <span className="mt-0.5 grid h-5 w-5 shrink-0 place-items-center rounded-md border border-info/20 bg-info-bg text-info">
+              <Sparkles className="h-3 w-3 animate-pulse" strokeWidth={2.25} />
+            </span>
+            <div className="min-w-0 flex-1">
+              <div className="truncate text-[11px] font-semibold">{worker.label}</div>
+              <div className="line-clamp-2 text-[10px] leading-relaxed text-muted-foreground">
+                {worker.detail ?? "Working…"}
+              </div>
+            </div>
+          </motion.div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+function ThinkingRow({ turn }: { turn: TranscriptTurn }) {
+  const speaker = turn.agent ? ROSTER_BY_ID[turn.agent] : resolveMember(turn.role);
+  const seatId = speaker?.id ?? turn.agent ?? "cfo";
+  const accent = toneClasses(AGENT_TONE[seatId] ?? "info");
+
+  return (
+    <motion.li
+      layout
+      initial={{ opacity: 0, y: 8 }}
+      animate={{ opacity: 1, y: 0 }}
+      exit={{ opacity: 0, y: -4 }}
+      className={cx(
+        "min-w-0 rounded-md border border-dashed bg-background p-2.5",
+        accent.border,
+        "border-l-2",
+        accent.ring,
+      )}
+    >
+      <div className="flex min-w-0 items-center justify-between gap-2">
+        <div className="flex min-w-0 items-center gap-2">
+          <span className={cx("grid h-6 w-6 shrink-0 place-items-center rounded-md border border-border bg-surface", accent.text)}>
+            <Loader2 className="h-3.5 w-3.5 animate-spin" strokeWidth={2.25} />
+          </span>
+          <span className="truncate text-[12px] font-semibold">{speaker?.label ?? turn.label ?? "Council"}</span>
+        </div>
+        <StatusBadge tone="info" pulse>
+          Thinking
+        </StatusBadge>
+      </div>
+      {turn.argument && (
+        <p className="mt-2 break-words text-[12px] leading-relaxed text-muted-foreground">{turn.argument}</p>
+      )}
+    </motion.li>
   );
 }
 
@@ -174,7 +213,12 @@ function TurnRow({ turn, recommendation }: { turn: TranscriptTurn; recommendatio
   const evidence = Array.isArray(turn.evidence) ? turn.evidence : [];
 
   return (
-    <li className={cx("min-w-0 rounded-md border border-border bg-background p-2.5", "border-l-2", accent.ring)}>
+    <motion.li
+      layout
+      initial={{ opacity: 0, y: 10 }}
+      animate={{ opacity: 1, y: 0 }}
+      className={cx("min-w-0 rounded-md border border-border bg-background p-2.5", "border-l-2", accent.ring)}
+    >
       <div className="flex min-w-0 items-center justify-between gap-2">
         <div className="flex min-w-0 items-center gap-2">
           <span className={cx("grid h-6 w-6 shrink-0 place-items-center rounded-md border border-border bg-surface", accent.text)}>
@@ -226,11 +270,10 @@ function TurnRow({ turn, recommendation }: { turn: TranscriptTurn; recommendatio
       )}
 
       {evidence.length > 0 && <EvidenceChips evidence={evidence} />}
-    </li>
+    </motion.li>
   );
 }
 
-// Optional per-turn grounding chips (only render if a worker attached evidence).
 function EvidenceChips({ evidence }: { evidence: EvidenceItem[] }) {
   return (
     <div className="mt-2 flex flex-wrap gap-1.5">
@@ -250,7 +293,6 @@ function EvidenceChips({ evidence }: { evidence: EvidenceItem[] }) {
   );
 }
 
-// Module-scope so the icon isn't treated as a component "created during render".
 function RoleGlyph({ icon: Icon, className }: { icon: IconType; className?: string }) {
   return <Icon className={className} strokeWidth={2} />;
 }
@@ -258,8 +300,8 @@ function RoleGlyph({ icon: Icon, className }: { icon: IconType; className?: stri
 function SkeletonTurns() {
   return (
     <div className="space-y-2.5">
-      {Array.from({ length: 3 }).map((_, index) => (
-        <div key={index} className="rounded-md border border-border bg-background p-2.5">
+      {Array.from({ length: 4 }).map((_, index) => (
+        <div key={index} className="rounded-md border border-dashed border-info/25 bg-info-bg/20 p-2.5">
           <div className="flex items-center gap-2">
             <div className="h-6 w-6 animate-pulse rounded-md bg-surface-muted" />
             <div className="h-3 w-28 animate-pulse rounded bg-surface-muted" />

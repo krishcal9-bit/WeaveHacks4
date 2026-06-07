@@ -88,8 +88,7 @@ export function BoardMemo({
     <Panel
       id="council-memo"
       icon={Gavel}
-      eyebrow="Committee resolution"
-      title="Board memo"
+      title="Recommendation"
       action={
         hasDecision ? (
           <div className="flex items-center gap-1.5">
@@ -186,7 +185,7 @@ export function ScenarioImpactCard({ impact }: { impact?: RunwayImpact }) {
   const deltaTone = delta == null ? "neutral" : delta < 0 ? "risk" : delta > 0 ? "positive" : "neutral";
 
   return (
-    <Panel icon={delta != null && delta < 0 ? TrendingDown : TrendingUp} eyebrow="Computed by Redis" title="Scenario runway impact">
+    <Panel icon={delta != null && delta < 0 ? TrendingDown : TrendingUp} title="Runway impact">
       {hasScenario ? (
         <>
           <div className="grid gap-2 [grid-template-columns:repeat(3,minmax(0,1fr))]">

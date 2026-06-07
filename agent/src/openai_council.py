@@ -64,6 +64,8 @@ load_env()
 LLM_PROVIDER = os.getenv("LLM_PROVIDER", "openai")
 LLM_MODEL = os.getenv("LLM_MODEL", "gpt-5.5")
 LLM_REASONING_EFFORT = os.getenv("LLM_REASONING_EFFORT", "xhigh")
+LLM_ANALYST_REASONING_EFFORT = os.getenv("LLM_ANALYST_REASONING_EFFORT", "low")
+LLM_DEBATE_REASONING_EFFORT = os.getenv("LLM_DEBATE_REASONING_EFFORT", "low")
 LLM_TEXT_VERBOSITY = os.getenv("LLM_TEXT_VERBOSITY", "low")
 
 # Cost is only reported when real per-token pricing is configured in the
@@ -72,13 +74,14 @@ _PRICE_IN_ENV = "OPENAI_PRICE_INPUT_PER_MTOK"
 _PRICE_OUT_ENV = "OPENAI_PRICE_OUTPUT_PER_MTOK"
 
 
-def llm(temperature: float = 0.3) -> Any:
+def llm(temperature: float = 0.3, *, reasoning_effort: str | None = None) -> Any:
     """Construct the env-configured chat model (OpenAI reasoning model by default)."""
+    effort = reasoning_effort or LLM_REASONING_EFFORT
     if LLM_PROVIDER.lower() == "openai":
         return ChatOpenAI(
             model=LLM_MODEL,
             temperature=temperature,
-            reasoning_effort=LLM_REASONING_EFFORT,
+            reasoning_effort=effort,
             verbosity=LLM_TEXT_VERBOSITY,
             output_version="responses/v1",
         )
@@ -211,6 +214,7 @@ async def structured_call(
     human: str,
     config: RunnableConfig | None = None,
     temperature: float = 0.3,
+    reasoning_effort: str | None = None,
     retries: int = 1,
 ) -> StructuredResult:
     """Run one structured model call, capturing usage/cost/refusal/errors.
@@ -220,7 +224,8 @@ async def structured_call(
     StructuredResult with ``parsed=None`` and the real error/refusal in telemetry.
     """
     messages: list[Any] = [SystemMessage(content=system), HumanMessage(content=human)]
-    model = llm(temperature).with_structured_output(schema, include_raw=True)
+    effort = reasoning_effort or LLM_REASONING_EFFORT
+    model = llm(temperature, reasoning_effort=effort).with_structured_output(schema, include_raw=True)
 
     in_tok = out_tok = tot_tok = None
     last_error: str | None = None
@@ -271,7 +276,7 @@ async def structured_call(
                 model=LLM_MODEL,
                 model_family=model_family(),
                 provider=LLM_PROVIDER,
-                reasoning_effort=LLM_REASONING_EFFORT,
+                reasoning_effort=effort,
                 input_tokens=in_tok,
                 output_tokens=out_tok,
                 total_tokens=tot_tok,
@@ -292,7 +297,7 @@ async def structured_call(
             model=LLM_MODEL,
             model_family=model_family(),
             provider=LLM_PROVIDER,
-            reasoning_effort=LLM_REASONING_EFFORT,
+            reasoning_effort=effort,
             input_tokens=in_tok,
             output_tokens=out_tok,
             total_tokens=tot_tok,
@@ -727,7 +732,8 @@ async def analyst_position(
         f"COMPANY CONTEXT ({company}):\n{json.dumps(context, default=str)[:12000]}\n\n"
         f"PLANNED EVIDENCE (gathered live from Redis for your seat — lean on this):\n"
         f"{json.dumps(evidence, default=str)[:6000]}\n\n"
-        "Give your position. Populate cited_metrics with the concrete numbers you relied on."
+        "Give a concise position: headline ≤10 words, argument ≤2 short sentences, exactly 2 key_points, "
+        "and cited_metrics with the concrete numbers you relied on. Be direct — no preamble."
         f"{operator_directives}"
     )
     return await structured_call(
@@ -738,6 +744,7 @@ async def analyst_position(
         human=human,
         config=config,
         temperature=0.4,
+        reasoning_effort=LLM_ANALYST_REASONING_EFFORT,
     )
 
 
@@ -769,6 +776,7 @@ async def challenge_panel(
         human=human,
         config=config,
         temperature=0.2,
+        reasoning_effort=LLM_DEBATE_REASONING_EFFORT,
     )
 
 
@@ -805,6 +813,7 @@ async def cross_examination(
         human=human,
         config=config,
         temperature=0.55,
+        reasoning_effort=LLM_DEBATE_REASONING_EFFORT,
     )
 
 

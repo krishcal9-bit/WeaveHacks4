@@ -135,7 +135,7 @@ export interface DecisionEvent {
   [k: string]: unknown;
 }
 
-export type TurnType = "framing" | "position" | "rebuttal" | "decision" | "reliability" | "challenge";
+export type TurnType = "framing" | "position" | "rebuttal" | "decision" | "reliability" | "challenge" | "thinking";
 export type Stance = "support" | "oppose" | "conditional";
 
 export interface TranscriptTurn {

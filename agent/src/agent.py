@@ -9,8 +9,11 @@ recommendation plus a board memo and operator action checklist. State streams to
 the frontend (CopilotKit useCoAgent) to drive the boardroom view; every node is a
 @weave.op so the committee appears as named spans in Weave.
 
-Flow:  intake → planner → treasury → fpna → risk → procurement → challenge
+Flow:  intake → planner → committee_parallel → challenge
        → debate → synthesis → governance → reliability → persist
+
+``committee_parallel`` runs Treasury, FP&A, Risk, and Procurement concurrently
+with live AG-UI streaming so the UI shows every seat thinking at once.
 
 The OpenAI-native lifting (typed prompts, structured calls with token/cost/refusal
 telemetry, classification, evidence planning, challenge panel, synthesis, board
@@ -283,6 +286,18 @@ def _turn(role_key: str, **extra) -> dict:
     return {"agent": role_key, "label": p["label"], "role": p["role"], "monogram": p["monogram"], **extra}
 
 
+def _thinking_turn(role_key: str, detail: str) -> dict:
+    turn = _turn(role_key, type="thinking", headline="Working…", argument=detail)
+    turn["id"] = f"thinking-{role_key}"
+    turn["at"] = _now()
+    return turn
+
+
+def _without_thinking(transcript: list | None, role_key: str) -> list:
+    token = f"thinking-{role_key}"
+    return [item for item in (transcript or []) if item.get("id") != token]
+
+
 def _now() -> str:
     return time.strftime("%H:%M:%S")
 
@@ -467,13 +482,16 @@ def _trace_summary(
 
 
 def _span_statuses(active_node: str, active_status: str) -> list[dict]:
-    spans = [
-        "intake",
-        "planner",
+    parallel_analysts = {
         "analyst_treasury",
         "analyst_fpna",
         "analyst_risk",
         "analyst_procurement",
+    }
+    spans = [
+        "intake",
+        "planner",
+        "committee_parallel",
         "challenge_panel",
         "debate_round",
         "cfo_synthesis",
@@ -485,6 +503,8 @@ def _span_statuses(active_node: str, active_status: str) -> list[dict]:
     out: list[dict] = []
     for index, span in enumerate(spans):
         if span == active_node:
+            span_status = active_status
+        elif active_node == "committee_parallel" and span in parallel_analysts:
             span_status = active_status
         elif active_index >= 0 and index < active_index:
             span_status = "complete"
@@ -969,6 +989,242 @@ async def planner_node(state: DebateState, config: RunnableConfig) -> dict:
             _redis_ping_activity(health),
             _redis_activity("Evidence plan", f"{len(role_plans)} role plans, {len(tool_plan)} tool steps", "plan"),
         ),
+        "sponsor_health": health,
+    }
+
+
+class _ParallelCouncil:
+    """Mutable streamed state while four analysts run concurrently."""
+
+    def __init__(self, state: DebateState, config: RunnableConfig, events: list, health: dict) -> None:
+        self.state = state
+        self.config = config
+        self.lock = asyncio.Lock()
+        self.health = health
+        self.agent_statuses = [dict(item) for item in (state.get("agent_statuses") or _initial_agent_statuses())]
+        self.transcript = list(state.get("transcript") or [])
+        self.positions = list(state.get("positions") or [])
+        self.redis_activity = list(state.get("redis_activity") or [])
+        self.observability_events = list(events)
+        self.model_telemetry = state.get("model_telemetry")
+
+    async def emit(self, *, current_phase: str, **extra) -> None:
+        async with self.lock:
+            await _emit_patch(
+                self.state,
+                self.config,
+                phase="analysis",
+                current_phase=current_phase,
+                agent_statuses=self.agent_statuses,
+                transcript=self.transcript,
+                positions=self.positions,
+                observability_events=self.observability_events,
+                redis_activity=self.redis_activity,
+                model_telemetry=self.model_telemetry,
+                sponsor_health=self.health,
+                trace_summary=_trace_summary(
+                    "committee_parallel",
+                    "running",
+                    model_calls=len(self.positions),
+                    telemetry=self.model_telemetry,
+                ),
+                **extra,
+            )
+
+    async def set_role(self, role_key: str, **updates) -> None:
+        async with self.lock:
+            self.agent_statuses = _set_agent_status(self.agent_statuses, role_key, **updates)
+
+    async def show_thinking(self, role_key: str, detail: str) -> None:
+        async with self.lock:
+            self.transcript = _without_thinking(self.transcript, role_key) + [_thinking_turn(role_key, detail)]
+
+    async def record_position(
+        self,
+        role_key: str,
+        entry: dict,
+        *,
+        agent_updates: dict,
+        redis_items: list[dict],
+        events: list[dict],
+        telemetry: dict,
+    ) -> None:
+        async with self.lock:
+            self.transcript = _without_thinking(self.transcript, role_key) + [entry]
+            self.positions = [*self.positions, entry]
+            self.agent_statuses = _set_agent_status(self.agent_statuses, role_key, **agent_updates)
+            self.redis_activity = _append(self.redis_activity, *redis_items)
+            self.observability_events = _append(self.observability_events, *events)
+            self.model_telemetry = merge_telemetry(self.model_telemetry, telemetry)
+
+
+async def _run_analyst_parallel(role_key: str, state: DebateState, config: RunnableConfig, live: _ParallelCouncil) -> None:
+    persona = ROSTER[role_key]
+    company_name = _company_name(state.get("context"))
+    decision_type = state.get("decision_type") or "general"
+    role_plan = _role_plan(state.get("decision_plan"), role_key)
+    health = live.health
+
+    await live.set_role(role_key, status="thinking", detail=f"{persona['label']}: pulling live Redis evidence")
+    await live.show_thinking(role_key, f"{persona['label']} is querying vendors, policies, and financials from Redis…")
+    await live.emit(current_phase="All four analysts working in parallel")
+
+    bundle = gather_role_evidence(role_plan, state.get("context", {}))
+    redis_items = [
+        _redis_ping_activity(health),
+        *[_redis_activity(item["label"], item["detail"], item["kind"]) for item in bundle.redis_activity],
+    ]
+
+    await live.set_role(
+        role_key,
+        status="thinking",
+        detail=f"{persona['label']}: forming position ({bundle.policy_hits} policy hit(s))",
+    )
+    await live.show_thinking(
+        role_key,
+        f"{persona['label']} has the numbers — drafting a grounded stance now…",
+    )
+    await live.emit(current_phase=f"{persona['label']} + peers analyzing in parallel")
+
+    result = await analyst_position(
+        role_key=role_key,
+        persona=persona,
+        decision=state.get("decision", ""),
+        context=state.get("context", {}),
+        company=company_name,
+        stage=_company_stage(state.get("context")),
+        decision_type=decision_type,
+        decision_focus=_decision_focus(state.get("decision_plan")),
+        evidence=bundle.evidence,
+        operator_directives=_command_focus_prompt(),
+        config=config,
+    )
+    prompt_version = next((pv for pv in (state.get("prompt_versions") or []) if pv.get("role") == role_key), {})
+
+    if not result.ok:
+        detail = result.telemetry.refusal or result.telemetry.error or "No grounded position produced"
+        entry = _turn(
+            role_key,
+            type="position",
+            headline="Could not produce a grounded position",
+            argument=detail,
+            key_points=[],
+            cited_metrics=[],
+            prompt_version=prompt_version.get("version"),
+            error=detail,
+        )
+        await live.record_position(
+            role_key,
+            entry,
+            agent_updates={"status": "error", "headline": "Position unavailable", "detail": detail},
+            redis_items=redis_items,
+            events=[_event("OpenAI", f"{persona['label']} call failed", detail, "warning")],
+            telemetry=result.telemetry,
+        )
+        await live.emit(current_phase=f"{persona['label']} could not finish — peers continue")
+        return
+
+    pos = result.parsed
+    entry = _turn(
+        role_key,
+        type="position",
+        stance=pos.stance,
+        headline=pos.headline,
+        argument=pos.argument,
+        key_points=pos.key_points,
+        cited_metrics=pos.cited_metrics,
+        evidence_used=pos.evidence_used,
+        prompt_version=prompt_version.get("version"),
+        tokens=result.telemetry.total_tokens,
+        cost_usd=result.telemetry.cost_usd,
+    )
+    await live.record_position(
+        role_key,
+        entry,
+        agent_updates={
+            "status": "speaking",
+            "stance": pos.stance,
+            "headline": pos.headline,
+            "detail": pos.argument,
+        },
+        redis_items=redis_items,
+        events=[
+            _event(
+                "Redis",
+                "Evidence grounded",
+                f"{persona['label']} cited {len(pos.cited_metrics)} figure(s)",
+                "positive",
+            ),
+        ],
+        telemetry=result.telemetry,
+    )
+    await live.emit(current_phase=f"{persona['label']} position in — {len(live.positions)}/{len(ANALYSTS)} complete")
+
+
+@weave.op(name="committee_parallel")
+async def committee_parallel_node(state: DebateState, config: RunnableConfig) -> dict:
+    """Run Treasury, FP&A, Risk, and Procurement concurrently with live streaming."""
+    require_live_ready()
+    await _honor_pause(state, config, "parallel committee analysis")
+    health = sponsor_health()
+
+    agent_statuses = state.get("agent_statuses") or _initial_agent_statuses()
+    for role_key in ANALYSTS:
+        persona = ROSTER[role_key]
+        agent_statuses = _set_agent_status(
+            agent_statuses,
+            role_key,
+            status="thinking",
+            detail=f"{persona['label']}: joining the live council room",
+        )
+
+    thinking_turns = [_thinking_turn(role_key, f"{ROSTER[role_key]['label']} is opening the books…") for role_key in ANALYSTS]
+    events = _append(
+        state.get("observability_events"),
+        _event("W&B Weave", "Trace span opened", "committee_parallel", "positive"),
+        _event("OpenAI", "Parallel analyst calls", f"{len(ANALYSTS)} roles · low reasoning effort", "info"),
+        _event("Redis", "Redis-grounded context active", "All roles query live financials, vendors, and policies", "positive"),
+        _sponsor_event(health),
+    )
+    await _emit_patch(
+        state,
+        config,
+        phase="analysis",
+        current_phase="All four analysts working in parallel",
+        agent_statuses=agent_statuses,
+        transcript=(state.get("transcript") or []) + thinking_turns,
+        observability_events=events,
+        trace_summary=_trace_summary("committee_parallel", "running", telemetry=state.get("model_telemetry")),
+        redis_activity=_append(
+            state.get("redis_activity"),
+            _redis_ping_activity(health),
+            _redis_activity("Parallel council", "Treasury · FP&A · Risk · Procurement in session", "state"),
+        ),
+        sponsor_health=health,
+    )
+
+    live = _ParallelCouncil(state, config, events, health)
+    live.agent_statuses = agent_statuses
+    live.transcript = (state.get("transcript") or []) + thinking_turns
+
+    await asyncio.gather(*[_run_analyst_parallel(role_key, state, config, live) for role_key in ANALYSTS])
+
+    model_calls = len(live.positions)
+    closing = _append(
+        live.observability_events,
+        _event("OpenAI", "Parallel analysis complete", f"{model_calls}/{len(ANALYSTS)} positions recorded", "positive"),
+        _event("W&B Weave", "Trace span closed", "committee_parallel", "positive"),
+    )
+    return {
+        "positions": live.positions,
+        "transcript": live.transcript,
+        "phase": "analysis",
+        "current_phase": f"Committee positions ready · {model_calls}/{len(ANALYSTS)}",
+        "agent_statuses": live.agent_statuses,
+        "model_telemetry": live.model_telemetry,
+        "observability_events": closing,
+        "trace_summary": _trace_summary("committee_parallel", "complete", model_calls=model_calls, telemetry=live.model_telemetry),
+        "redis_activity": live.redis_activity,
         "sponsor_health": health,
     }
 
@@ -1934,8 +2190,7 @@ def _command_wrapped(node):
 workflow = StateGraph(DebateState)
 workflow.add_node("intake", _command_wrapped(intake_node))
 workflow.add_node("planner", _command_wrapped(planner_node))
-for _a in ANALYSTS:
-    workflow.add_node(_a, _command_wrapped(make_analyst_node(_a)))
+workflow.add_node("committee_parallel", _command_wrapped(committee_parallel_node))
 workflow.add_node("challenge", _command_wrapped(challenge_node))
 workflow.add_node("debate", _command_wrapped(debate_node))
 workflow.add_node("synthesis", _command_wrapped(synthesis_node))
@@ -1945,11 +2200,8 @@ workflow.add_node("persist", _command_wrapped(persist_node))
 
 workflow.add_edge(START, "intake")
 workflow.add_edge("intake", "planner")
-workflow.add_edge("planner", "treasury")
-workflow.add_edge("treasury", "fpna")
-workflow.add_edge("fpna", "risk")
-workflow.add_edge("risk", "procurement")
-workflow.add_edge("procurement", "challenge")
+workflow.add_edge("planner", "committee_parallel")
+workflow.add_edge("committee_parallel", "challenge")
 workflow.add_edge("challenge", "debate")
 workflow.add_edge("debate", "synthesis")
 workflow.add_edge("synthesis", "governance")

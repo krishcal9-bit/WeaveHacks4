@@ -75,12 +75,17 @@ export function toneClasses(tone: Tone): ToneClasses {
 // --------------------------------------------------------------------------- //
 // Graph node / phase vocabulary (mirrors agent/src/agent.py)
 // --------------------------------------------------------------------------- //
+export const COUNCIL_ANALYST_IDS = ["treasury", "fpna", "risk", "procurement"] as const;
+
 export const NODE_LABEL: Record<string, string> = {
   intake: "Convening the committee",
+  planner: "Planning evidence for each role",
+  committee_parallel: "All four analysts working in parallel",
   treasury: "Treasury is forming its position",
   fpna: "FP&A is forming its position",
   risk: "Risk & Audit is forming its position",
   procurement: "Procurement is forming its position",
+  challenge: "Evidence challenge panel",
   debate: "Committee cross-examination",
   synthesis: "The CFO is deliberating",
   reliability: "Reliability auditor is scoring the council",
@@ -90,10 +95,13 @@ export const NODE_LABEL: Record<string, string> = {
 
 export const NODE_TO_AGENT: Record<string, string> = {
   intake: "cfo",
+  planner: "planner",
+  committee_parallel: "committee_parallel",
   treasury: "treasury",
   fpna: "fpna",
   risk: "risk",
   procurement: "procurement",
+  challenge: "challenge",
   debate: "debate",
   synthesis: "cfo",
   reliability: "reliability",
@@ -282,6 +290,13 @@ function timelineStatus(args: {
   if (complete) return "complete";
   if (!healthReady) return "pending";
   if (running && nodeName === id) return "active";
+  if (
+    running &&
+    nodeName === "committee_parallel" &&
+    (COUNCIL_ANALYST_IDS as readonly string[]).includes(id)
+  ) {
+    return "active";
+  }
   return "pending";
 }
 
@@ -384,7 +399,7 @@ export function buildPhaseSteps(steps: TimelineStep[]): PhaseStep[] {
         : "pending";
 
   return [
-    { id: "briefing", label: "Briefing", status: byId.intake ?? byId.preflight ?? "pending", target: "council-matrix" },
+    { id: "briefing", label: "Briefing", status: byId.intake ?? byId.preflight ?? "pending", target: "council-web" },
     { id: "analysis", label: "Analysis", status: analysisStatus, target: "council-transcript" },
     { id: "debate", label: "Debate", status: byId.debate ?? "pending", target: "council-transcript" },
     { id: "ruling", label: "Ruling", status: byId.synthesis ?? "pending", target: "council-memo" },
@@ -429,6 +444,10 @@ export function findLatestTurnForMember(memberId: string, transcript: Transcript
   return undefined;
 }
 
+export function isParallelCouncilNode(nodeName?: string): boolean {
+  return nodeName === "committee_parallel";
+}
+
 export function isAgentActive(args: {
   agentStatus?: AgentStatus;
   healthReady: boolean;
@@ -439,7 +458,10 @@ export function isAgentActive(args: {
   const { agentStatus, healthReady, memberId, nodeName, running } = args;
   if (!healthReady) return false;
   const statusValue = String(agentStatus?.status ?? "").toLowerCase();
+  const parallelSeat =
+    running && isParallelCouncilNode(nodeName) && (COUNCIL_ANALYST_IDS as readonly string[]).includes(memberId);
   return (
+    parallelSeat ||
     (running && NODE_TO_AGENT[nodeName ?? ""] === memberId) ||
     ["thinking", "speaking", "running"].includes(statusValue)
   );
@@ -562,8 +584,32 @@ export function getAgentSnippet(args: {
   if (turn?.argument) return turn.argument;
   if (turn?.point) return turn.point;
   if (!healthReady) return "Strict live preflight must pass before this seat can produce a live utterance.";
-  if (started) return "Queued in the graph. No live utterance has streamed for this seat yet.";
+  if (started && (agentStatus?.status === "thinking" || agentStatus?.status === "running")) {
+    return agentStatus.detail ?? "Working in the live council room…";
+  }
+  if (started) return "Standing by in the council room.";
   return "Ready to join once a decision command is submitted.";
+}
+
+export function activeCouncilWorkers(
+  agentStatuses: AgentStatus[],
+  running: boolean,
+  nodeName?: string,
+): AgentStatus[] {
+  if (!running) return [];
+  const working = agentStatuses.filter((status) =>
+    ["thinking", "speaking", "running"].includes(String(status.status ?? "").toLowerCase()),
+  );
+  if (working.length > 0) return working;
+  if (isParallelCouncilNode(nodeName)) {
+    return agentStatuses.filter((status) =>
+      (COUNCIL_ANALYST_IDS as readonly string[]).includes(status.id),
+    );
+  }
+  const mapped = NODE_TO_AGENT[nodeName ?? ""];
+  if (!mapped || mapped === "committee_parallel") return [];
+  const match = agentStatuses.find((status) => status.id === mapped);
+  return match ? [match] : [];
 }
 
 // --------------------------------------------------------------------------- //

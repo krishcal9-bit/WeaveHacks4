@@ -4,8 +4,6 @@ import { AlertTriangle, Loader2, Radio, ShieldAlert, XCircle } from "lucide-reac
 import { cx } from "@/components/ui";
 import {
   averageReliability,
-  getHealthLabel,
-  NODE_LABEL,
   sponsorStatusTone,
   toneClasses,
   type HealthView,
@@ -14,7 +12,7 @@ import {
 } from "@/lib/council";
 import type { LearningReport, ReliabilityScore } from "@/lib/types";
 import { PhaseTimeline } from "./phase-timeline";
-import { SectionLabel, StatusBadge } from "./primitives";
+import { StatusBadge } from "./primitives";
 
 // --------------------------------------------------------------------------- //
 // Council status bar — live sponsor/system signals. Holds the #settings anchor.
@@ -84,17 +82,13 @@ function SignalChip({ label, row, fallback }: { label: string; row?: SponsorView
 export function CouncilHeader({
   currentPhase,
   decision,
-  health,
   healthReady,
-  nodeName,
   running,
   steps,
 }: {
   currentPhase: string;
   decision?: string;
-  health: HealthView;
   healthReady: boolean;
-  nodeName?: string;
   running: boolean;
   steps: TimelineStep[];
 }) {
@@ -111,16 +105,11 @@ export function CouncilHeader({
               {liveLabel}
             </StatusBadge>
           </div>
-          <div className="mt-1.5">
-            <SectionLabel>Decision under debate</SectionLabel>
-            <p className="mt-0.5 line-clamp-2 break-words text-[14px] font-semibold leading-snug">
-              {decision || "Awaiting a live decision command"}
-            </p>
-          </div>
+          <p className="mt-1.5 line-clamp-2 break-words text-[14px] font-semibold leading-snug">
+            {decision || "What should the council decide?"}
+          </p>
           <div className="mt-1 text-[12px] text-muted-foreground">
             <span className="font-semibold text-info">{currentPhase}</span>
-            <span className="mx-1.5 text-border-strong">·</span>
-            <span>{running ? NODE_LABEL[nodeName ?? ""] ?? "Streaming" : getHealthLabel(health)}</span>
           </div>
         </div>
 

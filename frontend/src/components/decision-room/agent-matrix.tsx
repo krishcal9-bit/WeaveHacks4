@@ -51,9 +51,16 @@ export function AgentMatrix({
     <Panel
       id="council-matrix"
       icon={Users}
-      eyebrow="Council"
-      title="Agent status matrix"
-      action={<span className="hidden text-[10px] text-subtle-foreground sm:block">Select a seat to inspect</span>}
+      title="Council"
+      action={
+        running ? (
+          <StatusBadge tone="info" pulse>
+            Live council
+          </StatusBadge>
+        ) : (
+          <span className="hidden text-[10px] text-subtle-foreground sm:block">All seats visible</span>
+        )
+      }
     >
       <div className="grid grid-cols-1 gap-2 sm:grid-cols-2 xl:grid-cols-3">
         {members.map((member) => (
@@ -124,9 +131,9 @@ function AgentCard({
       title={member.mandate}
       className={cx(
         "group flex min-w-0 flex-col rounded-lg border p-2.5 text-left transition-all",
-        selected
-          ? "border-info/40 bg-info-bg/30 shadow-[0_0_0_3px_rgba(47,91,183,0.10)]"
-          : "border-border bg-surface hover:border-border-strong hover:bg-surface-quiet",
+        active && "border-info/45 bg-info-bg/35 shadow-[0_0_0_3px_rgba(47,91,183,0.12)]",
+        selected && !active && "border-info/40 bg-info-bg/30 shadow-[0_0_0_3px_rgba(47,91,183,0.10)]",
+        !selected && !active && "border-border bg-surface hover:border-border-strong hover:bg-surface-quiet",
       )}
     >
       <div className="flex min-w-0 items-start gap-2.5">
