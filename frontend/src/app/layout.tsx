@@ -4,6 +4,7 @@ import { Archivo, Fraunces, IBM_Plex_Mono, Newsreader } from "next/font/google";
 import { CopilotKit } from "@copilotkit/react-core";
 import { AppShell } from "@/components/app-shell";
 import { ThemeProvider } from "@/components/theme-provider";
+import { APP_DESCRIPTION, APP_DOCUMENT_TITLE } from "@/lib/branding";
 import { THEME_STORAGE_KEY } from "@/lib/theme";
 import "@copilotkit/react-ui/styles.css";
 import "./globals.css";
@@ -35,9 +36,9 @@ const plexMono = IBM_Plex_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Atlas — Autonomous Finance Operations",
-  description:
-    "An AI finance department that analyzes, debates, and decides on the decisions that move your runway.",
+  title: APP_DOCUMENT_TITLE,
+  description: APP_DESCRIPTION,
+  applicationName: APP_DOCUMENT_TITLE,
 };
 
 const themeInitScript = `

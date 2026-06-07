@@ -33,6 +33,7 @@ export function ReliabilityPanel({
     <Panel
       id="evals"
       icon={Activity}
+      visualIcon="health"
       eyebrow="W&B self-improvement"
       title="Council reliability"
       action={
@@ -48,7 +49,7 @@ export function ReliabilityPanel({
             <SkeletonText lines={3} />
           </div>
         ) : (
-          <EmptyState icon={Activity}>
+          <EmptyState icon={Activity} visualIcon="health">
             {started
               ? "The reliability auditor will score each agent and gate prompt promotion."
               : "Per-agent reliability scores and the W&B promotion gate appear after a run."}

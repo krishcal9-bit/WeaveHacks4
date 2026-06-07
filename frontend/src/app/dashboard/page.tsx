@@ -15,6 +15,7 @@ import { MotionLink } from "@/components/motion/motion-link";
 import { Stagger, StaggerItem } from "@/components/motion/stagger";
 import { springBar, springSnappy } from "@/components/motion/variants";
 import { api } from "@/lib/api";
+import { AtlasIcon, type AtlasIconName } from "@/components/atlas-icon";
 import type {
   ConnectorInventory,
   ConnectorStatus,
@@ -38,40 +39,47 @@ type BatchState = {
   done?: boolean;
 };
 
-const FILES: Record<string, { label: string; expected: string; aliases: string[] }> = {
+const FILES: Record<string, { label: string; expected: string; icon: AtlasIconName; aliases: string[] }> = {
   ledger: {
     label: "Ledger",
     expected: "CSV",
+    icon: "runway",
     aliases: ["ledger", "general-ledger", "cloudledger", "gl-detail", "gl", "cash", "close-detail"],
   },
   invoices: {
     label: "Invoices",
     expected: "CSV",
+    icon: "reconcile",
     aliases: ["invoice", "invoices", "payablesdesk", "ap-aging", "ap", "bills", "payables"],
   },
   vendor_export: {
     label: "Vendors",
     expected: "JSON",
+    icon: "evidence",
     aliases: ["vendor", "procurement", "contractvault", "contract", "supplier", "vendor-register"],
   },
   crm_opportunities: {
     label: "Sales pipeline",
     expected: "CSV",
+    icon: "scenario",
     aliases: ["crm", "opportunity", "opportunities", "pipelinehub", "pipeline", "forecast", "sales"],
   },
   headcount_plan: {
     label: "Hiring plan",
     expected: "CSV",
+    icon: "council",
     aliases: ["headcount", "peopleroster", "workforce", "hris", "people", "hiring"],
   },
   security_evidence: {
     label: "Security notes",
     expected: "JSON",
+    icon: "risk",
     aliases: ["security", "trustvault", "grc", "soc", "soc2", "control", "evidence", "risk"],
   },
   board_policy: {
     label: "Board rules",
     expected: "JSON",
+    icon: "memo",
     aliases: ["board-policy", "board_policy", "boardportal", "policy", "policies", "rules", "governance"],
   },
 };
@@ -236,11 +244,14 @@ export default function DataRoomPage() {
     <main className="mx-auto flex w-full max-w-[1180px] flex-col gap-4 px-4 py-5 sm:px-6">
       <Stagger className="flex flex-col gap-4">
       <StaggerItem className="grid gap-4 border-b border-border pb-5 lg:grid-cols-[minmax(0,1fr)_360px] lg:items-end">
-        <div className="min-w-0">
-          <h1 className="font-display text-[28px] font-medium tracking-tight">Add the demo files</h1>
-          <p className="mt-2 max-w-2xl text-[14px] leading-relaxed text-muted-foreground">
-            Choose the seven files from any demo folder. Atlas loads them, checks them, and then you can run the council.
-          </p>
+        <div className="flex min-w-0 items-start gap-3">
+          <AtlasIcon name="upload" size="lg" className="mt-1 hidden sm:inline-grid" />
+          <div className="min-w-0">
+            <h1 className="font-display text-[28px] font-medium tracking-tight">Add the demo files</h1>
+            <p className="mt-2 max-w-2xl text-[14px] leading-relaxed text-muted-foreground">
+              Choose the seven files from any demo folder. Atlas Finance loads them, checks them, and then you can run the council.
+            </p>
+          </div>
         </div>
         <div className="flex flex-wrap gap-2 lg:justify-end">
           <motion.label
@@ -313,9 +324,12 @@ export default function DataRoomPage() {
           transition={springSnappy}
         >
           <div className="flex items-center justify-between gap-3 border-b border-border px-4 py-3">
-            <div className="min-w-0">
-              <h2 className="text-[15px] font-semibold">Files to load</h2>
-              <p className="mt-0.5 text-[12px] text-muted-foreground">The file names are matched automatically.</p>
+            <div className="flex min-w-0 items-center gap-2">
+              <AtlasIcon name="upload" size="sm" className="atlas-icon-badge--quiet" />
+              <div className="min-w-0">
+                <h2 className="text-[15px] font-semibold">Files to load</h2>
+                <p className="mt-0.5 text-[12px] text-muted-foreground">The file names are matched automatically.</p>
+              </div>
             </div>
             <TonePill tone={readyToRun ? "positive" : loaded ? "warning" : "neutral"}>
               {loaded}/{total} loaded
@@ -327,6 +341,7 @@ export default function DataRoomPage() {
                 key={row.id}
                 index={index}
                 id={row.id}
+                icon={row.icon}
                 label={row.label}
                 expected={row.expected}
                 connector={row.connector}
@@ -375,6 +390,13 @@ function UploadProgress({
   const detail = batch?.current ?? (loaded === total && total > 0 ? "Ready to run the council" : "Upload the full folder for the cleanest demo.");
   const barClass = batch?.done && !batch.failed ? "bg-positive" : batch?.failed ? "bg-risk" : "bg-accent";
   const active = Boolean(batch && !batch.done);
+  const iconName: AtlasIconName = batch?.failed
+    ? "risk"
+    : active
+      ? "upload"
+      : value === 100
+        ? "reconcile"
+        : "memory";
 
   return (
     <motion.section
@@ -388,7 +410,9 @@ function UploadProgress({
       transition={active ? { duration: 1.6, repeat: Infinity, repeatType: "reverse" } : springSnappy}
     >
       <div className="flex flex-wrap items-center justify-between gap-2">
-        <div className="min-w-0">
+        <div className="flex min-w-0 items-center gap-3">
+          <AtlasIcon name={iconName} size="sm" className="atlas-icon-badge--quiet" />
+          <div className="min-w-0">
           <AnimatePresence mode="wait">
             <motion.div
               key={label}
@@ -413,6 +437,7 @@ function UploadProgress({
               {detail}
             </motion.div>
           </AnimatePresence>
+          </div>
         </div>
         <motion.div
           className="text-[18px] font-semibold tabular-nums"
@@ -446,6 +471,7 @@ function UploadProgress({
 
 function FileRow({
   id,
+  icon,
   index,
   label,
   expected,
@@ -454,6 +480,7 @@ function FileRow({
   onFile,
 }: {
   id: string;
+  icon: AtlasIconName;
   index: number;
   label: string;
   expected: string;
@@ -499,8 +526,13 @@ function FileRow({
       </AnimatePresence>
       <div className="relative min-w-0">
         <div className="flex min-w-0 flex-wrap items-center gap-2">
-          <motion.div animate={uploading ? { scale: [1, 1.25, 1] } : { scale: 1 }} transition={{ duration: 0.9, repeat: uploading ? Infinity : 0 }}>
-            <StatusDot tone={tone} />
+          <motion.div
+            className="relative shrink-0"
+            animate={uploading ? { scale: [1, 1.08, 1] } : { scale: 1 }}
+            transition={{ duration: 0.9, repeat: uploading ? Infinity : 0 }}
+          >
+            <AtlasIcon name={icon} size="xs" className="atlas-icon-badge--quiet" />
+            <StatusDot tone={tone} className="absolute -bottom-0.5 -right-0.5 ring-2 ring-surface" />
           </motion.div>
           <div className="text-[14px] font-semibold text-foreground">{label}</div>
           <AnimatePresence mode="wait">
@@ -584,6 +616,15 @@ function ResultPanel({
   const issues = (report?.discrepancies ?? []).filter((item) => item.severity !== "info");
   const ready = loaded === total && total > 0;
   const stateKey = serviceError ? "offline" : ready ? (issues.length ? "review" : "ready") : loaded ? "partial" : "waiting";
+  const stateIcon: AtlasIconName = serviceError
+    ? "risk"
+    : ready
+      ? issues.length
+        ? "evidence"
+        : "reconcile"
+      : loaded
+        ? "upload"
+        : "memory";
 
   return (
     <motion.aside
@@ -593,7 +634,10 @@ function ResultPanel({
       animate={{ opacity: 1, x: 0 }}
       transition={{ ...springSnappy, delay: 0.12 }}
     >
-      <h2 className="text-[15px] font-semibold">What happened</h2>
+      <div className="flex items-center gap-2">
+        <AtlasIcon name={stateIcon} size="sm" className="atlas-icon-badge--quiet" />
+        <h2 className="text-[15px] font-semibold">What happened</h2>
+      </div>
       <div className="mt-3 rounded-lg border border-border bg-background p-3">
         <AnimatePresence mode="wait">
           <motion.div
@@ -615,7 +659,7 @@ function ResultPanel({
                 title={issues.length ? "Files loaded. Review the notes." : "Files loaded."}
                 detail={
                   issues.length
-                    ? `Atlas found ${fmtInt(issues.length)} item${issues.length === 1 ? "" : "s"} to review before the run.`
+                    ? `Atlas Finance found ${fmtInt(issues.length)} item${issues.length === 1 ? "" : "s"} to review before the run.`
                     : "No review items found."
                 }
               />
@@ -650,12 +694,13 @@ function ResultPanel({
           ) : (
             <motion.div
               key="empty"
-              className="flex min-h-[140px] items-center justify-center rounded-lg border border-dashed border-border bg-surface-quiet p-4 text-center text-[12px] text-muted-foreground"
+              className="flex min-h-[140px] flex-col items-center justify-center gap-2 rounded-lg border border-dashed border-border bg-surface-quiet p-4 text-center text-[12px] text-muted-foreground"
               initial={{ opacity: 0, scale: 0.98 }}
               animate={{ opacity: 1, scale: 1 }}
               exit={{ opacity: 0, scale: 0.98 }}
             >
-              Notes from the file check will appear here.
+              <AtlasIcon name="reconcile" size="md" className="atlas-icon-badge--quiet" />
+              <span>Notes from the file check will appear here.</span>
             </motion.div>
           )}
         </AnimatePresence>
@@ -707,6 +752,7 @@ function StateMessage({ tone, title, detail }: { tone: Tone; title: string; deta
 
 function IssueItem({ item }: { item: Discrepancy }) {
   const tone: Tone = item.severity === "critical" || item.severity === "high" ? "risk" : item.severity === "medium" ? "warning" : "info";
+  const iconName: AtlasIconName = tone === "risk" ? "risk" : tone === "warning" ? "evidence" : "health";
   return (
     <motion.li
       className="rounded-lg border border-border bg-background p-3"
@@ -715,6 +761,7 @@ function IssueItem({ item }: { item: Discrepancy }) {
       transition={springSnappy}
     >
       <div className="flex items-start justify-between gap-2">
+        <AtlasIcon name={iconName} size="xs" className="atlas-icon-badge--quiet" />
         <div className="min-w-0">
           <div className="line-clamp-1 text-[12px] font-semibold text-foreground">{item.title}</div>
           <div className="mt-1 line-clamp-2 text-[11.5px] leading-relaxed text-muted-foreground">{item.detail}</div>

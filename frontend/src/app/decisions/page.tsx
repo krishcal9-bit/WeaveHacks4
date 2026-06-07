@@ -19,15 +19,19 @@ import type {
   CommandResult,
   DebateState,
   OperatorCommand,
+  VoiceTranscriptEntry,
 } from "@/lib/types";
 import { CouncilWeb } from "@/components/decision-room/council-web";
 import { BoardMemo, ScenarioImpactCard } from "@/components/decision-room/board-memo";
 import { CommandConsole } from "@/components/decision-room/command-console";
 import { CouncilHeader, CouncilStatusBar, PreflightPanel } from "@/components/decision-room/council-chrome";
+import { InfluencePanel } from "@/components/decision-room/influence-panel";
+import { SelfImprovementPanel } from "@/components/decision-room/self-improvement-panel";
 import { TranscriptStream } from "@/components/decision-room/transcript-stream";
+import { Stagger, StaggerItem } from "@/components/motion/stagger";
 
 import { agentBase } from "@/lib/agent-base";
-import { connectRealtimeVoice, type RealtimeVoiceHandle } from "@/lib/realtime-voice";
+import { connectRealtimeVoice, type RealtimeVoiceHandle, type VoiceTranscriptUpdate } from "@/lib/realtime-voice";
 import { useDeferredHealthReady, useMounted } from "@/lib/use-mounted";
 
 export default function DecisionsPage() {
@@ -36,9 +40,32 @@ export default function DecisionsPage() {
   const [selectedAgentId, setSelectedAgentId] = useState<string | null>(null);
   const [nowLabel, setNowLabel] = useState("");
   const [realtime, setRealtime] = useState<RealtimeView>({ status: "idle", detail: "Realtime 2 voice idle" });
+  const [voiceTranscript, setVoiceTranscript] = useState<VoiceTranscriptEntry[]>([]);
 
   const realtimeAudioRef = useRef<HTMLAudioElement | null>(null);
   const realtimeVoiceRef = useRef<RealtimeVoiceHandle | null>(null);
+
+  const mergeVoiceTranscript = useCallback((update: VoiceTranscriptUpdate) => {
+    const at = new Intl.DateTimeFormat("en-US", {
+      hour: "numeric",
+      minute: "2-digit",
+      second: "2-digit",
+    }).format(new Date());
+
+    setVoiceTranscript((prev) => {
+      const index = prev.findIndex((entry) => entry.id === update.id);
+      if (index >= 0) {
+        const next = [...prev];
+        next[index] = {
+          ...next[index],
+          text: update.text,
+          final: update.final,
+        };
+        return next;
+      }
+      return [...prev, { id: update.id, role: update.role, text: update.text, final: update.final, at }];
+    });
+  }, []);
 
   const { state, setState, running, nodeName } = useCoAgent<DebateState>({ name: "finance_department" });
   const { appendMessage } = useCopilotChat();
@@ -48,7 +75,9 @@ export default function DecisionsPage() {
   const agentStatuses = state?.agent_statuses ?? [];
   const recommendation = state?.recommendation;
   const reliabilityScores = state?.reliability_scores ?? [];
+  const councilInfluence = state?.council_influence;
   const learningReport = state?.learning_report;
+  const agentImprovements = state?.agent_improvements;
   const commands = state?.commands;
   const decision = state?.decision;
   const companyName = state?.context?.financials?.name ?? "the company";
@@ -189,6 +218,7 @@ export default function DecisionsPage() {
         audioEl,
         callbacks: {
           onStatus: setRealtime,
+          onTranscript: mergeVoiceTranscript,
           onSubmitDecision: async (decision) => {
             if (running || !healthReady) return;
             setInput(decision);
@@ -200,7 +230,20 @@ export default function DecisionsPage() {
       stopRealtime();
       setRealtime({ status: "blocked", detail: err instanceof Error ? err.message : String(err) });
     }
-  }, [appendMessage, healthReady, running, stopRealtime]);
+  }, [appendMessage, healthReady, mergeVoiceTranscript, running, stopRealtime]);
+
+  const onVoiceButton = useCallback(() => {
+    if (realtime.status === "connected") {
+      const handle = realtimeVoiceRef.current;
+      if (!handle) return;
+      const nextMuted = !handle.isMicMuted();
+      handle.setMicMuted(nextMuted);
+      return;
+    }
+    if (realtime.status !== "connecting") {
+      void startRealtime();
+    }
+  }, [realtime.status, startRealtime]);
 
   // ----------------------------------------------------------------------- //
   // Submission — strict-gated, streams via CopilotKit / AG-UI.
@@ -363,6 +406,7 @@ export default function DecisionsPage() {
   return (
     <main className="flex min-h-full flex-col bg-background">
       <CouncilStatusBar
+        councilInfluence={mounted ? councilInfluence : undefined}
         healthReady={displayHealthReady}
         learningReport={mounted ? learningReport : undefined}
         nowLabel={nowLabel}
@@ -382,9 +426,11 @@ export default function DecisionsPage() {
         {!displayHealthReady && <PreflightPanel health={health} onRefresh={loadHealth} />}
 
         <div className="grid min-h-0 flex-1 gap-2 xl:grid-cols-[minmax(0,1fr)_minmax(280px,340px)]">
-          <div className="flex min-w-0 flex-col gap-2">
+          <Stagger className="flex min-w-0 flex-col gap-2">
+            <StaggerItem>
             <CouncilWeb
               agentStatuses={displayAgentStatuses}
+              councilInfluence={mounted ? councilInfluence : undefined}
               healthReady={displayHealthReady}
               nodeName={displayNodeName}
               onSelectAgent={setSelectedAgentId}
@@ -394,7 +440,9 @@ export default function DecisionsPage() {
               started={displayStarted}
               transcript={displayTranscript}
             />
+            </StaggerItem>
 
+            <StaggerItem>
             <TranscriptStream
               transcript={displayTranscript}
               recommendation={displayRecommendation}
@@ -404,7 +452,28 @@ export default function DecisionsPage() {
               started={displayStarted}
               agentStatuses={displayAgentStatuses}
             />
+            </StaggerItem>
 
+            <StaggerItem>
+            <InfluencePanel
+              councilInfluence={mounted ? councilInfluence : undefined}
+              reliabilityScores={mounted ? reliabilityScores : []}
+              running={displayRunning}
+              started={displayStarted}
+              phase={displayPhase}
+            />
+            </StaggerItem>
+
+            <StaggerItem>
+            <SelfImprovementPanel
+              agentImprovements={mounted ? agentImprovements : undefined}
+              reliabilityScores={mounted ? reliabilityScores : []}
+              running={displayRunning}
+              started={displayStarted}
+            />
+            </StaggerItem>
+
+            <StaggerItem>
             <BoardMemo
               recommendation={displayRecommendation}
               decision={displayDecision}
@@ -414,8 +483,12 @@ export default function DecisionsPage() {
               healthReady={displayHealthReady}
               started={displayStarted}
             />
+            </StaggerItem>
+
+            <StaggerItem>
             <ScenarioImpactCard impact={displayRecommendation?.impact} />
-          </div>
+            </StaggerItem>
+          </Stagger>
 
           <aside className="min-w-0 xl:sticky xl:top-2 xl:self-start">
             <CommandConsole
@@ -427,8 +500,8 @@ export default function DecisionsPage() {
               healthReady={displayHealthReady}
               started={displayStarted}
               realtime={realtime}
-              onStartRealtime={startRealtime}
-              onStopRealtime={stopRealtime}
+              onVoiceButton={onVoiceButton}
+              voiceTranscript={voiceTranscript}
               commands={commands}
               audioRef={realtimeAudioRef}
             />

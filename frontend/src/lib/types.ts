@@ -135,7 +135,7 @@ export interface DecisionEvent {
   [k: string]: unknown;
 }
 
-export type TurnType = "framing" | "position" | "rebuttal" | "decision" | "reliability" | "challenge" | "thinking";
+export type TurnType = "framing" | "position" | "rebuttal" | "decision" | "reliability" | "challenge" | "thinking" | "influence";
 export type Stance = "support" | "oppose" | "conditional";
 
 export interface TranscriptTurn {
@@ -167,6 +167,14 @@ export interface TranscriptTurn {
   evidence_used?: string[];
   prompt_version?: string;
   error?: string;
+}
+
+export interface VoiceTranscriptEntry {
+  id: string;
+  role: "user" | "assistant";
+  text: string;
+  final: boolean;
+  at: string;
 }
 
 // Grounding artifact behind a claim (Redis-backed). Optional everywhere.
@@ -224,6 +232,8 @@ export interface Recommendation {
   key_risks?: string[];
   conditions?: string[];
   impact?: RunwayImpact;
+  council_influence?: CouncilInfluenceReport;
+  confidence_factors?: Record<string, number | string>;
 }
 
 export interface DebateState {
@@ -240,7 +250,11 @@ export interface DebateState {
   redis_activity?: RedisActivity[];
   sponsor_health?: SponsorHealth | SponsorCheck[];
   reliability_scores?: ReliabilityScore[];
+  council_influence?: CouncilInfluenceReport;
   learning_report?: LearningReport;
+  // W&B Weave-driven self-improvement loop (agent/src/self_improvement.py): the
+  // least-reliable sub-agent is improved each round; reliability trends over time.
+  agent_improvements?: AgentImprovementState;
   // Deterministic strategic-planning digital twin (agent/src/planning.py),
   // attached by the CFO synthesis node for multi-month plan prompts.
   strategic_plan?: StrategicPlan;
@@ -516,6 +530,11 @@ export interface AgentStatus {
   reliability_score?: number;
   reliability_dimensions?: ReliabilityDimensions;
   reliability_rationale?: string;
+  influence_weight?: number;
+  influence_rationale?: string;
+  grounding_signal?: number;
+  debate_signal?: number;
+  historical_reliability?: number;
   known_weaknesses?: string[];
   prompt_adjustment?: string;
   promotion_gate?: string;
@@ -541,6 +560,34 @@ export interface ReliabilityScore extends ReliabilityDimensions {
   promotion_gate?: string;
 }
 
+export interface AgentInfluence {
+  agent_id: string;
+  influence_weight: number;
+  grounding_signal?: number;
+  debate_signal?: number;
+  historical_reliability?: number;
+  rationale?: string;
+}
+
+export interface CouncilInfluenceLeader {
+  agent_id: string;
+  influence_weight: number;
+  rationale?: string;
+}
+
+export interface CouncilInfluenceReport {
+  summary?: string;
+  weights: AgentInfluence[];
+  ranked_weights?: AgentInfluence[];
+  spread?: number;
+  leader?: CouncilInfluenceLeader;
+  historical_priors?: Record<string, number>;
+  signals?: Record<string, { grounding_signal?: number; debate_signal?: number; cited_metrics?: number }>;
+  blend_formula?: Record<string, number>;
+  decision_type?: string;
+  decision_type_fit?: string;
+}
+
 export interface LearningReport {
   summary?: string;
   eval_dataset?: string;
@@ -549,6 +596,68 @@ export interface LearningReport {
   score_formula?: Record<string, number>;
   weave_project?: string | null;
   weave_url?: string | null;
+  [k: string]: unknown;
+}
+
+// --------------------------------------------------------------------------- //
+// W&B Weave-driven self-improvement loop — mirrors agent/src/self_improvement.py.
+// The five-agent council (CFO + four sub-agents) improves its least-reliable
+// sub-agent every round; reliability fluctuates and trends across rounds.
+// --------------------------------------------------------------------------- //
+export interface ReliabilityHistoryPoint {
+  round: number;
+  reliability: number;
+}
+
+export interface AgentImprovementEntry {
+  round: number;
+  from_version?: number;
+  to_version?: number;
+  version_label?: string;
+  focus?: string;
+  directive?: string;
+  targeted_dimension?: string;
+  expected_gain?: string;
+  prior_reliability?: number;
+  source?: string;
+  at?: string;
+}
+
+export interface AgentImprovementSeat {
+  agent_id?: string;
+  label?: string;
+  version?: number;
+  version_label?: string;
+  directive?: string;
+  focus?: string;
+  targeted_dimension?: string;
+  applied_round?: number;
+  reliability_history?: ReliabilityHistoryPoint[];
+  improvement_history?: AgentImprovementEntry[];
+  improved_this_round?: boolean;
+}
+
+export interface ImprovementRoundEntry {
+  round: number;
+  improved?: string;
+  improved_label?: string;
+  focus?: string;
+  targeted_dimension?: string;
+  prior_reliability?: number;
+  council_average?: number;
+  scores?: Record<string, number>;
+  version_label?: string;
+  source?: string;
+  at?: string;
+}
+
+export interface AgentImprovementState {
+  company_id?: string;
+  round?: number;
+  updated_at?: string;
+  last_improved?: string | null;
+  agents?: Record<string, AgentImprovementSeat>;
+  rounds?: ImprovementRoundEntry[];
   [k: string]: unknown;
 }
 

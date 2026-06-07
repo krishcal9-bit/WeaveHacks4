@@ -56,6 +56,38 @@ export const staggerFast: Variants = {
   },
 };
 
+export const transcriptTurn: Variants = {
+  hidden: { opacity: 0, y: 10, x: -8, scale: 0.985, filter: "blur(4px)" },
+  show: {
+    opacity: 1,
+    y: 0,
+    x: 0,
+    scale: 1,
+    filter: "blur(0px)",
+    transition: { duration: 0.38, ease: EASE_OUT_EXPO },
+  },
+};
+
+export const councilOrb: Variants = {
+  hidden: { opacity: 0, scale: 0.82, filter: "blur(6px)" },
+  show: {
+    opacity: 1,
+    scale: 1,
+    filter: "blur(0px)",
+    transition: { type: "spring", stiffness: 280, damping: 24, mass: 0.9 },
+  },
+};
+
+export const influenceReveal: Variants = {
+  hidden: { opacity: 0, y: 8, scale: 0.98 },
+  show: {
+    opacity: 1,
+    y: 0,
+    scale: 1,
+    transition: { duration: 0.42, ease: EASE_OUT_EXPO },
+  },
+};
+
 export function tabSlideVariants(direction: number): Variants {
   const x = direction === 0 ? 0 : direction > 0 ? 28 : -28;
   return {

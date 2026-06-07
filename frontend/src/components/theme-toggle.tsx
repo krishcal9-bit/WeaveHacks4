@@ -16,7 +16,7 @@ const toggleClass = (variant: "app" | "landing", className?: string) =>
   cx(
     "inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-full border transition-colors",
     variant === "landing"
-      ? "border-white/12 bg-white/[0.04] text-[#d8d0c4] hover:border-white/20 hover:bg-white/[0.08] hover:text-[#f6f0e6]"
+      ? "border-border bg-surface text-muted-foreground hover:border-border-strong hover:bg-surface-muted hover:text-foreground"
       : "border-border bg-background text-muted-foreground hover:bg-surface-muted hover:text-foreground",
     className,
   );

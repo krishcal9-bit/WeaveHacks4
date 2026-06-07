@@ -1,13 +1,63 @@
-entity,export_id,planning_cycle,approved_by,team,role,headcount,monthly_cost,start_month,status,funding_basis,recruiter,req_id
-Verdant MedTech Labs,VM-PEOPLEROSTER-H2-2026,H2 operating plan,Pending finance review,Engineering,Platform Engineer,1,14000,2026-07,open,signed expansion,internal,VM-REQ-0500
-Verdant MedTech Labs,VM-PEOPLEROSTER-H2-2026,H2 operating plan,Finance Committee,Customer Success,Implementation Manager,2,23500,2026-08,planned,security evidence remediation,retained search,VM-REQ-0501
-Verdant MedTech Labs,VM-PEOPLEROSTER-H2-2026,H2 operating plan,Finance Committee,Sales,Account Executive,3,33000,2026-09,filled,pipeline conversion,agency,VM-REQ-0502
-Verdant MedTech Labs,VM-PEOPLEROSTER-H2-2026,H2 operating plan,Finance Committee,Marketing,Growth Manager,4,35000,2026-10,open,customer onboarding,internal,VM-REQ-0503
-Verdant MedTech Labs,VM-PEOPLEROSTER-H2-2026,H2 operating plan,Pending finance review,Security,Security Analyst,1,44500,2026-11,open,automation savings,retained search,VM-REQ-0504
-Verdant MedTech Labs,VM-PEOPLEROSTER-H2-2026,H2 operating plan,Finance Committee,Operations,Ops Lead,2,54000,2026-07,planned,signed expansion,agency,VM-REQ-0505
-Verdant MedTech Labs,VM-PEOPLEROSTER-H2-2026,H2 operating plan,Finance Committee,Data,Data Engineer,3,14000,2026-08,filled,security evidence remediation,internal,VM-REQ-0506
-Verdant MedTech Labs,VM-PEOPLEROSTER-H2-2026,H2 operating plan,Finance Committee,Quality,QA Specialist,4,23500,2026-09,open,pipeline conversion,retained search,VM-REQ-0507
-Verdant MedTech Labs,VM-PEOPLEROSTER-H2-2026,H2 operating plan,Pending finance review,Finance Ops,Finance Systems Analyst,1,33000,2026-10,open,customer onboarding,agency,VM-REQ-0508
-Verdant MedTech Labs,VM-PEOPLEROSTER-H2-2026,H2 operating plan,Finance Committee,Field Operations,Field Technician,2,35000,2026-11,planned,automation savings,internal,VM-REQ-0509
-Verdant MedTech Labs,VM-PEOPLEROSTER-H2-2026,H2 operating plan,Finance Committee,Hardware,Hardware Engineer,3,44500,2026-07,filled,signed expansion,retained search,VM-REQ-0510
-Verdant MedTech Labs,VM-PEOPLEROSTER-H2-2026,H2 operating plan,Finance Committee,Risk,Risk Analyst,4,54000,2026-08,open,security evidence remediation,agency,VM-REQ-0511
+team,role,headcount,monthly_cost,start_month,status,funding_basis,requisition_id,manager,location,source_system
+Engineering,Staff Engineer 1,1,15400,2026-01,open,security blocker,VM-REQ-0001,Dana Price,Remote US,PeopleRoster
+Engineering,Implementation Manager 2,2,17150,2026-02,planned,approved plan,VM-REQ-0002,Morgan Lee,Remote US,PeopleRoster
+Engineering,Revenue Analyst 3,3,18900,2026-03,filled,approved plan,VM-REQ-0003,Casey Patel,Remote US,PeopleRoster
+Engineering,Security Engineer 4,1,20650,2026-04,filled,approved plan,VM-REQ-0004,Jordan Wells,Remote US,PeopleRoster
+Engineering,Finance Manager 5,2,22400,2026-05,open,signed revenue,VM-REQ-0005,Dana Price,Remote US,PeopleRoster
+Customer Success,Implementation Manager 1,1,16700,2026-02,open,security blocker,VM-REQ-0006,Dana Price,Austin,PeopleRoster
+Customer Success,Revenue Analyst 2,2,18450,2026-03,planned,approved plan,VM-REQ-0007,Morgan Lee,Austin,PeopleRoster
+Customer Success,Security Engineer 3,3,20200,2026-04,filled,approved plan,VM-REQ-0008,Casey Patel,Austin,PeopleRoster
+Customer Success,Finance Manager 4,1,21950,2026-05,filled,approved plan,VM-REQ-0009,Jordan Wells,Austin,PeopleRoster
+Customer Success,Ops Coordinator 5,2,23700,2026-06,open,signed revenue,VM-REQ-0010,Dana Price,Austin,PeopleRoster
+Sales,Revenue Analyst 1,1,18000,2026-03,open,security blocker,VM-REQ-0011,Dana Price,Toronto,PeopleRoster
+Sales,Security Engineer 2,2,19750,2026-04,planned,approved plan,VM-REQ-0012,Morgan Lee,Toronto,PeopleRoster
+Sales,Finance Manager 3,3,21500,2026-05,filled,approved plan,VM-REQ-0013,Casey Patel,Toronto,PeopleRoster
+Sales,Ops Coordinator 4,1,23250,2026-06,filled,approved plan,VM-REQ-0014,Jordan Wells,Toronto,PeopleRoster
+Sales,Product Manager 5,2,25000,2026-01,open,signed revenue,VM-REQ-0015,Dana Price,Toronto,PeopleRoster
+Security,Security Engineer 1,1,19300,2026-04,open,security blocker,VM-REQ-0016,Dana Price,Dublin,PeopleRoster
+Security,Finance Manager 2,2,21050,2026-05,planned,approved plan,VM-REQ-0017,Morgan Lee,Dublin,PeopleRoster
+Security,Ops Coordinator 3,3,22800,2026-06,filled,approved plan,VM-REQ-0018,Casey Patel,Dublin,PeopleRoster
+Security,Product Manager 4,1,24550,2026-01,filled,approved plan,VM-REQ-0019,Jordan Wells,Dublin,PeopleRoster
+Security,Data Engineer 5,2,26300,2026-02,open,signed revenue,VM-REQ-0020,Dana Price,Dublin,PeopleRoster
+Finance,Finance Manager 1,1,20600,2026-05,open,security blocker,VM-REQ-0021,Dana Price,Denver,PeopleRoster
+Finance,Ops Coordinator 2,2,22350,2026-06,planned,approved plan,VM-REQ-0022,Morgan Lee,Denver,PeopleRoster
+Finance,Product Manager 3,3,24100,2026-01,filled,approved plan,VM-REQ-0023,Casey Patel,Denver,PeopleRoster
+Finance,Data Engineer 4,1,25850,2026-02,filled,approved plan,VM-REQ-0024,Jordan Wells,Denver,PeopleRoster
+Finance,Support Lead 5,2,27600,2026-03,open,signed revenue,VM-REQ-0025,Dana Price,Denver,PeopleRoster
+Operations,Ops Coordinator 1,1,21900,2026-06,open,security blocker,VM-REQ-0026,Dana Price,Remote US,PeopleRoster
+Operations,Product Manager 2,2,23650,2026-01,planned,approved plan,VM-REQ-0027,Morgan Lee,Remote US,PeopleRoster
+Operations,Data Engineer 3,3,25400,2026-02,filled,approved plan,VM-REQ-0028,Casey Patel,Remote US,PeopleRoster
+Operations,Support Lead 4,1,27150,2026-03,filled,approved plan,VM-REQ-0029,Jordan Wells,Remote US,PeopleRoster
+Operations,Solutions Architect 5,2,28900,2026-04,open,signed revenue,VM-REQ-0030,Dana Price,Remote US,PeopleRoster
+Product,Product Manager 1,1,23200,2026-01,open,security blocker,VM-REQ-0031,Dana Price,Austin,PeopleRoster
+Product,Data Engineer 2,2,24950,2026-02,planned,approved plan,VM-REQ-0032,Morgan Lee,Austin,PeopleRoster
+Product,Support Lead 3,3,26700,2026-03,filled,approved plan,VM-REQ-0033,Casey Patel,Austin,PeopleRoster
+Product,Solutions Architect 4,1,28450,2026-04,filled,approved plan,VM-REQ-0034,Jordan Wells,Austin,PeopleRoster
+Product,Staff Engineer 5,2,30200,2026-05,open,signed revenue,VM-REQ-0035,Dana Price,Austin,PeopleRoster
+Data,Data Engineer 1,1,24500,2026-02,open,security blocker,VM-REQ-0036,Dana Price,Toronto,PeopleRoster
+Data,Support Lead 2,2,26250,2026-03,planned,approved plan,VM-REQ-0037,Morgan Lee,Toronto,PeopleRoster
+Data,Solutions Architect 3,3,28000,2026-04,filled,approved plan,VM-REQ-0038,Casey Patel,Toronto,PeopleRoster
+Data,Staff Engineer 4,1,29750,2026-05,filled,approved plan,VM-REQ-0039,Jordan Wells,Toronto,PeopleRoster
+Data,Implementation Manager 5,2,31500,2026-06,open,signed revenue,VM-REQ-0040,Dana Price,Toronto,PeopleRoster
+Implementation,Support Lead 1,1,25800,2026-03,open,security blocker,VM-REQ-0041,Dana Price,Dublin,PeopleRoster
+Implementation,Solutions Architect 2,2,27550,2026-04,planned,approved plan,VM-REQ-0042,Morgan Lee,Dublin,PeopleRoster
+Implementation,Staff Engineer 3,3,29300,2026-05,filled,approved plan,VM-REQ-0043,Casey Patel,Dublin,PeopleRoster
+Implementation,Implementation Manager 4,1,31050,2026-06,filled,approved plan,VM-REQ-0044,Jordan Wells,Dublin,PeopleRoster
+Implementation,Revenue Analyst 5,2,32800,2026-01,open,signed revenue,VM-REQ-0045,Dana Price,Dublin,PeopleRoster
+Support,Solutions Architect 1,1,27100,2026-04,open,security blocker,VM-REQ-0046,Dana Price,Denver,PeopleRoster
+Support,Staff Engineer 2,2,28850,2026-05,planned,approved plan,VM-REQ-0047,Morgan Lee,Denver,PeopleRoster
+Support,Implementation Manager 3,3,30600,2026-06,filled,approved plan,VM-REQ-0048,Casey Patel,Denver,PeopleRoster
+Support,Revenue Analyst 4,1,32350,2026-01,filled,approved plan,VM-REQ-0049,Jordan Wells,Denver,PeopleRoster
+Support,Security Engineer 5,2,34100,2026-02,open,signed revenue,VM-REQ-0050,Dana Price,Denver,PeopleRoster
+RevOps Exception,Staff Engineer exception 1,2,18200,2026-03,open,unmapped expansion request,VM-REQ-0051,Dana Price,Remote US,PeopleRoster
+RevOps Exception,Implementation Manager exception 2,1,19500,2026-04,planned,unmapped expansion request,VM-REQ-0052,Morgan Lee,Remote US,PeopleRoster
+RevOps Exception,Revenue Analyst exception 3,1,20800,2026-05,planned,unmapped expansion request,VM-REQ-0053,Casey Patel,Remote US,PeopleRoster
+Trust Program,Implementation Manager exception 1,2,20600,2026-04,open,customer escalation,VM-REQ-0054,Morgan Lee,Austin,PeopleRoster
+Trust Program,Revenue Analyst exception 2,1,21900,2026-05,planned,customer escalation,VM-REQ-0055,Casey Patel,Austin,PeopleRoster
+Trust Program,Security Engineer exception 3,1,23200,2026-06,planned,customer escalation,VM-REQ-0056,Jordan Wells,Austin,PeopleRoster
+Strategic Programs,Revenue Analyst exception 1,2,23000,2026-05,open,unmapped expansion request,VM-REQ-0057,Casey Patel,Toronto,PeopleRoster
+Strategic Programs,Security Engineer exception 2,1,24300,2026-06,planned,unmapped expansion request,VM-REQ-0058,Jordan Wells,Toronto,PeopleRoster
+Strategic Programs,Finance Manager exception 3,1,25600,2026-01,planned,unmapped expansion request,VM-REQ-0059,Dana Price,Toronto,PeopleRoster
+Field Launch,Security Engineer exception 1,2,25400,2026-06,open,customer escalation,VM-REQ-0060,Jordan Wells,Dublin,PeopleRoster
+Field Launch,Finance Manager exception 2,1,26700,2026-01,planned,customer escalation,VM-REQ-0061,Dana Price,Dublin,PeopleRoster
+Field Launch,Ops Coordinator exception 3,1,28000,2026-02,planned,customer escalation,VM-REQ-0062,Morgan Lee,Dublin,PeopleRoster

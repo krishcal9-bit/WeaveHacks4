@@ -2,6 +2,7 @@
 
 import { useState, type ComponentType, type ReactNode } from "react";
 import { Check, ChevronDown, Copy } from "lucide-react";
+import { AtlasIcon, type AtlasIconName } from "@/components/atlas-icon";
 import { cx } from "@/components/ui";
 import { toneClasses, type Tone } from "@/lib/council";
 
@@ -15,6 +16,7 @@ export function Panel({
   id,
   title,
   icon: Icon,
+  visualIcon,
   eyebrow,
   action,
   count,
@@ -28,6 +30,7 @@ export function Panel({
   id?: string;
   title: ReactNode;
   icon?: IconType;
+  visualIcon?: AtlasIconName;
   eyebrow?: ReactNode;
   action?: ReactNode;
   count?: number;
@@ -46,17 +49,19 @@ export function Panel({
       id={id}
       className={cx("flex min-w-0 flex-col overflow-hidden rounded-lg border border-border bg-surface shadow-sm", className)}
     >
-      <header className="flex items-center gap-2 border-b border-border px-3 py-2.5">
-        {Icon && (
-          <span className="grid h-6 w-6 shrink-0 place-items-center rounded-md bg-surface-muted text-muted-foreground">
+      <header className="flex items-center gap-2.5 border-b border-border px-3 py-2.5">
+        {visualIcon ? (
+          <AtlasIcon name={visualIcon} size="sm" className="atlas-icon-badge--quiet" />
+        ) : Icon ? (
+          <span className="grid h-6 w-6 shrink-0 place-items-center rounded-md border border-border/70 bg-surface-muted text-accent">
             <Icon className="h-3.5 w-3.5" strokeWidth={2} />
           </span>
-        )}
+        ) : null}
         <div className="min-w-0 flex-1">
           {eyebrow && (
-            <div className="text-[10px] font-semibold uppercase tracking-[0.08em] text-subtle-foreground">{eyebrow}</div>
+            <div className="font-mono text-[9px] font-semibold uppercase tracking-[0.18em] text-subtle-foreground">{eyebrow}</div>
           )}
-          <h2 className="truncate text-[13px] font-semibold leading-tight">{title}</h2>
+          <h2 className="truncate font-display text-[15px] font-medium leading-tight tracking-[-0.01em]">{title}</h2>
         </div>
         {typeof count === "number" && (
           <span className="shrink-0 rounded-full border border-border bg-background px-1.5 py-0.5 text-[10px] font-semibold tabular-nums text-muted-foreground">
@@ -144,7 +149,17 @@ export function SkeletonText({ lines = 3, className = "" }: { lines?: number; cl
   );
 }
 
-export function EmptyState({ icon: Icon, children, className = "" }: { icon?: IconType; children: ReactNode; className?: string }) {
+export function EmptyState({
+  icon: Icon,
+  visualIcon,
+  children,
+  className = "",
+}: {
+  icon?: IconType;
+  visualIcon?: AtlasIconName;
+  children: ReactNode;
+  className?: string;
+}) {
   return (
     <div
       className={cx(
@@ -152,7 +167,11 @@ export function EmptyState({ icon: Icon, children, className = "" }: { icon?: Ic
         className,
       )}
     >
-      {Icon && <Icon className="h-5 w-5 text-subtle-foreground" strokeWidth={1.75} />}
+      {visualIcon ? (
+        <AtlasIcon name={visualIcon} size="md" className="atlas-icon-badge--quiet" />
+      ) : Icon ? (
+        <Icon className="h-5 w-5 text-subtle-foreground" strokeWidth={1.75} />
+      ) : null}
       <p className="text-[12px] leading-relaxed text-muted-foreground">{children}</p>
     </div>
   );
@@ -217,7 +236,7 @@ export function Waveform({ active, className = "" }: { active: boolean; classNam
       {[4, 9, 13, 7, 15, 6, 11, 5, 10].map((height, index) => (
         <span
           key={`${height}-${index}`}
-          className={cx("w-[2px] rounded-full bg-current", active ? "animate-pulse" : "opacity-60")}
+          className={cx("w-[2px] rounded-full bg-current", active ? "council-wave-bar" : "opacity-60")}
           style={{ height }}
         />
       ))}

@@ -80,6 +80,7 @@ export function AgentInspector({
     <Panel
       id="agent-inspector"
       icon={agentIcon(member.id)}
+      visualIcon="council"
       eyebrow="Inspector"
       title={member.label}
       action={

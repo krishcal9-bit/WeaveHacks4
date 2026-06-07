@@ -1,5 +1,6 @@
 import type { ComponentType, ReactNode } from "react";
 import { ArrowDownRight, ArrowUpRight, Minus } from "lucide-react";
+import { AtlasIcon, type AtlasIconName } from "@/components/atlas-icon";
 import { cx, Pill, StatusDot } from "@/components/ui";
 import { decisionStyle } from "@/lib/agents";
 import { titleCase } from "@/lib/format";
@@ -49,6 +50,7 @@ export function Panel({
   title,
   eyebrow,
   icon: Icon,
+  visualIcon,
   action,
   children,
   className = "",
@@ -57,6 +59,7 @@ export function Panel({
   title: ReactNode;
   eyebrow?: ReactNode;
   icon?: ComponentType<{ className?: string; strokeWidth?: number }>;
+  visualIcon?: AtlasIconName;
   action?: ReactNode;
   children: ReactNode;
   className?: string;
@@ -72,7 +75,11 @@ export function Panel({
             </div>
           )}
           <h2 className="flex items-center gap-1.5 text-[12.5px] font-semibold text-foreground">
-            {Icon && <Icon className="h-3.5 w-3.5 shrink-0 text-muted-foreground" strokeWidth={1.85} />}
+            {visualIcon ? (
+              <AtlasIcon name={visualIcon} size="xs" className="atlas-icon-badge--quiet" />
+            ) : Icon ? (
+              <Icon className="h-3.5 w-3.5 shrink-0 text-muted-foreground" strokeWidth={1.85} />
+            ) : null}
             <span className="truncate">{title}</span>
           </h2>
         </div>
@@ -90,18 +97,24 @@ export function MetricTile({
   sub,
   tone = "neutral",
   icon: Icon,
+  visualIcon,
 }: {
   label: string;
   value: string;
   sub?: ReactNode;
   tone?: Tone;
   icon?: ComponentType<{ className?: string; strokeWidth?: number }>;
+  visualIcon?: AtlasIconName;
 }) {
   return (
     <div className="command-surface flex min-h-[94px] flex-col justify-between p-3.5">
       <div className="flex items-center justify-between gap-2">
         <span className="truncate text-[11px] font-medium text-muted-foreground">{label}</span>
-        {Icon && <Icon className="h-3.5 w-3.5 shrink-0 text-subtle-foreground" strokeWidth={1.85} />}
+        {visualIcon ? (
+          <AtlasIcon name={visualIcon} size="xs" className="atlas-icon-badge--quiet" />
+        ) : Icon ? (
+          <Icon className="h-3.5 w-3.5 shrink-0 text-subtle-foreground" strokeWidth={1.85} />
+        ) : null}
       </div>
       <div className={cx("mt-2 text-[22px] font-semibold leading-none tracking-tight tabular-nums", TONE_TEXT[tone])}>
         {value}

@@ -10,7 +10,8 @@ the frontend (CopilotKit useCoAgent) to drive the boardroom view; every node is 
 @weave.op so the committee appears as named spans in Weave.
 
 Flow:  intake → planner → committee_parallel → challenge
-       → debate → synthesis → governance → reliability → persist
+       → debate → influence → synthesis → governance → reliability
+       → self_improvement → persist
 
 ``committee_parallel`` runs Treasury, FP&A, Risk, and Procurement concurrently
 with live AG-UI streaming so the UI shows every seat thinking at once.
@@ -49,12 +50,15 @@ from src import governance as GOV
 from src.governance_models import ActorType
 from src.realtime import realtime_health
 from src.structured_models import DecisionPlan, RoleEvidencePlan
+from src import council_influence as CI
+from src import self_improvement as SI
 from src.openai_council import (
     analyst_position,
     board_memo,
     cfo_recommendation,
     challenge_panel,
     classify_and_plan,
+    council_influence,
     cross_examination,
     gather_role_evidence,
     init_telemetry,
@@ -242,7 +246,14 @@ class DebateState(CopilotKitState):
     redis_activity: list
     sponsor_health: dict
     reliability_scores: list
+    council_influence: dict
     learning_report: dict
+    # W&B Weave-driven self-improvement loop (see src/self_improvement.py). Holds
+    # the rolling per-sub-agent reliability history, the current standing
+    # directive grafted onto each analyst, and which agent was improved this
+    # round. Loaded at intake (prior rounds), updated by the self_improvement
+    # node after the reliability audit. Mirrored in frontend/src/lib/types.ts.
+    agent_improvements: dict
     # Governance outcome (policy controls, approval route, audit, obligations).
     # Set by the governance node; mirrored in frontend/src/lib/types.ts.
     governance: dict
@@ -316,6 +327,11 @@ def _company_name(context: dict | None = None) -> str:
 def _company_stage(context: dict | None = None) -> str:
     financials = (context or {}).get("financials") or {}
     return financials.get("stage") or "Series A"
+
+
+def _company_id(context: dict | None = None) -> str:
+    financials = (context or {}).get("financials") or {}
+    return financials.get("id") or ROOM
 
 
 def _role_plan(decision_plan: dict | None, role_key: str) -> RoleEvidencePlan | None:
@@ -397,7 +413,9 @@ STREAM_STATE_KEYS = (
     "redis_activity",
     "sponsor_health",
     "reliability_scores",
+    "council_influence",
     "learning_report",
+    "agent_improvements",
     "strategic_plan",
     "governance",
     # OpenAI-native council expansion keys (mirrored in frontend types.ts).
@@ -503,6 +521,7 @@ def _span_statuses(active_node: str, active_status: str) -> list[dict]:
         "cfo_synthesis",
         "governance",
         "reliability_auditor",
+        "self_improvement",
         "persist_decision",
     ]
     active_index = spans.index(active_node) if active_node in spans else -1
@@ -647,6 +666,24 @@ def _normalize_reliability_scores(scores: list[ReliabilityScore]) -> list[dict]:
         item["reliability"] = _weighted_reliability(item)
         by_agent[agent_id] = item
     return [by_agent.get(agent_id) or _default_reliability_score(agent_id) for agent_id in expected]
+
+
+def _attach_influence_to_statuses(statuses: list | None, influence: dict | None) -> list[dict]:
+    current = [dict(item) for item in (statuses or _initial_agent_statuses())]
+    by_agent = {item.get("agent_id"): item for item in (influence or {}).get("weights") or []}
+    updated: list[dict] = []
+    for item in current:
+        weight = by_agent.get(item.get("id"))
+        if weight:
+            item.update(
+                influence_weight=weight.get("influence_weight"),
+                influence_rationale=weight.get("rationale"),
+                grounding_signal=weight.get("grounding_signal"),
+                debate_signal=weight.get("debate_signal"),
+                historical_reliability=weight.get("historical_reliability"),
+            )
+        updated.append(item)
+    return updated
 
 
 def _attach_reliability_to_statuses(statuses: list | None, scores: list[dict]) -> list[dict]:
@@ -845,6 +882,7 @@ async def intake_node(state: DebateState, config: RunnableConfig) -> dict:
         redis_activity=[_redis_ping_activity(health)],
         sponsor_health=health,
         reliability_scores=[],
+        council_influence={},
         learning_report={},
         model_telemetry=telemetry,
         realtime_status=realtime,
@@ -866,6 +904,15 @@ async def intake_node(state: DebateState, config: RunnableConfig) -> dict:
     except Exception as exc:  # pragma: no cover - defensive
         print(f"[intake] operations snapshot skipped: {exc}")
     prompt_versions = prompt_versions_payload(context)
+    # Load the rolling self-improvement overlay earned from prior W&B Weave
+    # reliability traces. The standing directives here are grafted onto each
+    # analyst this round; the self_improvement node updates the overlay after the
+    # reliability audit so the NEXT round improves further.
+    try:
+        improvement_state = SI.agent_improvement_state(_company_id(context))
+    except Exception as exc:
+        improvement_state = {}
+        print(f"[intake] improvement overlay warning: {redact_secrets(exc)}")
     framing = _turn(
         "cfo",
         type="framing",
@@ -882,7 +929,9 @@ async def intake_node(state: DebateState, config: RunnableConfig) -> dict:
         "transcript": [framing],
         "recommendation": {},
         "reliability_scores": [],
+        "council_influence": {},
         "learning_report": {},
+        "agent_improvements": improvement_state,
         "strategic_plan": {},
         "decision_type": "",
         "decision_plan": {},
@@ -907,6 +956,16 @@ async def intake_node(state: DebateState, config: RunnableConfig) -> dict:
             events,
             _event("Redis", "Financial context loaded", "JSON company record, vendor search, vector policy RAG", "positive"),
             _event("OpenAI", "Prompt versions pinned", f"{len(prompt_versions)} versioned prompts for W&B promotion gates", "info"),
+            _event(
+                "W&B Weave",
+                "Self-improvement overlay loaded",
+                (
+                    f"Round {int((improvement_state or {}).get('round', 0))} · "
+                    f"{sum(1 for a in (improvement_state or {}).get('agents', {}).values() if (a or {}).get('directive'))}/4 "
+                    "sub-agents carry an earned directive"
+                ),
+                "positive",
+            ),
             _event("W&B Weave", "Trace span closed", "intake", "positive"),
         ),
         "trace_summary": _trace_summary("intake", "complete", tool_calls=3, telemetry=telemetry),
@@ -1156,6 +1215,8 @@ async def _run_analyst_parallel(role_key: str, state: DebateState, config: Runna
     )
     await live.emit(current_phase=f"{persona['label']} + peers analyzing in parallel")
 
+    overlay = (state.get("agent_improvements") or {}).get("agents", {}).get(role_key) or {}
+    improvement_directive = str(overlay.get("directive") or "")
     result = await analyst_position(
         role_key=role_key,
         persona=persona,
@@ -1167,9 +1228,13 @@ async def _run_analyst_parallel(role_key: str, state: DebateState, config: Runna
         decision_focus=_decision_focus(state.get("decision_plan")),
         evidence=bundle.evidence,
         operator_directives=_command_focus_prompt(),
+        improvement_directive=improvement_directive,
         config=config,
     )
     prompt_version = next((pv for pv in (state.get("prompt_versions") or []) if pv.get("role") == role_key), {})
+    # Surface the self-improvement version (e.g. treasury.v4-evidence-plan+imp3)
+    # so the transcript shows the agent is running an improved prompt this round.
+    displayed_version = overlay.get("version_label") if overlay.get("directive") else prompt_version.get("version")
 
     if not result.ok:
         detail = result.telemetry.refusal or result.telemetry.error or "No grounded position produced"
@@ -1180,7 +1245,7 @@ async def _run_analyst_parallel(role_key: str, state: DebateState, config: Runna
             argument=detail,
             key_points=[],
             cited_metrics=[],
-            prompt_version=prompt_version.get("version"),
+            prompt_version=displayed_version,
             error=detail,
         )
         await live.record_position(
@@ -1204,7 +1269,7 @@ async def _run_analyst_parallel(role_key: str, state: DebateState, config: Runna
         key_points=pos.key_points,
         cited_metrics=pos.cited_metrics,
         evidence_used=pos.evidence_used,
-        prompt_version=prompt_version.get("version"),
+        prompt_version=displayed_version,
         tokens=result.telemetry.total_tokens,
         cost_usd=result.telemetry.cost_usd,
     )
@@ -1346,6 +1411,8 @@ def make_analyst_node(role_key: str):
             _redis_ping_activity(health),
             *[_redis_activity(item["label"], item["detail"], item["kind"]) for item in bundle.redis_activity],
         )
+        overlay = (state.get("agent_improvements") or {}).get("agents", {}).get(role_key) or {}
+        improvement_directive = str(overlay.get("directive") or "")
         result = await analyst_position(
             role_key=role_key,
             persona=persona,
@@ -1357,14 +1424,16 @@ def make_analyst_node(role_key: str):
             decision_focus=_decision_focus(state.get("decision_plan")),
             evidence=bundle.evidence,
             operator_directives=_command_focus_prompt(),
+            improvement_directive=improvement_directive,
             config=config,
         )
         telemetry = merge_telemetry(state.get("model_telemetry"), result.telemetry)
         prompt_version = next((pv for pv in (state.get("prompt_versions") or []) if pv.get("role") == role_key), {})
+        displayed_version = overlay.get("version_label") if overlay.get("directive") else prompt_version.get("version")
 
         if not result.ok:
             detail = result.telemetry.refusal or result.telemetry.error or "No grounded position produced"
-            entry = _turn(role_key, type="position", headline="Model could not produce a grounded position", argument=detail, key_points=[], cited_metrics=[], prompt_version=prompt_version.get("version"), error=detail)
+            entry = _turn(role_key, type="position", headline="Model could not produce a grounded position", argument=detail, key_points=[], cited_metrics=[], prompt_version=displayed_version, error=detail)
             agent_statuses = _set_agent_status(agent_statuses, role_key, status="error", headline="Position unavailable", detail=detail)
             return {
                 "transcript": state.get("transcript", []) + [entry],
@@ -1388,7 +1457,7 @@ def make_analyst_node(role_key: str):
             key_points=pos.key_points,
             cited_metrics=pos.cited_metrics,
             evidence_used=pos.evidence_used,
-            prompt_version=prompt_version.get("version"),
+            prompt_version=displayed_version,
             tokens=result.telemetry.total_tokens,
             cost_usd=result.telemetry.cost_usd,
         )
@@ -1629,6 +1698,142 @@ async def debate_node(state: DebateState, config: RunnableConfig) -> dict:
     }
 
 
+@weave.op(name="council_influence")
+async def influence_node(state: DebateState, config: RunnableConfig) -> dict:
+    require_live_ready()
+    health = sponsor_health()
+    company_name = _company_name(state.get("context"))
+    company_id = _company_id(state.get("context"))
+    decision_type = state.get("decision_type") or "general"
+    positions = state.get("positions", [])
+    debate_turns = [t for t in state.get("transcript", []) if t.get("type") == "rebuttal"]
+    historical = CI.historical_reliability(company_id, state.get("context"))
+    signals = CI.debate_signals(
+        positions=positions,
+        challenge_report=state.get("challenge_report"),
+        debate_turns=debate_turns,
+    )
+    agent_statuses = _set_agent_status(
+        state.get("agent_statuses"),
+        "cfo",
+        status="thinking",
+        detail="Assigning unequal council influence weights before the ruling",
+    )
+    events = _append(
+        state.get("observability_events"),
+        _event("W&B Weave", "Trace span opened", "council_influence", "positive"),
+        _event("Redis", "Historical reliability priors loaded", json.dumps(historical), "positive"),
+        _sponsor_event(health),
+    )
+    await _emit_patch(
+        state,
+        config,
+        phase="influence",
+        current_phase="Council influence weighting",
+        agent_statuses=agent_statuses,
+        observability_events=events,
+        trace_summary=_trace_summary("council_influence", "running", model_calls=1, telemetry=state.get("model_telemetry")),
+        redis_activity=_append(
+            state.get("redis_activity"),
+            _redis_ping_activity(health),
+            _redis_activity("Council influence", "Blending debate signals with rolling reliability priors", "state"),
+        ),
+        sponsor_health=health,
+    )
+
+    baseline_weights = CI.compute_baseline_influence(historical=historical, signals=signals, decision_type=decision_type)
+
+    if _fast_council():
+        weights = CI.apply_signal_floors(baseline_weights, signals)
+        top = max(weights, key=lambda item: item["influence_weight"])
+        influence = CI.influence_report_payload(
+            weights=weights,
+            summary=f"Fast-path influence · {top['agent_id']} leads at {top['influence_weight']}%",
+            decision_type_fit=f"{decision_type} decision routed through deterministic council weighting",
+            historical=historical,
+            signals=signals,
+            decision_type=decision_type,
+        )
+        telemetry = state.get("model_telemetry")
+        status = "complete"
+    else:
+        result = await council_influence(
+            decision=state.get("decision", ""),
+            positions=positions,
+            debate_turns=debate_turns,
+            challenge_report=state.get("challenge_report"),
+            historical_reliability=historical,
+            decision_type=decision_type,
+            company=company_name,
+            operator_directives=_command_focus_prompt(),
+            config=config,
+        )
+        telemetry = merge_telemetry(state.get("model_telemetry"), result.telemetry)
+        if result.ok:
+            report = result.parsed
+            merged = CI.reconcile_with_baseline(
+                [item.model_dump() for item in report.weights],
+                baseline_weights,
+            )
+            normalized = CI.apply_signal_floors(merged, signals)
+            influence = CI.influence_report_payload(
+                weights=normalized,
+                summary=report.summary,
+                decision_type_fit=report.decision_type_fit,
+                historical=historical,
+                signals=signals,
+                decision_type=decision_type,
+            )
+            status = "complete"
+        else:
+            weights = CI.apply_signal_floors(baseline_weights, signals)
+            detail = result.telemetry.refusal or result.telemetry.error or "Council influence assignment unavailable"
+            influence = CI.influence_report_payload(
+                weights=weights,
+                summary=f"Influence fallback after live assignment failure: {detail}",
+                decision_type_fit=f"{decision_type} decision used deterministic weighting",
+                historical=historical,
+                signals=signals,
+                decision_type=decision_type,
+            )
+            status = "warning"
+
+    agent_statuses = _attach_influence_to_statuses(state.get("agent_statuses"), influence)
+    top = max(influence["weights"], key=lambda item: item["influence_weight"])
+    influence_turn = _turn(
+        "cfo",
+        type="influence",
+        headline=f"Council influence · {top['agent_id']} {top['influence_weight']}%",
+        argument=influence["summary"],
+        key_points=[f"{item['agent_id']}: {item['influence_weight']}%" for item in influence["weights"]],
+    )
+    return {
+        "council_influence": influence,
+        "transcript": state.get("transcript", []) + [influence_turn],
+        "phase": "influence",
+        "current_phase": "Council influence assigned",
+        "agent_statuses": agent_statuses,
+        "model_telemetry": telemetry,
+        "observability_events": _append(
+            events,
+            _event(
+                "OpenAI",
+                "Council influence assigned",
+                f"{top['agent_id']} leads at {top['influence_weight']}%",
+                "positive" if status == "complete" else "warning",
+            ),
+            _event("W&B Weave", "Trace span closed", "council_influence", "positive"),
+        ),
+        "trace_summary": _trace_summary("council_influence", status, model_calls=0 if _fast_council() else 1, telemetry=telemetry),
+        "redis_activity": _append(
+            state.get("redis_activity"),
+            _redis_ping_activity(health),
+            _redis_activity("Council influence", influence["summary"], "state"),
+        ),
+        "sponsor_health": health,
+    }
+
+
 @weave.op(name="cfo_synthesis")
 async def synthesis_node(state: DebateState, config: RunnableConfig) -> dict:
     require_live_ready()
@@ -1704,6 +1909,7 @@ async def synthesis_node(state: DebateState, config: RunnableConfig) -> dict:
         debate_turns=debate_turns,
         challenge_report=state.get("challenge_report"),
         decision_plan=state.get("decision_plan"),
+        council_influence=state.get("council_influence"),
         company=company_name,
         decision_type=decision_type,
         operator_directives=_command_focus_prompt() + plan_prompt,
@@ -1712,7 +1918,12 @@ async def synthesis_node(state: DebateState, config: RunnableConfig) -> dict:
     telemetry = merge_telemetry(state.get("model_telemetry"), rec_result.telemetry)
     if rec_result.ok:
         rec = rec_result.parsed
-        rec_decision, rec_confidence, rec_rationale = rec.decision, rec.confidence, rec.rationale
+        rec_decision, rec_rationale = rec.decision, rec.rationale
+        rec_confidence, confidence_factors = CI.confidence_adjustment(
+            base_confidence=rec.confidence,
+            influence=state.get("council_influence"),
+            evidence_gaps=state.get("evidence_gaps"),
+        )
         rec_key_risks, rec_conditions = rec.key_risks, rec.conditions
         extra_monthly, one_time, added_rev = rec.estimated_monthly_cost, rec.estimated_one_time_cost, rec.estimated_added_monthly_revenue
     else:
@@ -1720,6 +1931,7 @@ async def synthesis_node(state: DebateState, config: RunnableConfig) -> dict:
         detail = rec_result.telemetry.refusal or rec_result.telemetry.error or "CFO synthesis returned no recommendation"
         rec_decision, rec_confidence, rec_rationale = "DEFER", 0, f"Synthesis could not complete live: {detail}"
         rec_key_risks, rec_conditions = ["CFO synthesis call did not complete"], []
+        confidence_factors = {}
         extra_monthly = one_time = added_rev = 0.0
 
     # Precise runway impact, computed (not hallucinated) from the CFO's estimates.
@@ -1739,6 +1951,8 @@ async def synthesis_node(state: DebateState, config: RunnableConfig) -> dict:
         "conditions": rec_conditions,
         "impact": impact,
         "decision_type": decision_type,
+        "council_influence": state.get("council_influence") or {},
+        "confidence_factors": confidence_factors if rec_result.ok else {},
         "source": "cfo" if rec_result.ok else "model_error",
     }
 
@@ -2007,6 +2221,15 @@ async def reliability_node(state: DebateState, config: RunnableConfig) -> dict:
             print(f"[reliability] eval capture warning: {eval_warning}")
 
         agent_statuses = _attach_reliability_to_statuses(agent_statuses, scorecard)
+        try:
+            updated_history = CI.update_historical_reliability(
+                _company_id(state.get("context")),
+                scorecard,
+                state.get("council_influence"),
+            )
+        except Exception as exc:
+            updated_history = {}
+            print(f"[reliability] history update warning: {exc}")
         agent_statuses = _set_agent_status(
             agent_statuses,
             "reliability",
@@ -2035,6 +2258,14 @@ async def reliability_node(state: DebateState, config: RunnableConfig) -> dict:
                 _event("W&B Weave", "Trace span closed", "reliability_auditor", "positive"),
             ),
             "trace_summary": _trace_summary("reliability_auditor", "complete", model_calls=0, tool_calls=2, telemetry=state.get("model_telemetry")),
+            "redis_activity": _append(
+                state.get("redis_activity"),
+                _redis_activity(
+                    "Reliability history",
+                    f"Updated rolling priors for {len(updated_history)} analysts" if updated_history else "History update skipped",
+                    "json",
+                ),
+            ),
             "sponsor_health": health,
         }
 
@@ -2151,6 +2382,15 @@ async def reliability_node(state: DebateState, config: RunnableConfig) -> dict:
         print(f"[reliability] eval capture warning: {eval_warning}")
 
     agent_statuses = _attach_reliability_to_statuses(agent_statuses, scorecard)
+    try:
+        updated_history = CI.update_historical_reliability(
+            _company_id(state.get("context")),
+            scorecard,
+            state.get("council_influence"),
+        )
+    except Exception as exc:
+        updated_history = {}
+        print(f"[reliability] history update warning: {exc}")
     agent_statuses = _set_agent_status(
         agent_statuses,
         "reliability",
@@ -2195,9 +2435,183 @@ async def reliability_node(state: DebateState, config: RunnableConfig) -> dict:
             state.get("redis_activity"),
             _redis_ping_activity(health),
             _redis_activity(
+                "Reliability history",
+                f"Updated rolling priors for {len(updated_history)} analysts" if updated_history else "History update skipped",
+                "json",
+            ),
+            _redis_activity(
                 "W&B eval packet",
                 f"Persisted reliability scorecard {eval_event_id}" if eval_event_id else (eval_warning or "Persistence warning"),
                 "eval" if eval_event_id else "warning",
+            ),
+        ),
+        "sponsor_health": health,
+    }
+
+
+@weave.op(name="self_improvement")
+async def self_improvement_node(state: DebateState, config: RunnableConfig) -> dict:
+    """W&B Weave-driven self-improvement: improve the least-reliable sub-agent.
+
+    The roster is fixed at five agents (CFO + four sub-agents). After the CFO
+    rules and the reliability auditor scores the council against the W&B Weave
+    rubric, this node records every sub-agent's reliability for the round, finds
+    the weakest, and rewrites its standing directive from its Weave trace so it
+    improves next round. No agent is ever removed — only improved.
+    """
+    require_live_ready()
+    health = sponsor_health()
+    company_id = _company_id(state.get("context"))
+    company_name = _company_name(state.get("context"))
+    scorecard = [s for s in (state.get("reliability_scores") or []) if (s.get("agent_id") in SI.SUBAGENTS)]
+
+    agent_statuses = _set_agent_status(
+        state.get("agent_statuses"),
+        "reliability",
+        status="thinking",
+        detail="Selecting the least-reliable sub-agent to improve from its W&B Weave trace",
+    )
+    events = _append(
+        state.get("observability_events"),
+        _event("W&B Weave", "Self-improvement span opened", "self_improvement", "positive"),
+        _event("W&B Weave", "Scoring sub-agents for improvement", "Lowest Weave reliability is improved, never removed", "positive"),
+        _sponsor_event(health),
+    )
+    await _emit_patch(
+        state,
+        config,
+        phase="self_improvement",
+        current_phase="Improving the least-reliable sub-agent from its W&B Weave trace",
+        agent_statuses=agent_statuses,
+        observability_events=events,
+        trace_summary=_trace_summary("self_improvement", "running", model_calls=0 if _fast_council() else 1, tool_calls=1, telemetry=state.get("model_telemetry")),
+        redis_activity=_append(
+            state.get("redis_activity"),
+            _redis_ping_activity(health),
+            _redis_activity("Self-improvement", "Reading rolling reliability history and standing directives", "json"),
+        ),
+        sponsor_health=health,
+    )
+
+    if not scorecard:
+        # No sub-agent scores → nothing to improve this round; pass through.
+        improvement_state = state.get("agent_improvements") or SI.agent_improvement_state(company_id)
+        agent_statuses = _set_agent_status(
+            agent_statuses,
+            "reliability",
+            status="done",
+            detail="No sub-agent scores available to improve this round",
+        )
+        return {
+            "agent_improvements": improvement_state,
+            "phase": "self_improvement",
+            "current_phase": "Self-improvement skipped — no sub-agent scores",
+            "agent_statuses": agent_statuses,
+            "observability_events": _append(
+                events,
+                _event("W&B Weave", "Self-improvement skipped", "No sub-agent reliability scores in this run", "warning"),
+                _event("W&B Weave", "Self-improvement span closed", "self_improvement", "positive"),
+            ),
+            "trace_summary": _trace_summary("self_improvement", "warning", telemetry=state.get("model_telemetry")),
+            "sponsor_health": health,
+        }
+
+    improvement = None
+    warning = None
+    try:
+        improvement = await SI.improve_weakest_agent(
+            company_id=company_id,
+            company=company_name,
+            scorecard=scorecard,
+            decision=state.get("decision") or "",
+            use_llm=not _fast_council(),
+            config=config,
+        )
+    except Exception as exc:
+        warning = redact_secrets(exc)
+        print(f"[self_improvement] warning: {warning}")
+
+    if improvement is None:
+        improvement_state = state.get("agent_improvements") or SI.agent_improvement_state(company_id)
+        agent_statuses = _set_agent_status(
+            agent_statuses,
+            "reliability",
+            status="warning",
+            detail=warning or "Self-improvement could not complete this round",
+        )
+        return {
+            "agent_improvements": improvement_state,
+            "phase": "self_improvement",
+            "current_phase": "Self-improvement warning",
+            "agent_statuses": agent_statuses,
+            "observability_events": _append(
+                events,
+                _event("W&B Weave", "Self-improvement warning", warning or "Unknown warning", "warning"),
+                _event("W&B Weave", "Self-improvement span closed", "self_improvement", "positive"),
+            ),
+            "trace_summary": _trace_summary("self_improvement", "warning", telemetry=state.get("model_telemetry")),
+            "sponsor_health": health,
+        }
+
+    # Reload the authoritative, freshly-persisted overlay for downstream streaming.
+    improvement_state = SI.agent_improvement_state(company_id)
+    improved_label = improvement.get("improved_label") or improvement.get("improved_agent")
+    round_no = improvement.get("round")
+    focus = improvement.get("focus") or ""
+    prior_reliability = improvement.get("prior_reliability")
+    council_average = improvement.get("council_average")
+    weave_published = bool((improvement.get("weave") or {}).get("published"))
+
+    agent_statuses = _set_agent_status(
+        agent_statuses,
+        "reliability",
+        status="done",
+        headline=f"Round {round_no} · improved {improved_label}",
+        detail=f"{improved_label} reliability {prior_reliability}% → directive bumped to {improvement.get('version_label')}",
+    )
+    improve_turn = _turn(
+        "reliability",
+        type="reliability",
+        headline=f"Self-improvement · round {round_no}: {improved_label}",
+        argument=(
+            f"{improved_label} was the least reliable sub-agent at {prior_reliability}% on this decision. "
+            f"Its prompt now carries a W&B Weave-derived directive targeting {focus or 'its weakest dimension'} "
+            f"({improvement.get('version_label')}) so it improves next round."
+        ),
+        key_points=[
+            f"Council sub-agent average: {council_average}%",
+            f"Improvement directive: {improvement.get('directive', '')[:160]}",
+        ],
+    )
+    return {
+        "agent_improvements": improvement_state,
+        "phase": "self_improvement",
+        "current_phase": f"Round {round_no}: improved {improved_label} from its W&B Weave trace",
+        "agent_statuses": agent_statuses,
+        "transcript": state.get("transcript", []) + [improve_turn],
+        "observability_events": _append(
+            events,
+            _event(
+                "W&B Weave",
+                f"Sub-agent improved · round {round_no}",
+                f"{improved_label} {prior_reliability}% → {improvement.get('version_label')} (targets {focus or 'weakest dimension'})",
+                "positive",
+            ),
+            _event(
+                "W&B Weave",
+                "Improvement snapshot published" if weave_published else "Improvement snapshot persisted",
+                "atlas:stream:agent_improvements" if not weave_published else (improvement.get("weave") or {}).get("url") or "W&B Weave",
+                "positive",
+            ),
+            _event("W&B Weave", "Self-improvement span closed", "self_improvement", "positive"),
+        ),
+        "trace_summary": _trace_summary("self_improvement", "complete", model_calls=0 if _fast_council() else 1, tool_calls=1, telemetry=state.get("model_telemetry")),
+        "redis_activity": _append(
+            state.get("redis_activity"),
+            _redis_activity(
+                "Self-improvement",
+                f"Round {round_no}: {improved_label} directive → {improvement.get('version_label')}",
+                "json",
             ),
         ),
         "sponsor_health": health,
@@ -2260,7 +2674,9 @@ async def persist_node(state: DebateState, config: RunnableConfig) -> dict:
                 "prompt_versions": state.get("prompt_versions", []),
                 "model_telemetry": telemetry,
                 "reliability_scores": state.get("reliability_scores", []),
+                "council_influence": state.get("council_influence", {}),
                 "learning_report": state.get("learning_report", {}),
+                "agent_improvements": state.get("agent_improvements", {}),
                 "governance": gov,
                 "pinned_evidence": AGUI.load_command_state(ROOM).get("pinned_evidence", []),
                 "generated_at": _now(),
@@ -2276,6 +2692,7 @@ async def persist_node(state: DebateState, config: RunnableConfig) -> dict:
             "operator_actions": state.get("operator_actions", []),
             "evidence_gaps": state.get("evidence_gaps", []),
             "reliability_scores": state.get("reliability_scores", []),
+            "council_influence": state.get("council_influence", {}),
             "learning_report": state.get("learning_report", {}),
             "prompt_versions": state.get("prompt_versions", []),
             "model_telemetry": {
@@ -2374,9 +2791,11 @@ workflow.add_node("planner", _command_wrapped(planner_node))
 workflow.add_node("committee_parallel", _command_wrapped(committee_parallel_node))
 workflow.add_node("challenge", _command_wrapped(challenge_node))
 workflow.add_node("debate", _command_wrapped(debate_node))
+workflow.add_node("influence", _command_wrapped(influence_node))
 workflow.add_node("synthesis", _command_wrapped(synthesis_node))
 workflow.add_node("governance", _command_wrapped(governance_node))
 workflow.add_node("reliability", _command_wrapped(reliability_node))
+workflow.add_node("self_improvement", _command_wrapped(self_improvement_node))
 workflow.add_node("persist", _command_wrapped(persist_node))
 
 workflow.add_edge(START, "intake")
@@ -2384,10 +2803,12 @@ workflow.add_edge("intake", "planner")
 workflow.add_edge("planner", "committee_parallel")
 workflow.add_edge("committee_parallel", "challenge")
 workflow.add_edge("challenge", "debate")
-workflow.add_edge("debate", "synthesis")
+workflow.add_edge("debate", "influence")
+workflow.add_edge("influence", "synthesis")
 workflow.add_edge("synthesis", "governance")
 workflow.add_edge("governance", "reliability")
-workflow.add_edge("reliability", "persist")
+workflow.add_edge("reliability", "self_improvement")
+workflow.add_edge("self_improvement", "persist")
 workflow.add_edge("persist", END)
 
 checkpointer = MemorySaver()

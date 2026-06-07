@@ -133,6 +133,12 @@ COMPANY: dict = {
         {"decision_id": "dec-hiring", "owner": "Risk & Audit", "predicted": "preserve >10 months runway", "actual": "preserved 10.2 months runway", "outcome": "correct constraint", "calibration_score": 86},
         {"decision_id": "dec-support", "owner": "Procurement", "predicted": "outsourced tier-1 support saves $28K/mo", "actual": "quality misses increased churn risk; savings reversed", "outcome": "missed service-quality risk", "calibration_score": 58},
     ],
+    "agent_reliability_baseline": {
+        "treasury": 74,
+        "fpna": 81,
+        "risk": 69,
+        "procurement": 63,
+    },
     "prompt_versions": [
         {"agent": "treasury", "current": "treasury.v3", "candidate": "treasury.v4-liquidity-stress", "promotion_gate": "must beat v3 on runway-risk recall by 5%"},
         {"agent": "fpna", "current": "fpna.v3", "candidate": "fpna.v4-cohort-calibration", "promotion_gate": "must reduce forecast overconfidence on replay set"},
@@ -315,6 +321,27 @@ def seed(verbose: bool = True) -> dict:
 
     # 1) Company financials (JSON system of record)
     R.set_json(COMPANY_KEY, COMPANY)
+
+    # 1b) Rolling council reliability priors for influence weighting (idempotent).
+    try:
+        from src.council_influence import seed_historical_reliability
+
+        seed_historical_reliability(COMPANY["id"], COMPANY.get("agent_reliability_baseline"))
+    except Exception as exc:
+        from src.env import redact_secrets
+
+        print(f"[seed] reliability history warning: {redact_secrets(exc)}")
+
+    # 1c) Blank W&B Weave self-improvement overlay for the five-agent council
+    # (CFO + four sub-agents). Idempotent — only written if absent.
+    try:
+        from src.self_improvement import seed_agent_improvement_state
+
+        seed_agent_improvement_state(COMPANY["id"])
+    except Exception as exc:
+        from src.env import redact_secrets
+
+        print(f"[seed] self-improvement overlay warning: {redact_secrets(exc)}")
 
     # 2) Vendors (JSON) + search index
     for v in VENDORS:

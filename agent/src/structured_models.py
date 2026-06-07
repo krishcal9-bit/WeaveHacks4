@@ -13,6 +13,7 @@ Grouped by phase:
   • Cross-examination ........... Exchange, Rebuttals
   • Evidence challenge panel .... ChallengeFinding, ChallengePanelReport
   • CFO synthesis ............... Recommendation, BoardMemo, OperatorAction
+  • Council influence ........... AgentInfluence, CouncilInfluenceReport
   • Reliability / self-improve .. ReliabilityScore, ReliabilityReport
   • Prompt promotion gates ...... PromptVersion
 """
@@ -176,6 +177,30 @@ class BoardMemo(StrictStructuredModel):
 
 
 # --------------------------------------------------------------------------- #
+# Council influence — unequal deliberation weights assigned before CFO synthesis
+# --------------------------------------------------------------------------- #
+class AgentInfluence(StrictStructuredModel):
+    agent_id: str = Field(description="one of: treasury, fpna, risk, procurement")
+    influence_weight: int = Field(
+        ge=0,
+        le=100,
+        description="share of CFO deliberation weight among analysts; all four analysts must sum to 100",
+    )
+    grounding_signal: int = Field(ge=0, le=100, description="how well-grounded this role was in this debate")
+    debate_signal: int = Field(ge=0, le=100, description="how valuable this role was in cross-examination")
+    historical_reliability: int = Field(ge=0, le=100, description="rolling reliability prior from prior council runs")
+    rationale: str = Field(description="why this agent earned this influence share on this decision")
+
+
+class CouncilInfluenceReport(StrictStructuredModel):
+    summary: str = Field(description="board-ready summary of who earned the most influence and why")
+    weights: list[AgentInfluence] = Field(description="per-analyst influence weights that sum to 100")
+    decision_type_fit: str = Field(
+        description="which roles were most relevant for this decision type and how that shaped the weights",
+    )
+
+
+# --------------------------------------------------------------------------- #
 # Reliability / self-improvement (W&B Weave replay evals)
 # --------------------------------------------------------------------------- #
 class ReliabilityScore(StrictStructuredModel):
@@ -200,6 +225,30 @@ class ReliabilityReport(StrictStructuredModel):
     eval_dataset: str = Field(description="W&B/Weave eval dataset or replay-set label")
     replay_plan: list[str] = Field(description="replay cases or eval steps to run")
     promotion_gate: str = Field(description="global gate for accepting future prompt/model changes")
+
+
+class AgentImprovement(StrictStructuredModel):
+    """A rewritten standing directive for the least-reliable sub-agent.
+
+    Produced by the self-improvement engine after the CFO rules and the
+    Reliability Auditor (W&B Weave) scores the council. It is grafted onto the
+    targeted analyst's system prompt for the *next* round so its reliability can
+    climb over successive decisions.
+    """
+
+    agent_id: str = Field(description="the sub-agent being improved: one of treasury, fpna, risk, procurement")
+    focus: str = Field(description="the single biggest weakness this revision targets, <= 12 words")
+    directive: str = Field(
+        description=(
+            "a concise standing instruction (<= 3 sentences) to graft onto this agent's system "
+            "prompt next round, derived strictly from its W&B Weave reliability trace; concrete, "
+            "operational, and quantified where possible — no fluff and no invented facts"
+        )
+    )
+    targeted_dimension: str = Field(
+        description="the lowest-scoring reliability dimension this directive should lift (e.g. evidence_grounding)"
+    )
+    expected_gain: str = Field(description="what should measurably improve next round and why")
 
 
 # --------------------------------------------------------------------------- #

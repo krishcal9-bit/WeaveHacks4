@@ -27,13 +27,14 @@ export function EvidenceDrawer({ context, started }: { context?: CouncilContext;
   return (
     <Panel
       icon={FolderOpen}
+      visualIcon="evidence"
       eyebrow="Redis-grounded"
       title="Evidence drawer"
       collapsible
       defaultOpen={false}
     >
       {!hasEvidence ? (
-        <EmptyState icon={FileSearch}>
+        <EmptyState icon={FileSearch} visualIcon="evidence">
           {started
             ? "Loading the company financial system of record, vendor contracts, and policy hits…"
             : "Intake loads financials, vendor contracts, and policy precedents that ground every position."}

@@ -10,6 +10,7 @@ import { motion } from "motion/react";
 import { CollapseIn } from "@/components/motion/presence";
 import { Stagger, StaggerItem } from "@/components/motion/stagger";
 import { springSnappy } from "@/components/motion/variants";
+import { AtlasIcon, type AtlasIconName } from "@/components/atlas-icon";
 import { cx, StatusDot } from "@/components/ui";
 import { TonePill, type Tone } from "@/components/dashboard";
 
@@ -21,6 +22,16 @@ const FILE_LABELS: Record<string, string> = {
   headcount_plan: "Hiring plan",
   security_evidence: "Security notes",
   board_policy: "Board rules",
+};
+
+const FILE_ICONS: Record<string, AtlasIconName> = {
+  ledger: "runway",
+  invoices: "reconcile",
+  vendor_export: "evidence",
+  crm_opportunities: "scenario",
+  headcount_plan: "council",
+  security_evidence: "risk",
+  board_policy: "memo",
 };
 
 function resetTone(status?: string): Tone {
@@ -79,10 +90,15 @@ export default function SettingsPage() {
     <main className="mx-auto flex min-h-full w-full max-w-[980px] flex-col gap-4 px-4 py-5 sm:px-6">
       <Stagger className="flex flex-col gap-4">
       <StaggerItem className="border-b border-border pb-4">
-        <h1 className="font-display text-[28px] font-medium tracking-tight">Demo reset</h1>
-        <p className="mt-2 max-w-2xl text-[14px] leading-relaxed text-muted-foreground">
-          Clear the uploaded files and start the demo from a blank state.
-        </p>
+        <div className="flex items-start gap-3">
+          <AtlasIcon name="memory" size="lg" className="mt-1 hidden sm:inline-grid" />
+          <div className="min-w-0">
+            <h1 className="font-display text-[28px] font-medium tracking-tight">Demo reset</h1>
+            <p className="mt-2 max-w-2xl text-[14px] leading-relaxed text-muted-foreground">
+              Clear the uploaded files and start the demo from a blank state.
+            </p>
+          </div>
+        </div>
       </StaggerItem>
 
       <CollapseIn show={Boolean(error)}>
@@ -92,8 +108,8 @@ export default function SettingsPage() {
       </CollapseIn>
 
       <StaggerItem className="grid gap-3 sm:grid-cols-2">
-        <SettingStat label="Files loaded" value={`${loadedCount}/${total}`} />
-        <SettingStat label="Review items" value={fmtInt(issues)} />
+        <SettingStat label="Files loaded" value={`${loadedCount}/${total}`} icon="upload" />
+        <SettingStat label="Review items" value={fmtInt(issues)} icon={issues ? "risk" : "reconcile"} />
       </StaggerItem>
 
       <StaggerItem>
@@ -120,7 +136,14 @@ export default function SettingsPage() {
               >
                 <div className="flex items-center justify-between gap-2">
                   <div className="flex min-w-0 items-center gap-2">
-                    <StatusDot tone={tone} />
+                    <div className="relative shrink-0">
+                      <AtlasIcon
+                        name={FILE_ICONS[connector.connector_id] ?? "memory"}
+                        size="xs"
+                        className="atlas-icon-badge--quiet"
+                      />
+                      <StatusDot tone={tone} className="absolute -bottom-0.5 -right-0.5 ring-2 ring-background" />
+                    </div>
                     <div className="truncate text-[13px] font-semibold text-foreground">
                       {FILE_LABELS[connector.connector_id] ?? connector.source_type.replace(/_/g, " ")}
                     </div>
@@ -148,6 +171,7 @@ export default function SettingsPage() {
         <div className="flex flex-col gap-3 md:flex-row md:items-start md:justify-between">
           <div className="min-w-0">
             <div className="flex items-center gap-2">
+              <AtlasIcon name={result ? "reconcile" : "risk"} size="sm" className="atlas-icon-badge--quiet" />
               {result ? (
                 <CheckCircle2 className="h-4 w-4 text-positive" strokeWidth={2} />
               ) : (
@@ -195,23 +219,26 @@ export default function SettingsPage() {
   );
 }
 
-function SettingStat({ label, value }: { label: string; value: string }) {
+function SettingStat({ label, value, icon }: { label: string; value: string; icon: AtlasIconName }) {
   return (
     <motion.div
-      className="command-surface min-h-[82px] p-3.5"
+      className="command-surface flex min-h-[82px] items-center gap-3 p-3.5"
       whileHover={{ y: -3, scale: 1.01 }}
       transition={springSnappy}
     >
-      <div className="text-[11px] font-medium text-muted-foreground">{label}</div>
-      <motion.div
-        key={value}
-        className="mt-2 text-[24px] font-semibold leading-none tabular-nums text-foreground"
-        initial={{ opacity: 0, y: 6 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={springSnappy}
-      >
-        {value}
-      </motion.div>
+      <AtlasIcon name={icon} size="sm" className="atlas-icon-badge--quiet" />
+      <div className="min-w-0">
+        <div className="text-[11px] font-medium text-muted-foreground">{label}</div>
+        <motion.div
+          key={value}
+          className="mt-2 text-[24px] font-semibold leading-none tabular-nums text-foreground"
+          initial={{ opacity: 0, y: 6 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={springSnappy}
+        >
+          {value}
+        </motion.div>
+      </div>
     </motion.div>
   );
 }
