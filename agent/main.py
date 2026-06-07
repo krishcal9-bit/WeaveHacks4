@@ -82,9 +82,15 @@ mark_copilotkit_mounted(path="/", agent_name="finance_department")
 
 
 def main():
-    """Run the uvicorn server."""
+    """Run the uvicorn server.
+
+    Auto-reload is OFF by default: a mid-debate file change would restart the
+    server, drop the AG-UI stream, and wipe the live Decision Room. Opt back in
+    for backend iteration with AGENT_RELOAD=1.
+    """
     port = int(os.getenv("PORT", "8123"))
-    uvicorn.run("main:app", host="0.0.0.0", port=port, reload=True)
+    reload = os.getenv("AGENT_RELOAD", "").strip().lower() in {"1", "true", "yes", "on"}
+    uvicorn.run("main:app", host="0.0.0.0", port=port, reload=reload)
 
 
 warnings.filterwarnings("ignore", category=UserWarning, module="pydantic")
