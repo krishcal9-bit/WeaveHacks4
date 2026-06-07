@@ -147,7 +147,22 @@ export function EvidenceDrawer({
   const hasEvidence = Boolean(financials) || vendors.length > 0 || policies.length > 0 || Boolean(reconciliation) || pinnedEvidence.length > 0;
   const live = active && !reduced;
 
-  const topVendors = [...vendors]
+  // De-dupe vendors that share an id (or name when id is absent): the live
+  // dataset can surface the same contract twice (e.g. "Sterling Device QA"),
+  // which both corrupts the count and collides React keys downstream.
+  const uniqueVendors = (() => {
+    const seen = new Set<string>();
+    const out: Vendor[] = [];
+    for (const vendor of vendors) {
+      const dedupeKey = String(vendor.id ?? vendor.name ?? "");
+      if (dedupeKey && seen.has(dedupeKey)) continue;
+      if (dedupeKey) seen.add(dedupeKey);
+      out.push(vendor);
+    }
+    return out;
+  })();
+
+  const topVendors = [...uniqueVendors]
     .sort((a, b) => (b.monthly_cost ?? 0) - (a.monthly_cost ?? 0))
     .slice(0, 4);
 
@@ -199,19 +214,19 @@ export function EvidenceDrawer({
           {topVendors.length > 0 && (
             <EvidenceGroup
               kind="redisearch"
-              title={`Vendor contracts (${vendors.length})`}
+              title={`Vendor contracts (${uniqueVendors.length})`}
               icon={<Boxes className="h-3.5 w-3.5" strokeWidth={2} />}
               active={live}
               reduced={reduced}
               source={{
                 label: "RediSearch query",
                 value: "FT.SEARCH atlas:idx:vendors @status:* SORTBY monthly_cost DESC",
-                meta: [`${vendors.length} vendor documents`, `${topVendors.length} displayed`],
+                meta: [`${uniqueVendors.length} vendor documents`, `${topVendors.length} displayed`],
               }}
             >
               <ul className="divide-y divide-border rounded-md border border-border bg-background">
-                {topVendors.map((vendor) => (
-                  <li key={vendor.id ?? vendor.name} className="flex min-h-[50px] items-center justify-between gap-2 px-2.5 py-1.5">
+                {topVendors.map((vendor, index) => (
+                  <li key={`${vendor.id ?? vendor.name}-${index}`} className="flex min-h-[50px] items-center justify-between gap-2 px-2.5 py-1.5">
                     <div className="min-w-0">
                       <div className="truncate text-[12px] font-semibold">{vendor.name}</div>
                       <div className="truncate text-[10px] text-subtle-foreground">

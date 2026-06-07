@@ -22,6 +22,7 @@ import type {
   VoiceTranscriptEntry,
 } from "@/lib/types";
 import { CouncilWeb } from "@/components/decision-room/council-web";
+import { CouncilQuestionBanner } from "@/components/decision-room/council-question-banner";
 import { BoardMemo, ScenarioImpactCard } from "@/components/decision-room/board-memo";
 import { CommandConsole } from "@/components/decision-room/command-console";
 import { CouncilHeader, PreflightPanel } from "@/components/decision-room/council-chrome";
@@ -77,6 +78,7 @@ function realtimeViewFromStream(status?: DebateState["realtime_status"]): Realti
 
 export default function DecisionsPage() {
   const [input, setInput] = useState("");
+  const [councilQuestion, setCouncilQuestion] = useState("");
   const [health, setHealth] = useState<HealthView>({ status: "loading", refreshing: true });
   const [selectedAgentId, setSelectedAgentId] = useState<string | null>(null);
   const [realtime, setRealtime] = useState<RealtimeView>({ status: "idle", detail: "Realtime 2 voice idle" });
@@ -281,6 +283,7 @@ export default function DecisionsPage() {
   useDemoResetListener(() => {
     stopRealtime();
     setInput("");
+    setCouncilQuestion("");
     setSelectedAgentId(null);
     setVoiceTranscript([]);
     setStateMirror({});
@@ -313,7 +316,7 @@ export default function DecisionsPage() {
             if (running || !healthReady) return;
             const blockedMessage = await requireCompanyDataOrRedirect();
             if (blockedMessage) return;
-            setInput(decision);
+            setCouncilQuestion(decision);
             await appendMessage(new TextMessage({ role: MessageRole.User, content: decision }));
           },
         },
@@ -419,6 +422,29 @@ export default function DecisionsPage() {
         source: "copilot",
       });
       return result?.message ?? "Clarify command dispatched.";
+    },
+  });
+
+  // Send a full question/decision prompt to the council. Instead of dumping the
+  // text into the prompt input, surface it as the animated banner above the
+  // council web and stream it to the committee over AG-UI.
+  useCopilotAction({
+    name: "sendQuestionToCouncil",
+    description:
+      "Send a question or decision prompt to the full finance council to deliberate on. Use this whenever the operator asks you to put a question to the council, pose a decision, or kick off a debate. The question is shown as a prominent banner above the council web and streamed to the committee — never place it into a text input field.",
+    parameters: [
+      { name: "question", type: "string", description: "the question or decision prompt to send to the council", required: true },
+    ],
+    handler: async ({ question }) => {
+      const content = String(question ?? "").trim();
+      if (!content) return "No question provided.";
+      setCouncilQuestion(content);
+      if (running) return "The council is already deliberating; the question is shown above the council web.";
+      if (!healthReady) return "Strict-live preflight must pass before the council can deliberate.";
+      const blockedMessage = await requireCompanyDataOrRedirect();
+      if (blockedMessage) return blockedMessage;
+      await appendMessage(new TextMessage({ role: MessageRole.User, content }));
+      return "Question sent to the council.";
     },
   });
 
@@ -553,6 +579,12 @@ export default function DecisionsPage() {
 
         <div className="grid min-h-0 flex-1 gap-2 xl:grid-cols-[minmax(0,1fr)_minmax(280px,340px)]">
           <Stagger className="flex min-w-0 flex-col gap-2">
+            {mounted && councilQuestion && (
+              <StaggerItem>
+                <CouncilQuestionBanner question={councilQuestion} />
+              </StaggerItem>
+            )}
+
             <StaggerItem>
             <CouncilWeb
               agentStatuses={displayAgentStatuses}
