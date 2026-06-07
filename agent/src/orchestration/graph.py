@@ -258,13 +258,21 @@ async def _conduct_node(state: dict, config) -> dict:
             _event("W&B Weave", "Span: orch_conductor", "topology planning traced", "info"),
         ],
     }
+    should_decompose = _should_decompose(topology)
+    orchestration["mode"] = "hierarchical" if should_decompose else "single"
+    patch["orchestration"] = orchestration
+    if should_decompose:
+        patch["current_phase"] = f"Complex decision → hierarchical mode ({len(seats)} seats)"
     await _stream(config, patch)
     patch["_topology"] = topology.model_dump(mode="json")
+    patch["_decompose"] = should_decompose
     return patch
 
 
 @weave.op(name="orch_debate")
 async def _debate_node(state: dict, config) -> dict:
+    if state.get("_decompose"):
+        return await _hierarchical_branch(state, config)
     decision = state.get("decision", "")
     context = state.get("context", {})
     company, stage, _cid = _company(context)
@@ -348,7 +356,7 @@ async def _persist_node(state: dict, config) -> dict:
     decision = state.get("decision", "")
     context = state.get("context", {})
     _company_name, _stage, company_id = _company(context)
-    recommendation = (trace.recommendation if trace else {}) or {}
+    recommendation = (trace.recommendation if trace else state.get("recommendation")) or {}
 
     saved = {"trace": False, "memory": False, "event": False}
     if trace:
@@ -412,6 +420,82 @@ async def _persist_node(state: dict, config) -> dict:
 
 
 # --------------------------------------------------------------------------- #
+# Complexity router → hierarchical sub-debates for big decisions
+# --------------------------------------------------------------------------- #
+COMPLEX_DECISION_TYPES = {"acquisition", "merger", "divestiture", "expansion", "restructuring", "fundraising"}
+
+
+def _should_decompose(topology: M.Topology) -> bool:
+    """Reuse the Conductor's own complexity judgment (encoded in the topology) to
+    decide whether to run hierarchical sub-debates: complex decision type, a wide
+    roster (>=5 seats), or a deep debate (>=4 rounds)."""
+    seats = [n for n in topology.nodes if n.kind in (M.NodeKind.analyst, M.NodeKind.specialist)]
+    return (
+        (topology.decision_type or "").lower() in COMPLEX_DECISION_TYPES
+        or len(seats) >= 5
+        or (topology.max_rounds or 0) >= 4
+    )
+
+
+def _lean_sub_topology(_question: str) -> M.Topology:
+    """Cost-bounded sub-committee for in-graph hierarchical mode (3 seats, 1 round)."""
+    plan = M.ConductorPlan(
+        topology_name="sub-committee", decision_type="sub",
+        seats=[M.SeatPlan(role=r, is_specialist=False, rationale="sub-committee seat")
+               for r in ("cfo", "treasury", "fpna", "risk")],
+        rounds=1, fan_out=True, allow_loops=False, requires_red_team=False,
+        convergence_threshold=0.75, stop_conditions=["converge"], rationale="lean sub-committee",
+    )
+    return CONDUCTOR.plan_to_topology(plan)
+
+
+async def _hierarchical_branch(state: dict, config) -> dict:
+    """Decompose a complex decision into concurrent sub-committees and aggregate
+    (the subdebate engine), mapping the parent ruling onto the streamed state."""
+    from src.orchestration import subdebate as SUB
+
+    decision = state.get("decision", "")
+    context = state.get("context", {})
+    company, stage, _cid = _company(context)
+    framing = (state.get("transcript") or [{}])[0]
+    orch_view = dict(state.get("orchestration") or {})
+    orch_view.update(mode="hierarchical", phase="decompose")
+    await _stream(config, {"current_phase": "Complex decision — decomposing into sub-committees", "orchestration": orch_view})
+
+    htrace = await SUB.run_hierarchical(
+        decision, context, company=company, stage=stage,
+        sub_topology_factory=_lean_sub_topology, persist=True, config=config,
+    )
+    parent_rec = htrace.parent_recommendation or {}
+    turns = [framing]
+    for question, ruling in zip(htrace.sub_questions, htrace.sub_rulings):
+        turns.append({
+            "agent": "cfo", "label": "Sub-committee", "role": "Sub-committee", "monogram": "SC",
+            "type": "position", "stance": (ruling or {}).get("decision"), "headline": question[:90],
+            "argument": (ruling or {}).get("rationale", ""), "key_points": [], "at": _now(),
+        })
+    orch_view.update(
+        phase="aggregated", sub_questions=htrace.sub_questions, sub_rulings=htrace.sub_rulings,
+        hierarchical_run_id=htrace.run_id, cost_usd=htrace.cost_usd,
+    )
+    patch = {
+        "phase": "debate-complete",
+        "current_phase": f"Aggregated {len(htrace.sub_questions)} sub-committees → {parent_rec.get('decision', 'DEFER')}",
+        "recommendation": parent_rec,
+        "transcript": turns,
+        "positions": turns[1:],
+        "orchestration": orch_view,
+        "observability_events": [
+            _event("OpenAI", "Hierarchical aggregation", f"{len(htrace.sub_questions)} sub-committees", "positive"),
+            _event("Redis", "Sub-debates persisted", f"{len(htrace.sub_run_ids)} sub-traces + 1 hierarchical run", "positive"),
+        ],
+    }
+    await _stream(config, patch)
+    patch["_htrace"] = htrace.model_dump(mode="json")
+    return patch
+
+
+# --------------------------------------------------------------------------- #
 # Graph builder
 # --------------------------------------------------------------------------- #
 def build_orchestrator_graph(base_graph=None):
@@ -426,6 +510,8 @@ def build_orchestrator_graph(base_graph=None):
         _precedents: list
         _topology: dict
         _trace: dict
+        _decompose: bool
+        _htrace: dict
 
     workflow = StateGraph(OrchestrationState)
     workflow.add_node("intake", _intake_node)

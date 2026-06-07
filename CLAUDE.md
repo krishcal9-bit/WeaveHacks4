@@ -181,6 +181,13 @@ so the AG-UI bridge + frontend are unchanged), and `api.py`/`data/seed.py` addit
   + POST `/plan`), mounted additively + flag-gated onto `src.api.router`.
 - **`seed.py`** — idempotent baseline topologies + episodic precedents:
   `uv run --directory agent python -m src.orchestration.seed` (also wired into `seed()` behind the flag).
+- **`control.py`** — operator human-in-the-loop directives (inject/retire seats, force rounds, override
+  convergence threshold) in `atlas:orch:control:<thread>`, read cooperatively between debate rounds.
+- **`subdebate.py`** — hierarchical/parallel sub-debates: decompose a complex decision into concurrent,
+  bus-coordinated sub-committees and aggregate. `graph.py` auto-routes complex decisions (acquisition/
+  expansion/… or wide/deep topologies) here; also POST `/api/orchestration/hierarchical`.
+- **`selftest.py`** / **`eval_run.py`** — offline regression guard (`python -m src.orchestration.selftest`,
+  no model/Redis cost) and a topology A/B CLI; analytics over real runs at `/api/orchestration/observability`.
 
 Same strict rules as the rest of the repo, plus `.cursor/rules/atlas-orchestration.mdc`: live-only (no
 fakes), `atlas:orch:*`-only ownership, reuse `agent` contracts via lazy imports, every model step a

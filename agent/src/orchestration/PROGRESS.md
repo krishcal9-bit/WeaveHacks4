@@ -51,6 +51,7 @@ the strict live-only contract and without clobbering the sibling editing
 - [x] M10 — operator HITL control: inject/retire seats, force rounds, override threshold (live-verified)
 - [x] M11 — analytics endpoint (/api/orchestration/observability) + eval CLI (eval_run) + selftest (26/26)
 - [x] M12 — hierarchical/parallel sub-debates (bus-coordinated): decompose → concurrent committees → aggregate (live-verified)
+- [~] M13 — auto-route complex decisions to hierarchical mode inside the live graph (deterministic complexity router)   (verifying)
 
 ## Log
 - **M0 done**: `__init__.py`, `namespace.py` (atlas:orch:* key map, pure/offline-safe), PROGRESS.md.
