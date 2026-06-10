@@ -115,25 +115,35 @@ function CouncilHeaderBase({
   const liveLabel = running ? "Streaming" : healthReady ? "Live" : "Locked";
 
   return (
-    <section className="border-b border-border bg-surface px-4 py-4 lg:px-5">
-      <div className="flex flex-col gap-4">
+    <section className="border-b border-border bg-surface px-4 py-4 lg:px-6">
+      <div className="flex flex-col gap-3.5">
         <div className="min-w-0">
-          <div className="flex items-center gap-2.5">
+          <div className="flex flex-wrap items-center gap-2.5">
             <AtlasIcon name={running ? "council" : healthReady ? "health" : "risk"} size="sm" className="atlas-icon-badge--quiet" />
-            <h2 className="font-display text-[23px] font-medium leading-none tracking-[-0.015em]">AI Council Room</h2>
+            <h2 className="font-display text-[23px] font-medium leading-none tracking-[-0.015em]">The Council Chamber</h2>
             <StatusBadge tone={liveTone} pulse={running}>
               {liveLabel}
             </StatusBadge>
+            <span className="ml-auto hidden font-mono text-[10px] font-semibold uppercase tracking-[0.16em] text-info md:block">
+              {currentPhase}
+            </span>
           </div>
-          <p className="mt-2 line-clamp-2 break-words font-serif text-[17px] font-medium leading-snug text-foreground">
-            {decision || "What should the council decide?"}
-          </p>
-          <div className="mt-1.5">
-            <span className="font-mono text-[10px] font-semibold uppercase tracking-[0.16em] text-info">{currentPhase}</span>
-          </div>
+          {decision ? (
+            <p className="headline mt-2.5 line-clamp-2 max-w-[920px] break-words text-[19px] font-medium leading-snug text-foreground lg:text-[21px]">
+              {decision}
+            </p>
+          ) : (
+            <p className="mt-2.5 font-serif text-[15px] italic leading-snug text-subtle-foreground">
+              No matter before the council — frame a decision below to convene.
+            </p>
+          )}
+          <span className="mt-1.5 block font-mono text-[10px] font-semibold uppercase tracking-[0.16em] text-info md:hidden">
+            {currentPhase}
+          </span>
         </div>
 
-        <div className="min-w-0 rounded-xl border border-border bg-background/45 px-3 py-3 shadow-sm">
+        <div className="min-w-0">
+          <div className="gilt-rule mb-3" aria-hidden />
           <PhaseTimeline steps={steps} />
         </div>
       </div>

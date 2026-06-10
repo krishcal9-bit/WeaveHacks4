@@ -69,22 +69,23 @@ export const fadeUp: Variants = {
   },
 };
 
+/* No `filter: blur()` in any variant: animating blur forces full repaints per
+   frame, which is exactly what made the live Decision Room lag. Transform and
+   opacity only. */
 export const fadeDown: Variants = {
-  hidden: { opacity: 0, y: -14, filter: "blur(4px)" },
+  hidden: { opacity: 0, y: -14 },
   show: {
     opacity: 1,
     y: 0,
-    filter: "blur(0px)",
     transition: transitionReveal,
   },
 };
 
 export const scaleIn: Variants = {
-  hidden: { opacity: 0, scale: 0.94, filter: "blur(8px)" },
+  hidden: { opacity: 0, scale: 0.94 },
   show: {
     opacity: 1,
     scale: 1,
-    filter: "blur(0px)",
     transition: transitionEmphasis,
   },
 };
@@ -104,23 +105,21 @@ export const staggerFast: Variants = {
 };
 
 export const transcriptTurn: Variants = {
-  hidden: { opacity: 0, y: 10, x: -8, scale: 0.985, filter: "blur(4px)" },
+  hidden: { opacity: 0, y: 10, x: -8, scale: 0.985 },
   show: {
     opacity: 1,
     y: 0,
     x: 0,
     scale: 1,
-    filter: "blur(0px)",
     transition: transitionReveal,
   },
 };
 
 export const councilOrb: Variants = {
-  hidden: { opacity: 0, scale: 0.82, filter: "blur(6px)" },
+  hidden: { opacity: 0, scale: 0.82 },
   show: {
     opacity: 1,
     scale: 1,
-    filter: "blur(0px)",
     transition: { type: "spring", stiffness: 280, damping: 24, mass: 0.9 },
   },
 };
@@ -217,11 +216,12 @@ export const reducedVariants: Variants = {
 };
 
 export function tabIndex(pathname: string): number {
-  if (pathname.startsWith("/dashboard")) return 0;
-  if (pathname.startsWith("/decisions")) return 1;
-  if (pathname.startsWith("/settings")) return 2;
+  if (pathname.startsWith("/overview")) return 0;
+  if (pathname.startsWith("/dashboard")) return 1;
+  if (pathname.startsWith("/decisions")) return 2;
   if (pathname.startsWith("/activity")) return 3;
   if (pathname.startsWith("/department")) return 4;
+  if (pathname.startsWith("/settings")) return 5;
   return -1;
 }
 

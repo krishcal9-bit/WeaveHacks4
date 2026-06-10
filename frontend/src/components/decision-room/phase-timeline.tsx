@@ -6,11 +6,14 @@ import { cx } from "@/components/ui";
 import { buildPhaseSteps, type PhaseStep, type TimelineStep } from "@/lib/council";
 import { SectionLabel } from "./primitives";
 
-// Static, animation-free stepper. Each phase shows a checkmark once it is
-// finished, a number while pending/active, or an X if blocked — no continuously
-// updating fill bar, no motion, no auto-scroll. This keeps the progress bar
-// cheap during a live council run (it re-renders only when a phase's status
-// changes, and renders no animations).
+/*
+  Phase stepper. Cheap by construction:
+  - A connector DRAWS once (scaleX, fill-mode both) when its phase completes.
+  - Exactly one connector (the link into the active phase) carries a
+    travelling spark; the active node carries one ping ring.
+  - Everything else is static. All animation is transform/opacity only, so a
+    live council run never repaints this strip beyond its own status changes.
+*/
 function PhaseTimelineBase({ steps }: { steps: TimelineStep[] }) {
   const phases = useMemo(() => buildPhaseSteps(steps), [steps]);
 
@@ -19,7 +22,13 @@ function PhaseTimelineBase({ steps }: { steps: TimelineStep[] }) {
       <SectionLabel>Decision phase</SectionLabel>
       <ol className="room-scroll mt-3 flex items-stretch overflow-x-auto overflow-y-visible px-0.5 pb-1 pt-1">
         {phases.map((phase, index) => (
-          <PhaseNode key={phase.id} step={phase} index={index} last={index === phases.length - 1} />
+          <PhaseNode
+            key={phase.id}
+            step={phase}
+            index={index}
+            last={index === phases.length - 1}
+            nextStatus={phases[index + 1]?.status}
+          />
         ))}
       </ol>
     </div>
@@ -32,14 +41,17 @@ const PhaseNode = memo(function PhaseNode({
   step,
   index,
   last,
+  nextStatus,
 }: {
   step: PhaseStep;
   index: number;
   last: boolean;
+  nextStatus?: PhaseStep["status"];
 }) {
   const isActive = step.status === "active";
   const isComplete = step.status === "complete";
   const isBlocked = step.status === "blocked";
+  const feedsActive = isComplete && nextStatus === "active";
 
   return (
     <li className={cx("flex min-w-[150px] items-center", last ? "flex-1" : "flex-[1.15_1_0]")} data-phase-item={step.id}>
@@ -65,7 +77,7 @@ const PhaseNode = memo(function PhaseNode({
             isComplete
               ? "border-positive bg-positive text-white"
               : isActive
-                ? "border-info bg-info-bg text-info"
+                ? "phase-node-ring--active border-info bg-info-bg text-info"
                 : isBlocked
                   ? "border-risk bg-risk-bg text-risk"
                   : "border-border-strong bg-surface text-subtle-foreground",
@@ -108,11 +120,19 @@ const PhaseNode = memo(function PhaseNode({
         <span
           aria-hidden="true"
           data-phase-connector-status={step.status}
-          className={cx(
-            "mx-2 h-[3px] w-8 shrink-0 rounded-full sm:w-12",
-            isComplete ? "bg-positive" : isBlocked ? "bg-risk" : "bg-border",
+          className="relative mx-2 h-[3px] w-8 shrink-0 overflow-hidden rounded-full bg-border sm:w-12"
+        >
+          {isComplete && (
+            <span
+              className={cx(
+                "council-phase-connector absolute inset-0 rounded-full",
+                feedsActive ? "bg-info" : "bg-positive",
+              )}
+            />
           )}
-        />
+          {feedsActive && <span className="council-phase-flow absolute inset-0" />}
+          {isBlocked && <span className="absolute inset-0 rounded-full bg-risk" />}
+        </span>
       )}
     </li>
   );
