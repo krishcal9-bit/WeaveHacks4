@@ -61,6 +61,12 @@ from src.financial_api import financial_router  # noqa: E402
 
 router.include_router(financial_router)
 
+# Mount the read-only SSE bridge (GET /api/live) for the Executive Overview:
+# re-emits `atlas:dashboard` pub/sub events so the browser doesn't poll.
+from src.live_feed import live_router  # noqa: E402
+
+router.include_router(live_router)
+
 def _upload_validation_http_error(exc: UploadValidationError) -> HTTPException:
     return HTTPException(status_code=400, detail=to_executive_error(exc, context="upload"))
 

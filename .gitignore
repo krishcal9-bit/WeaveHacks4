@@ -17,3 +17,4 @@ frontend/next-env.d.ts
 # OS / editor
 .DS_Store
 *.log
+.playwright-mcp/

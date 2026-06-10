@@ -215,7 +215,7 @@ export function LandingPage() {
 
           <div className="ml-auto flex items-center gap-2 md:ml-0">
             <MotionLink
-              href="/dashboard"
+              href="/overview"
               variant="landing-cta"
               className="landing-cta inline-flex h-10 items-center gap-2 rounded-full border border-border-strong bg-surface px-5 font-sans text-[13px] font-semibold text-foreground shadow-sm"
             >
@@ -242,7 +242,7 @@ export function LandingPage() {
 
               <StaggerItem className="mt-9 flex flex-wrap items-center gap-3">
                 <MotionLink
-                  href="/dashboard"
+                  href="/overview"
                   variant="landing-cta"
                   className="landing-cta inline-flex h-12 items-center gap-2.5 rounded-full bg-accent px-6 font-sans text-[14px] font-semibold text-accent-foreground shadow-[0_8px_28px_color-mix(in_srgb,var(--accent)_28%,transparent)]"
                 >
@@ -404,7 +404,7 @@ export function LandingPage() {
               <span className="block text-muted-foreground">you&apos;ll have the memo.</span>
             </h2>
             <MotionLink
-              href="/dashboard"
+              href="/overview"
               variant="landing-cta"
               className="landing-cta mt-10 inline-flex h-12 items-center gap-2.5 rounded-full border border-border-strong bg-surface px-8 font-sans text-[15px] font-semibold text-foreground shadow-sm"
             >
@@ -422,7 +422,7 @@ export function LandingPage() {
             <span>{APP_NAME} · WeaveHacks 4</span>
           </div>
           <div className="flex gap-6">
-            <Link href="/dashboard" className="transition-colors hover:text-foreground">
+            <Link href="/overview" className="transition-colors hover:text-foreground">
               Dashboard
             </Link>
             <Link href="/decisions" className="transition-colors hover:text-foreground">

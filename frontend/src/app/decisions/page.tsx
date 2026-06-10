@@ -1,7 +1,6 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { useRouter } from "next/navigation";
 import { useCoAgent, useCopilotAction, useCopilotChat } from "@copilotkit/react-core";
 import { MessageRole, TextMessage } from "@copilotkit/runtime-client-gql";
 import { api } from "@/lib/api";
@@ -23,6 +22,7 @@ import type {
 } from "@/lib/types";
 import { CouncilWeb } from "@/components/decision-room/council-web";
 import { CouncilQuestionBanner } from "@/components/decision-room/council-question-banner";
+import { DecisionComposer, type DataGateView } from "@/components/decision-room/decision-composer";
 import { BoardMemo } from "@/components/decision-room/board-memo";
 import { CommandConsole } from "@/components/decision-room/command-console";
 import { CouncilHeader, PreflightPanel } from "@/components/decision-room/council-chrome";
@@ -35,6 +35,7 @@ import { RedisActivityRail } from "@/components/decision-room/activity-rails";
 import { Stagger, StaggerItem } from "@/components/motion/stagger";
 
 import { agentBase } from "@/lib/agent-base";
+import { broadcastDemoReset } from "@/lib/demo-reset";
 import { connectRealtimeVoice, type RealtimeVoiceHandle, type VoiceTranscriptUpdate } from "@/lib/realtime-voice";
 import { useDemoResetListener } from "@/hooks/use-demo-reset";
 import { useDeferredHealthReady, useMounted } from "@/lib/use-mounted";
@@ -146,7 +147,6 @@ export default function DecisionsPage() {
     });
   }, []);
 
-  const router = useRouter();
   const { state, setState, running, nodeName } = useCoAgent<DebateState>({ name: "finance_department" });
   const { appendMessage } = useCopilotChat();
   const [stateMirror, setStateMirror] = useState<Partial<DebateState>>({});
@@ -292,10 +292,18 @@ export default function DecisionsPage() {
   }, [displayRedisActivity.length, mounted]);
 
   // ----------------------------------------------------------------------- //
-  // Gate: the council only runs once the operator has uploaded company data.
-  // On shortfall, schedule a redirect to the Data tab and return a message.
+  // Gate: the council only argues from real records. The check now resolves
+  // INLINE (the composer explains itself and offers a one-click live demo
+  // reseed) instead of bouncing the operator to another tab mid-thought.
   // ----------------------------------------------------------------------- //
-  const requireCompanyDataOrRedirect = useCallback(async (): Promise<string | null> => {
+  const [dataGate, setDataGate] = useState<DataGateView>({
+    status: "checking",
+    loaded: 0,
+    required: REQUIRED_CONNECTOR_IDS.length,
+  });
+  const [demoLoading, setDemoLoading] = useState(false);
+
+  const ensureCompanyData = useCallback(async (): Promise<string | null> => {
     let loaded = 0;
     try {
       const inventory = await api.connectors();
@@ -307,13 +315,34 @@ export default function DecisionsPage() {
     } catch {
       loaded = 0;
     }
-    if (loaded >= REQUIRED_CONNECTOR_IDS.length) return null;
-    const reason = loaded === 0 ? "empty" : "incomplete";
-    window.setTimeout(() => router.push(`/dashboard?need=${reason}`), 900);
+    const required = REQUIRED_CONNECTOR_IDS.length;
+    const ready = loaded >= required;
+    setDataGate({ status: ready ? "ready" : loaded === 0 ? "empty" : "incomplete", loaded, required });
+    if (ready) return null;
     return loaded === 0
-      ? "No data uploaded. Add your company files on the Data tab to run the council."
-      : "Incomplete data. Finish uploading the required company files on the Data tab.";
-  }, [router]);
+      ? "No company data is loaded yet — load the demo company or upload your files first."
+      : `Company data is incomplete (${loaded}/${required} sources loaded) — finish uploading or load the demo company.`;
+  }, []);
+
+  useEffect(() => {
+    const timeout = window.setTimeout(() => void ensureCompanyData(), 0);
+    return () => window.clearTimeout(timeout);
+  }, [ensureCompanyData]);
+
+  const onLoadDemo = useCallback(async () => {
+    if (demoLoading) return;
+    setDemoLoading(true);
+    try {
+      const result = await api.resetDemo();
+      broadcastDemoReset(result);
+      await ensureCompanyData();
+    } catch (err) {
+      console.error("Live demo reseed failed", err);
+      await ensureCompanyData();
+    } finally {
+      setDemoLoading(false);
+    }
+  }, [demoLoading, ensureCompanyData]);
 
   // ----------------------------------------------------------------------- //
   // OpenAI Realtime 2 voice (WebRTC): gated behind strict-live preflight.
@@ -366,7 +395,7 @@ export default function DecisionsPage() {
           onTranscript: mergeVoiceTranscript,
           onSubmitDecision: async (decision) => {
             if (running || !healthReady) return;
-            const blockedMessage = await requireCompanyDataOrRedirect();
+            const blockedMessage = await ensureCompanyData();
             if (blockedMessage) return;
             setCouncilQuestion(decision);
             await appendMessage(new TextMessage({ role: MessageRole.User, content: decision }));
@@ -377,7 +406,7 @@ export default function DecisionsPage() {
       stopRealtime();
       setRealtime({ status: "blocked", detail: err instanceof Error ? err.message : String(err) });
     }
-  }, [appendMessage, healthReady, mergeVoiceTranscript, requireCompanyDataOrRedirect, running, stopRealtime]);
+  }, [appendMessage, healthReady, mergeVoiceTranscript, ensureCompanyData, running, stopRealtime]);
 
   const onVoiceButton = useCallback(() => {
     if (realtime.status === "connected") {
@@ -399,7 +428,7 @@ export default function DecisionsPage() {
     async (text: string) => {
       const content = text.trim();
       if (!content || running || !healthReady) return;
-      const blockedMessage = await requireCompanyDataOrRedirect();
+      const blockedMessage = await ensureCompanyData();
       if (blockedMessage) throw new Error(blockedMessage);
       setInput("");
       // Show the question banner above the council web for the typed/Run path
@@ -407,7 +436,7 @@ export default function DecisionsPage() {
       setCouncilQuestion(content);
       await appendMessage(new TextMessage({ role: MessageRole.User, content }));
     },
-    [appendMessage, healthReady, running, requireCompanyDataOrRedirect],
+    [appendMessage, healthReady, running, ensureCompanyData],
   );
 
   // ----------------------------------------------------------------------- //
@@ -496,12 +525,12 @@ export default function DecisionsPage() {
       setCouncilQuestion(content);
       if (running) return "The council is already deliberating; the question is shown above the council web.";
       if (!healthReady) return "Strict-live preflight must pass before the council can deliberate.";
-      const blockedMessage = await requireCompanyDataOrRedirect();
+      const blockedMessage = await ensureCompanyData();
       if (blockedMessage) return blockedMessage;
       await appendMessage(new TextMessage({ role: MessageRole.User, content }));
       return "Question sent to the council.";
     },
-  }, [running, healthReady, requireCompanyDataOrRedirect, appendMessage]);
+  }, [running, healthReady, ensureCompanyData, appendMessage]);
 
   useCopilotAction({
     name: "challengeCouncilClaim",
@@ -634,7 +663,22 @@ export default function DecisionsPage() {
 
         <div className="grid min-h-0 min-w-0 flex-1 gap-2 xl:grid-cols-[minmax(0,1fr)_minmax(280px,340px)]">
           <Stagger className="flex min-w-0 flex-col gap-2">
-            {mounted && councilQuestion && (
+            {/* Idle: one serif question, one big input — the stage before the play. */}
+            {mounted && !displayStarted && (
+              <StaggerItem>
+                <DecisionComposer
+                  healthReady={displayHealthReady}
+                  health={health}
+                  running={displayRunning}
+                  dataGate={dataGate}
+                  demoLoading={demoLoading}
+                  onLoadDemo={onLoadDemo}
+                  onSubmit={submit}
+                />
+              </StaggerItem>
+            )}
+
+            {mounted && councilQuestion && displayStarted && (
               <StaggerItem>
                 <CouncilQuestionBanner question={councilQuestion} />
               </StaggerItem>
@@ -655,60 +699,64 @@ export default function DecisionsPage() {
             />
             </StaggerItem>
 
-            <StaggerItem>
-            <TranscriptStream
-              transcript={displayTranscript}
-              recommendation={displayRecommendation}
-              running={displayRunning}
-              nodeName={displayNodeName}
-              healthReady={displayHealthReady}
-              started={displayStarted}
-              agentStatuses={displayAgentStatuses}
-            />
-            </StaggerItem>
+            {displayStarted && (
+              <>
+                <StaggerItem>
+                <TranscriptStream
+                  transcript={displayTranscript}
+                  recommendation={displayRecommendation}
+                  running={displayRunning}
+                  nodeName={displayNodeName}
+                  healthReady={displayHealthReady}
+                  started={displayStarted}
+                  agentStatuses={displayAgentStatuses}
+                />
+                </StaggerItem>
 
-            <StaggerItem>
-            <InfluencePanel
-              councilInfluence={mounted ? councilInfluence : undefined}
-              reliabilityScores={mounted ? reliabilityScores : []}
-              running={displayRunning}
-              started={displayStarted}
-              phase={displayPhase}
-            />
-            </StaggerItem>
+                <StaggerItem>
+                <InfluencePanel
+                  councilInfluence={mounted ? councilInfluence : undefined}
+                  reliabilityScores={mounted ? reliabilityScores : []}
+                  running={displayRunning}
+                  started={displayStarted}
+                  phase={displayPhase}
+                />
+                </StaggerItem>
 
-            <StaggerItem>
-            <SelfImprovementPanel
-              agentImprovements={mounted ? agentImprovements : undefined}
-              reliabilityScores={mounted ? reliabilityScores : []}
-              running={displayRunning}
-              started={displayStarted}
-            />
-            </StaggerItem>
+                <StaggerItem>
+                <SelfImprovementPanel
+                  agentImprovements={mounted ? agentImprovements : undefined}
+                  reliabilityScores={mounted ? reliabilityScores : []}
+                  running={displayRunning}
+                  started={displayStarted}
+                />
+                </StaggerItem>
 
-            <StaggerItem>
-            <BoardMemo
-              boardMemo={mounted ? vState?.board_memo : undefined}
-              recommendation={displayRecommendation}
-              decision={displayDecision}
-              companyName={companyName}
-              reliabilityScores={reliabilityScores}
-              operatorActions={mounted ? vState?.operator_actions : undefined}
-              running={displayRunning}
-              healthReady={displayHealthReady}
-              started={displayStarted}
-            />
-            </StaggerItem>
+                <StaggerItem>
+                <BoardMemo
+                  boardMemo={mounted ? vState?.board_memo : undefined}
+                  recommendation={displayRecommendation}
+                  decision={displayDecision}
+                  companyName={companyName}
+                  reliabilityScores={reliabilityScores}
+                  operatorActions={mounted ? vState?.operator_actions : undefined}
+                  running={displayRunning}
+                  healthReady={displayHealthReady}
+                  started={displayStarted}
+                />
+                </StaggerItem>
 
-            {/* Evidence drawer lives at the bottom of the left column. */}
-            <StaggerItem>
-            <EvidenceDrawer
-              context={displayContext}
-              started={displayStarted}
-              active={displayActivityPulse}
-              pinnedEvidence={displayPinnedEvidence}
-            />
-            </StaggerItem>
+                {/* Evidence drawer lives at the bottom of the left column. */}
+                <StaggerItem>
+                <EvidenceDrawer
+                  context={displayContext}
+                  started={displayStarted}
+                  active={displayActivityPulse}
+                  pinnedEvidence={displayPinnedEvidence}
+                />
+                </StaggerItem>
+              </>
+            )}
           </Stagger>
 
           {/* Right column: operator console, the agent inspector, then Redis

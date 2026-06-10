@@ -401,7 +401,10 @@ const TurnRow = memo(function TurnRow({
         {...motionProps}
         style={transcriptAccentStyle("cfo")}
         data-transcript-turn-type="decision"
-        className="transcript-turn-row transcript-turn-row--decision transcript-decision-shell relative min-h-[180px] min-w-0 overflow-hidden rounded-lg"
+        className={cx(
+          "transcript-turn-row transcript-turn-row--decision transcript-decision-shell relative min-h-[180px] min-w-0 overflow-hidden rounded-lg",
+          !reduced && "verdict-enter",
+        )}
       >
         {!reduced && <span aria-hidden="true" className="transcript-decision-flare" />}
         <CfoRulingCard

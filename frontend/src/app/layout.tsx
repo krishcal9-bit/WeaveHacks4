@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import Script from "next/script";
-import { Archivo, Fraunces, IBM_Plex_Mono, Newsreader } from "next/font/google";
+import { Fraunces, IBM_Plex_Mono, Newsreader, Schibsted_Grotesk } from "next/font/google";
 import { CopilotKit } from "@copilotkit/react-core";
 import { AppShell } from "@/components/app-shell";
 import { ThemeProvider } from "@/components/theme-provider";
@@ -9,9 +9,9 @@ import { THEME_STORAGE_KEY } from "@/lib/theme";
 import "@copilotkit/react-ui/styles.css";
 import "./globals.css";
 
-// Grotesque for dense UI / data — sharper, more editorial than a neutral sans.
-const archivo = Archivo({
-  variable: "--font-archivo",
+// Grotesque for dense UI / data — Scandinavian-editorial, warmer than a neutral sans.
+const grotesk = Schibsted_Grotesk({
+  variable: "--font-grotesk",
   subsets: ["latin"],
 });
 
@@ -45,9 +45,8 @@ const themeInitScript = `
 (function () {
   try {
     var stored = localStorage.getItem(${JSON.stringify(THEME_STORAGE_KEY)});
-    var dark =
-      stored === "dark" ||
-      (stored !== "light" && window.matchMedia("(prefers-color-scheme: dark)").matches);
+    // After-hours ledger is the brand default: dark unless explicitly light.
+    var dark = stored ? stored === "dark" : true;
     document.documentElement.classList.toggle("dark", dark);
   } catch (e) {}
 })();
@@ -62,7 +61,7 @@ export default function RootLayout({
     <html
       lang="en"
       suppressHydrationWarning
-      className={`${archivo.variable} ${fraunces.variable} ${newsreader.variable} ${plexMono.variable} h-full`}
+      className={`${grotesk.variable} ${fraunces.variable} ${newsreader.variable} ${plexMono.variable} h-full`}
     >
       <body className="h-full antialiased" suppressHydrationWarning>
         <Script id="atlas-theme-init" strategy="beforeInteractive">

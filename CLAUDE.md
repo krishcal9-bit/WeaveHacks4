@@ -40,7 +40,7 @@ npm --prefix frontend run dev
 
 # Run a single process during iteration
 uv run --directory agent python main.py      # agent only (FastAPI + graph)
-npm --prefix frontend run dev:ui             # UI only (next dev)
+cd frontend && npx next dev                  # UI only (NB: `npm run dev`/`dev:ui` start BOTH via concurrently)
 
 # Install / sync dependencies
 uv sync --directory agent                    # exact Python deps (uv, Python 3.12)
@@ -71,8 +71,11 @@ the app and exercising the Decision Room.
    back to the UI.
 2. **Dashboard data + health (read-only).** Browser fetches **directly** (cross-origin, CORS `*`) from
    `NEXT_PUBLIC_AGENT_URL` → FastAPI REST router `agent/src/api.py` (`/api/company`, `/vendors`,
-   `/decisions`, `/roster`, `/health`, `/observability`). This bypasses CopilotKit entirely; see
-   `frontend/src/lib/api.ts`.
+   `/decisions`, `/roster`, `/health`, `/observability`, and many more). This bypasses CopilotKit
+   entirely; see `frontend/src/lib/api.ts`. Additionally, `GET /api/live` (`agent/src/live_feed.py`)
+   is an **SSE bridge** over the Redis pub/sub channel `atlas:dashboard`: the Executive Overview
+   subscribes via `frontend/src/lib/use-live-feed.ts` and refetches the moment a council ruling
+   persists, instead of polling aggressively.
 
 `AGENT_URL` is the server-side proxy target (used in `route.ts`); `NEXT_PUBLIC_AGENT_URL` is the
 browser-side base URL (used in `lib/api.ts` and the Decision Room health poll). Both default to
@@ -140,13 +143,31 @@ module-level status set at startup: `main.py` calls `set_weave_status()` after `
   before writing Next-specific code.
 - **Do not unpin the langgraph/langchain sub-packages** in `agent/pyproject.toml`; the pins match
   CopilotKit's known-good lock and unpinning causes import errors (see the comment there).
+- **Never remove `turbopack.root` from `frontend/next.config.ts`.** Without it Next infers the git
+  repo root and dev mode watches the entire repo: backend/tooling writes during a live council run
+  fire a Fast Refresh rebuild storm that pins the browser main thread and freezes the Decision Room.
+  This — not CSS/motion animations — was the original cause of the "live run lags/crashes" problem.
+- **Dark-first theme default lives in two places**: the pre-paint script in
+  `frontend/src/app/layout.tsx` and `resolveTheme()` in `frontend/src/lib/theme.ts`. They must agree
+  (dark unless the operator explicitly stored "light") or the toggle icon desyncs from the page.
 
-## Frontend pages
+## Frontend pages & design system
 
-App Router under `frontend/src/app/`, four routes wrapped by `AppShell`: `/` (Executive Dashboard),
-`/decisions` (the live AI Council / Decision Room — the centerpiece), `/department` (org chart),
-`/activity` (decision log). Tailwind v4, Recharts for the runway chart, semantic color tokens
-(`positive`/`risk`/`warning`/`info`) defined in `globals.css`.
+App Router under `frontend/src/app/`, routes wrapped by `AppShell`: `/` (landing), `/overview`
+(**Executive Overview** — live KPI hero with count-up serif numerals, cash/runway chart, recent
+rulings; auto-refreshes via the `/api/live` SSE feed), `/dashboard` (Data Room: connector uploads +
+reconciliation), `/decisions` (the live **AI Council Chamber** — the centerpiece; idle state is the
+`DecisionComposer` hero with inline data-gating and a one-click *real* demo reseed), `/activity`
+(decision log), `/department` (org chart), `/settings`.
+
+Design system — **"The Ledger & The Press"** (`globals.css`): dark-first "after-hours ledger"
+(green-black surfaces, cream ink, oxblood `--accent`, brass `--gilt` trim) with a salmon-newsprint
+light theme; fonts Fraunces (display) / Newsreader (serif) / Schibsted Grotesk (sans) / IBM Plex
+Mono. **Motion contract** (enforced by convention, do not regress): keyframes animate ONLY
+`transform`/`opacity` — never box-shadow, background-position, filter, or layout properties;
+continuous loops are reserved for small "live right now" signals (seat pings, waveform, phase spark);
+entrances run once with `animation-fill-mode: both`. The Decision Room throttles streamed coagent
+state to 250ms for display (`useThrottledValue`) and memoizes every panel — keep both.
 
 ## Orchestration engine (optional — `ATLAS_ORCHESTRATOR`, default OFF)
 

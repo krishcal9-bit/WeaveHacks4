@@ -4,10 +4,9 @@ export const THEME_STORAGE_KEY = "atlas-theme";
 
 export function resolveTheme(stored: string | null): Theme {
   if (stored === "dark" || stored === "light") return stored;
-  if (typeof window !== "undefined" && window.matchMedia("(prefers-color-scheme: dark)").matches) {
-    return "dark";
-  }
-  return "light";
+  // After-hours ledger is the brand default (must match the pre-paint script
+  // in app/layout.tsx): dark unless the operator explicitly chose light.
+  return "dark";
 }
 
 export function applyTheme(theme: Theme) {
