@@ -89,13 +89,15 @@ LLM_PROVIDER = os.getenv("LLM_PROVIDER", "openai")
 LLM_MODEL = os.getenv("LLM_MODEL", "gpt-5.5")
 LLM_REASONING_EFFORT = os.getenv("LLM_REASONING_EFFORT", "low")
 # Hot-path stages default fast so a full live debate finishes quickly
-# (planner/debate are cheap classification/moderation passes — "minimal" is plenty);
+# (planner/debate are cheap classification/moderation passes — "low" is plenty);
 # analyst/synthesis stay "low" for differentiation + ruling quality. Base
 # LLM_REASONING_EFFORT is "low" too (board memo / reliability audit / any base-effort
 # call); the health gate accepts any valid effort. All knobs can be overridden in .env.
+# NOTE: gpt-5.5 supports none|low|medium|high|xhigh only — "minimal" 400s and
+# silently broke the planner + debate cross-examination, so defaults are "low".
 LLM_ANALYST_REASONING_EFFORT = os.getenv("LLM_ANALYST_REASONING_EFFORT", "low")
-LLM_DEBATE_REASONING_EFFORT = os.getenv("LLM_DEBATE_REASONING_EFFORT", "minimal")
-LLM_PLANNER_REASONING_EFFORT = os.getenv("LLM_PLANNER_REASONING_EFFORT", "minimal")
+LLM_DEBATE_REASONING_EFFORT = os.getenv("LLM_DEBATE_REASONING_EFFORT", "low")
+LLM_PLANNER_REASONING_EFFORT = os.getenv("LLM_PLANNER_REASONING_EFFORT", "low")
 LLM_SYNTHESIS_REASONING_EFFORT = os.getenv("LLM_SYNTHESIS_REASONING_EFFORT", "low")
 LLM_TEXT_VERBOSITY = os.getenv("LLM_TEXT_VERBOSITY", "low")
 OPENAI_SERVICE_TIER = os.getenv("OPENAI_SERVICE_TIER", "priority")

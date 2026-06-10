@@ -1429,6 +1429,17 @@ main a {
   }
 }
 
+/* Hard performance kill-switch (always on): disable ALL CSS keyframe animations
+   app-wide. The live council stream plus dozens of infinite ambient loops
+   (orb pulses, edge runners, shimmers, spinners, glows) pinned the main thread
+   and made the page unresponsive/crash during a run. Cheap hover/color
+   transitions are kept; only continuous keyframe animations are removed. */
+*,
+*::before,
+*::after {
+  animation: none !important;
+}
+
 /* Respect reduced-motion: the council room leans on pulse/spin to signal "live". */
 @media (prefers-reduced-motion: reduce) {
   .council-edge-flow,

@@ -113,6 +113,23 @@ export const NODE_TO_AGENT: Record<string, string> = {
   persist: "cfo",
 };
 
+// Ordered phases the backend streams via `phase` (mirrors agent/src/agent.py node
+// order). Used to fill the progress bar progressively as the council advances.
+export const PHASE_SEQUENCE: readonly string[] = [
+  "intake",
+  "planning",
+  "analysis",
+  "challenge",
+  "debate",
+  "influence",
+  "synthesis",
+  "governance",
+  "reliability",
+  "self_improvement",
+  "persist",
+  "done",
+];
+
 export const PHASE_LABEL: Record<string, string> = {
   intake: "Intake",
   analysis: "Functional analysis",
@@ -327,12 +344,19 @@ export function buildTimeline(args: {
     : health.status === "loading"
       ? "active"
       : "blocked";
-  const hasFraming = transcript.some((turn) => turn.type === "framing");
-  const hasDebate = transcript.some((turn) => turn.type === "rebuttal");
-  const hasInfluence = transcript.some((turn) => turn.type === "influence");
-  const hasReliability = transcript.some((turn) => turn.type === "reliability");
+  // The backend streams `phase` progressively as each node runs. Driving step
+  // completion off this ordering (in addition to transcript signals) makes the
+  // bar fill in lockstep with the council instead of all-at-once at the end, and
+  // ensures a step shows complete once the council has moved past it.
+  const reached = phase ? PHASE_SEQUENCE.indexOf(phase) : -1;
+  const done = phase === "done";
+  const past = (p: string) => reached >= 0 && reached > PHASE_SEQUENCE.indexOf(p);
+  const hasFraming = transcript.some((turn) => turn.type === "framing") || past("intake") || done;
+  const hasDebate = transcript.some((turn) => turn.type === "rebuttal") || past("debate") || done;
+  const hasInfluence = transcript.some((turn) => turn.type === "influence") || past("influence") || done;
+  const hasReliability = transcript.some((turn) => turn.type === "reliability") || past("reliability") || done;
   const hasAgent = (agent: string) =>
-    transcript.some((turn) => turn.agent === agent && turn.type === "position");
+    transcript.some((turn) => turn.agent === agent && turn.type === "position") || past("analysis") || done;
 
   return [
     { id: "preflight", kind: "gate", label: "Strict preflight", status: preflightStatus },
@@ -383,7 +407,7 @@ export function buildTimeline(args: {
       kind: "node",
       label: phase === "done" ? "Persisted" : "CFO ruling",
       status: timelineStatus({
-        complete: Boolean(recommendation?.decision) || phase === "done",
+        complete: Boolean(recommendation?.decision) || past("synthesis") || done,
         healthReady,
         id: nodeName === "persist" ? "persist" : "synthesis",
         nodeName,
@@ -395,7 +419,7 @@ export function buildTimeline(args: {
       kind: "node",
       label: "Reliability eval",
       status: timelineStatus({
-        complete: hasReliability || phase === "done",
+        complete: hasReliability,
         healthReady,
         id: "reliability",
         nodeName,

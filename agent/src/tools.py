@@ -156,11 +156,15 @@ def _govern_preview(
     from src import governance as G
     from src.governance_models import DataSensitivity
 
-    impact = json.loads(compute_runway.invoke({
-        "extra_monthly_spend": float(estimated_monthly_cost or 0),
-        "one_time_cost": float(estimated_one_time_cost or 0),
-        "added_monthly_revenue": float(added_monthly_revenue or 0),
-    }))
+    # Call the underlying function directly (not .invoke): this runs inside another
+    # tool's execution under the graph's async event stream, and a nested tool
+    # .invoke() would emit an on_tool_end event with a raw string output that the
+    # AG-UI adapter cannot serialize (crashes the live run). .func bypasses tracing.
+    impact = json.loads(compute_runway.func(
+        extra_monthly_spend=float(estimated_monthly_cost or 0),
+        one_time_cost=float(estimated_one_time_cost or 0),
+        added_monthly_revenue=float(added_monthly_revenue or 0),
+    ))
     rec = {
         "decision": "APPROVE", "confidence": 70,
         "rationale": "Pre-decision governance preview.",

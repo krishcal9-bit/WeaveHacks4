@@ -143,7 +143,17 @@ function groupRows(rows: ActivityRow[]): ActivityGroup[] {
   return REDIS_SIGNAL_ORDER.map((kind) => ({ kind, rows: groups.get(kind) ?? [] })).filter((group) => group.rows.length > 0);
 }
 
-export function RedisActivityRail({ activity, active = false }: { activity: RedisActivity[]; active?: boolean }) {
+export function RedisActivityRail({
+  activity,
+  active = false,
+  className = "",
+  bodyClassName = "",
+}: {
+  activity: RedisActivity[];
+  active?: boolean;
+  className?: string;
+  bodyClassName?: string;
+}) {
   const prefersReducedMotion = useReducedMotion();
   const reduced = Boolean(prefersReducedMotion);
   const rows = useMemo(() => buildRows(activity), [activity]);
@@ -156,7 +166,9 @@ export function RedisActivityRail({ activity, active = false }: { activity: Redi
       visualIcon="memory"
       title="Redis activity"
       count={activity.length}
-      scroll
+      scroll={!bodyClassName}
+      className={className}
+      bodyClassName={bodyClassName}
     >
       {groups.length === 0 ? (
         <EmptyState icon={Database} visualIcon="memory">

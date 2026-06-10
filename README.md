@@ -119,55 +119,81 @@ FastAPI + LangGraph agent  (:8123, AG-UI)        ← Weave traces every node
       └── Redis: JSON records · vendor search · vector RAG · decision stream · pub/sub
 ```
 
-## Run it
+## Run the application
 
-**Prereqs:** Node 18+, [`uv`](https://docs.astral.sh/uv/), Docker Desktop, and a root `.env`
-with live sponsor credentials. Redis must be Redis Stack; the repeatable setup uses Docker image
-`redis/redis-stack-server:latest`.
+### Prerequisites
+
+- **Node 20+** and npm (the frontend is Next.js 16).
+- **[`uv`](https://docs.astral.sh/uv/)** — manages the Python 3.12 agent environment (uv provisions Python itself).
+- **Redis Stack** (RedisJSON + RediSearch are required — a plain Redis server will not work). Either:
+  - **Docker Desktop** running the `redis/redis-stack-server:latest` image (used by the helper scripts), **or**
+  - the local **`redis-stack-server`** binary ([Redis Stack install docs](https://redis.io/docs/latest/operate/oss_and_stack/install/install-stack/)).
+- A **workspace-root `.env`** with the live sponsor credentials (see below).
+
+### Step-by-step
 
 ```bash
-# 1. Configure live keys once. Do not commit the resulting .env.
+# 1. Configure live keys once (do NOT commit the resulting .env).
 cp agent/.env.example .env
-# Fill OPENAI_API_KEY, WANDB_API_KEY, REDIS_URL, and optional model/project settings.
+#    Fill in OPENAI_API_KEY, WANDB_API_KEY, REDIS_URL
+#    (optional: WANDB_PROJECT, WANDB_ENTITY, LLM_MODEL, PORT, NEXT_PORT, …)
 
-# 2. Run repeatable live setup.
-scripts/live-setup.sh
+# 2. Start Redis Stack.
+scripts/start-redis-stack.sh                 # Docker path (redis/redis-stack-server:latest)
+#    — or, without Docker, run the local binary in its own terminal:
+#    redis-stack-server
+#    Verify: `redis-cli ping` → PONG and `redis-cli MODULE LIST` lists ReJSON + search.
 
-# 3. Start the FastAPI agent and Next.js app.
-scripts/dev-live.sh
-#   UI      http://localhost:3000
-#   agent   http://localhost:8123
-```
+# 3. Install dependencies.
+npm ci --prefix frontend                     # frontend (Next.js / CopilotKit)
+uv sync --directory agent                    # agent (FastAPI / LangGraph / Weave)
 
-`scripts/live-setup.sh` runs the required setup steps in order:
-
-```bash
-scripts/start-redis-stack.sh              # Docker: redis/redis-stack-server:latest
-npm ci --prefix frontend                  # exact Next/CopilotKit dependency install
-uv sync --directory agent                 # exact FastAPI/LangGraph/Weave dependency sync
-scripts/live-preflight.sh                 # env/tool/sponsor DNS/Redis Stack checks
-scripts/seed-live.sh                      # live OpenAI embeddings + Redis Stack seed
-scripts/live-preflight.sh                 # final readiness check after seed
-```
-
-If Docker Desktop is closed or the daemon is unavailable, the Redis script stops with:
-
-```text
-Docker daemon is not running. Start Docker Desktop, then rerun scripts/start-redis-stack.sh.
-```
-
-Manual live commands are also supported as long as root `.env` is exported first:
-
-```bash
-set -a; source .env; set +a
-scripts/start-redis-stack.sh
-npm ci --prefix frontend
-uv sync --directory agent
-scripts/live-preflight.sh
+# 4. Seed the baseline scaffolding (live OpenAI embeddings + Redis Stack).
 scripts/seed-live.sh
-uv run --directory agent python main.py
-npm --prefix frontend run dev:ui
+
+# 5. Start the FastAPI agent and the Next.js app together.
+scripts/dev-live.sh
+#    UI      http://localhost:3000
+#    agent   http://localhost:8123  (health: http://localhost:8123/api/health)
 ```
+
+> **Upload-driven:** seeding loads finance-policy RAG, the governance matrix, reference
+> vendors, and the W&B eval/replay subsystem — but **not a company**. Atlas derives the
+> company's financials from the operating files you upload (next section), so the council
+> always debates *your* numbers, not a fixture.
+
+**One-shot setup (Docker):** `scripts/live-setup.sh` runs steps 2–4 in order (start Redis →
+install deps → preflight → seed → re-preflight), then you only need `scripts/dev-live.sh`.
+
+If Docker Desktop is closed, the Redis script stops with:
+`Docker daemon is not running. Start Docker Desktop, then rerun scripts/start-redis-stack.sh.`
+— start Docker (or use the `redis-stack-server` binary path above) and retry.
+
+### Manual start (two terminals)
+
+Run the agent and frontend separately when you want independent logs. Export the root `.env`
+in each terminal first:
+
+```bash
+# Terminal A — agent (FastAPI + LangGraph, port 8123)
+set -a; source .env; set +a
+PORT=8123 uv run --directory agent python main.py
+
+# Terminal B — frontend (Next.js, port 3000)
+cd frontend && PORT=3000 npx next dev
+```
+
+## Using the app (upload → debate)
+
+1. Open **http://localhost:3000** — it lands on the **Data** tab.
+2. **Upload a company data pack.** Drop in your finance exports, or use a bundled synthetic
+   pack from `demo_uploads/` (e.g. all seven files in `demo_uploads/northwind-robotics/`).
+   Atlas parses the files, derives the company financials, and runs reconciliation.
+3. Switch to the **Run** tab (the Decision Room) and pose a decision (see prompts below).
+   The committee debates live and the CFO issues a quantified ruling.
+   - The Run tab is **gated**: until the required files are uploaded it redirects back to
+     Data ("No data uploaded" / "Incomplete data").
+4. Use **Settings → Reset** to clear all uploaded/derived state and start fresh.
 
 ## Demo prompts
 

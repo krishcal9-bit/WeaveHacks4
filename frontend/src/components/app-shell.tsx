@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { motion, useReducedMotion } from "motion/react";
+import { MotionConfig, motion, useReducedMotion } from "motion/react";
 import { LayoutGrid } from "lucide-react";
 import type { ReactNode } from "react";
 import { cx } from "@/components/ui";
@@ -20,11 +20,21 @@ export function AppShell({ children }: { children: ReactNode }) {
 
   useAppNavShortcuts();
 
+  // Global motion kill-switch: force reduced motion app-wide so every
+  // framer-motion component (all of which already guard on `useReducedMotion`)
+  // skips its transform/layout animations. Combined with the CSS animation
+  // kill-switch in globals.css, this keeps the heavy live-streaming Decision
+  // Room responsive instead of repainting animations on every state delta.
   if (isLanding) {
-    return <PageTransition pathname={pathname}>{children}</PageTransition>;
+    return (
+      <MotionConfig reducedMotion="always">
+        <PageTransition pathname={pathname}>{children}</PageTransition>
+      </MotionConfig>
+    );
   }
 
   return (
+    <MotionConfig reducedMotion="always">
     <div className="relative flex min-h-dvh flex-col bg-background md:h-dvh md:overflow-hidden">
       <div className="app-grain pointer-events-none fixed inset-0 z-50" aria-hidden />
 
@@ -86,6 +96,7 @@ export function AppShell({ children }: { children: ReactNode }) {
         <PageTransition pathname={pathname}>{children}</PageTransition>
       </main>
     </div>
+    </MotionConfig>
   );
 }
 

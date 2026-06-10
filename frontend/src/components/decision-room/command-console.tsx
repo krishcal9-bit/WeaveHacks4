@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useRef, useState } from "react";
+import { memo, useEffect, useMemo, useRef, useState } from "react";
 import type { ComponentType, FormEvent, RefObject } from "react";
 import { AnimatePresence, motion, useReducedMotion } from "motion/react";
 import {
@@ -98,7 +98,9 @@ function submitTone(state: SubmissionState, running: boolean): Tone {
   return "accent";
 }
 
-export function CommandConsole({
+export const CommandConsole = memo(CommandConsoleBase);
+
+function CommandConsoleBase({
   input,
   onInput,
   onSubmit,

@@ -21,14 +21,68 @@ Grouped by phase:
 from __future__ import annotations
 
 from enum import Enum
+from typing import Any
 
 from pydantic import BaseModel, ConfigDict, Field
 
 
+def _enforce_strict_json_schema(node: Any) -> None:
+    """Recursively make a JSON schema OpenAI-strict-compliant in place.
+
+    OpenAI's strict structured outputs (Responses API ``text.format`` /
+    Chat Completions ``response_format`` json_schema) require every object to be
+    closed (``additionalProperties: false``) and to list *every* property in
+    ``required`` — even fields that have Python defaults. Pydantic marks
+    defaulted fields as optional, so without this the request 400s with
+    ``Invalid schema ... 'required' ... Missing '<field>'``. We walk the whole
+    schema (properties, ``$defs``, items, combinators) so nested models comply too.
+    """
+    if isinstance(node, dict):
+        # OpenAI strict mode forbids a "$ref" node from carrying sibling keywords
+        # (e.g. the "description" Pydantic attaches to enum-typed fields). Drop the
+        # siblings so the reference is bare; the field guidance lives in the prompt.
+        if "$ref" in node and len(node) > 1:
+            ref = node["$ref"]
+            node.clear()
+            node["$ref"] = ref
+            return
+        if isinstance(node.get("properties"), dict):
+            node["required"] = list(node["properties"].keys())
+            node["additionalProperties"] = False
+            for prop in node["properties"].values():
+                _enforce_strict_json_schema(prop)
+        for key in ("$defs", "definitions"):
+            if isinstance(node.get(key), dict):
+                for sub in node[key].values():
+                    _enforce_strict_json_schema(sub)
+        for key in ("items", "additionalItems", "contains", "not"):
+            if isinstance(node.get(key), dict):
+                _enforce_strict_json_schema(node[key])
+        for key in ("anyOf", "allOf", "oneOf", "prefixItems"):
+            if isinstance(node.get(key), list):
+                for sub in node[key]:
+                    _enforce_strict_json_schema(sub)
+    elif isinstance(node, list):
+        for sub in node:
+            _enforce_strict_json_schema(sub)
+
+
 class StrictStructuredModel(BaseModel):
-    """OpenAI strict structured outputs require closed, fully-required schemas."""
+    """OpenAI strict structured outputs require closed, fully-required schemas.
+
+    The JSON schema is post-processed so every property (including fields with
+    Python defaults) is in ``required`` and every object is closed. This is what
+    lets ``with_structured_output`` succeed against the strict Responses API
+    instead of 400ing on a defaulted field like ``question_kind``.
+    """
 
     model_config = ConfigDict(extra="forbid")
+
+    @classmethod
+    def model_json_schema(cls, *args: Any, **kwargs: Any) -> dict[str, Any]:
+        schema = super().model_json_schema(*args, **kwargs)
+        _enforce_strict_json_schema(schema)
+        return schema
 
 
 # --------------------------------------------------------------------------- #

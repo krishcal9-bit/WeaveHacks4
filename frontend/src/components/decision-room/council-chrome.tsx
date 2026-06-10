@@ -1,5 +1,6 @@
 "use client";
 
+import { memo } from "react";
 import { AlertTriangle, Loader2, Radio, ShieldAlert, XCircle } from "lucide-react";
 import { AnimatePresence, motion, useReducedMotion } from "motion/react";
 import { AtlasIcon } from "@/components/atlas-icon";
@@ -95,7 +96,9 @@ function SignalChip({ label, row, fallback }: { label: string; row?: SponsorView
 // --------------------------------------------------------------------------- //
 // Council header — title, decision under debate, current phase, phase timeline.
 // --------------------------------------------------------------------------- //
-export function CouncilHeader({
+export const CouncilHeader = memo(CouncilHeaderBase);
+
+function CouncilHeaderBase({
   currentPhase,
   decision,
   healthReady,

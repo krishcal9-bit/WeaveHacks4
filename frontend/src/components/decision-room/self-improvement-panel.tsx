@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo } from "react";
+import { memo, useMemo } from "react";
 import { RefreshCw, Sparkles, TrendingDown, TrendingUp } from "lucide-react";
 import { cx } from "@/components/ui";
 import { ROSTER_BY_ID } from "@/lib/agents";
@@ -10,7 +10,9 @@ import { EmptyState, Panel, SectionLabel, SkeletonText, StatusBadge } from "./pr
 
 const SUBAGENTS = COUNCIL_ANALYST_IDS as readonly string[];
 
-export function SelfImprovementPanel({
+export const SelfImprovementPanel = memo(SelfImprovementPanelBase);
+
+function SelfImprovementPanelBase({
   agentImprovements,
   reliabilityScores,
   running,

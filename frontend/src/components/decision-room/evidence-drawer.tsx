@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, type ReactNode } from "react";
+import { memo, useState, type ReactNode } from "react";
 import { AnimatePresence, motion, useReducedMotion } from "motion/react";
 import {
   Banknote,
@@ -126,16 +126,22 @@ function SignalBadge({ kind, active }: { kind: RedisSignalKind; active: boolean 
   );
 }
 
-export function EvidenceDrawer({
+export const EvidenceDrawer = memo(EvidenceDrawerBase);
+
+function EvidenceDrawerBase({
   context,
   started,
   active = false,
   pinnedEvidence = [],
+  className = "",
+  bodyClassName = "",
 }: {
   context?: CouncilContext;
   started: boolean;
   active?: boolean;
   pinnedEvidence?: PinnedEvidence[];
+  className?: string;
+  bodyClassName?: string;
 }) {
   const prefersReducedMotion = useReducedMotion();
   const reduced = Boolean(prefersReducedMotion);
@@ -174,6 +180,8 @@ export function EvidenceDrawer({
       title="Evidence drawer"
       collapsible
       defaultOpen
+      className={className}
+      bodyClassName={bodyClassName}
     >
       {!hasEvidence ? (
         <EmptyState icon={FileSearch} visualIcon="evidence">
