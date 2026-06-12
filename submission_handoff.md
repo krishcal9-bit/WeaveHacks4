@@ -17,8 +17,12 @@
 ## Imported as drafts
 
 - H0: Hack the Zero Stack with Vercel v0 and AWS Databases
+  - Additional info saved through finalization with Vercel URL, Vercel team ID,
+    testing instructions, and `architecture_diagram.png`.
 - UiPath AgentHack
 - Slack Agent Builder Challenge
+  - Additional info saved through finalization with eligibility basics and
+    `architecture_diagram.png`.
 - Arm Create: AI Optimization Challenge
 
 ## Remaining sponsor-specific proof
