@@ -8,6 +8,10 @@
 - Demo video: https://www.youtube.com/watch?v=IcEbcOxcNEY
 - W&B Weave traces: https://wandb.ai/krishcal9-uc-irvine-anteaters/atlas-finance-os/weave
 - Vercel team ID for H0 form: `team_JFIdO4tYfnvDuIwwzPLzEc8Z`
+- Architecture diagram image:
+  https://raw.githubusercontent.com/krishcal9-bit/WeaveHacks4/main/architecture_diagram.png
+- Zero-revenue P&L evidence:
+  https://raw.githubusercontent.com/krishcal9-bit/WeaveHacks4/main/xprize_zero_revenue_pnl.csv
 
 ## Submitted
 
@@ -24,6 +28,15 @@
   - Additional info saved through finalization with eligibility basics and
     `architecture_diagram.png`.
 - Arm Create: AI Optimization Challenge
+- Global AI Hackathon Series with Qwen Cloud
+  - Registered and imported as draft `1048632-atlas-finance`.
+  - Additional info saved through finalization with Agent Society track,
+    repository URL, AI-tools disclosure, and `architecture_diagram.png`.
+- Build with Gemini XPRIZE
+  - Registered and imported as draft `1048637-atlas-finance`.
+  - Additional info saved through finalization with Money & Financial Access
+    category, zero-revenue fields, product screenshot link, and
+    `xprize_zero_revenue_pnl.csv`.
 
 ## Remaining sponsor-specific proof
 
@@ -37,3 +50,8 @@
 - Slack needs a real Slack developer sandbox URL shared with the required
   judging accounts.
 - Arm needs measurable Arm-specific optimization or Arm64 benchmark evidence.
+- Qwen Cloud needs a real Qwen Cloud / Alibaba Cloud backend deployment and a
+  code proof URL. The draft explicitly says that integration is not added yet.
+- Gemini XPRIZE needs a real Google Cloud product, at least one Gemini API call,
+  customer/revenue evidence, and business proof. The draft explicitly says those
+  integrations and paid customer operations do not exist yet.
